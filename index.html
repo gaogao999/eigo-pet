@@ -140,6 +140,14 @@
   .coscard.sel{ border:2px solid var(--green); }
   .coscard.locked{ opacity:.55; color:#9aa896; cursor:default; }
   .cosswatch{ width:46px; height:46px; border-radius:10px; overflow:hidden; display:flex; flex-direction:column; justify-content:flex-end; }
+  .statchips{ display:flex; gap:8px; margin-bottom:10px; }
+  .chip{ flex:1; border:1px solid var(--line); background:var(--card); border-radius:12px; padding:8px 4px; font-size:12px; font-weight:700; color:var(--ink); cursor:pointer; }
+  .setrow{ text-align:center; margin-top:10px; font-size:13px; color:#7a8a76; font-weight:700; }
+  .optbtn{ border:1px solid var(--line); background:var(--card); border-radius:10px; padding:5px 10px; margin-left:6px; font-size:13px; font-weight:700; color:#7a8a76; cursor:pointer; }
+  .optbtn.sel{ background:var(--green); color:#fff; border-color:var(--green); }
+  .trow2{ padding:9px 10px; border-bottom:1px solid var(--line); font-size:14px; font-weight:700; color:#9aa896; }
+  .trow2.got{ color:var(--ink); }
+  .wlmast{ font-size:11px; color:#e0a92a; margin-left:6px; letter-spacing:1px; }
 </style>
 </head>
 <body>
@@ -205,6 +213,15 @@
     </div>
   </div>
 
+  <div id="rewardBanner" style="display:none; text-align:center; background:#fff2cf; border:1px solid #f0d98a; border-radius:12px; padding:8px; margin-bottom:10px; font-size:13px; font-weight:800; color:#9a6b12;">⏰ いまは ごほうびタイム！ えさ・けいけんち 2ばい</div>
+
+  <div class="statchips">
+    <button class="chip" id="ticketChip">🎫 おやすみ券 <span id="ticketN">0</span></button>
+    <button class="chip" id="boxChip">🎁 こんしゅう <span id="weekMet">0</span>/5</button>
+    <button class="chip" id="trophyChip">🏆 しょうごう <span id="titleN">0</span></button>
+  </div>
+  <button id="boxBtn" class="study-btn" style="display:none; background:#fff2cf; color:#9a6b12; border:1px solid #f0d98a;">🎁 たからばこを あける！</button>
+
   <div class="grades" id="grades">
     <button class="gbtn" data-g="g3">英検3級</button>
     <button class="gbtn" data-g="jun2">英検準2級</button>
@@ -216,6 +233,15 @@
     <button class="goalbtn" data-goal="10">10</button>
     <button class="goalbtn" data-goal="20">20</button>
     <button class="goalbtn" data-goal="30">30</button>
+  </div>
+  <div class="setrow" id="rtset">ごほうびタイム：
+    <button class="optbtn" data-h="">なし</button>
+    <button class="optbtn" data-h="7">あさ7</button>
+    <button class="optbtn" data-h="17">ゆう5</button>
+  </div>
+  <div class="setrow" id="sndset">こうかおん：
+    <button class="optbtn" data-v="1">ON</button>
+    <button class="optbtn" data-v="0">OFF</button>
   </div>
 </section>
 
@@ -334,6 +360,14 @@
     <div id="celeMsg" style="font-size:14px; color:var(--ink); line-height:1.6;"></div>
     <div id="celeReward" style="font-size:14px; color:var(--green); font-weight:700; margin-top:10px;"></div>
     <button id="celeClose" style="margin-top:16px; width:100%; padding:14px; border:none; border-radius:14px; background:var(--green); color:#fff; font-size:17px; font-weight:800; cursor:pointer;">やったー！</button>
+  </div>
+</div>
+
+<div id="trophyModal" style="display:none; position:fixed; inset:0; z-index:100; background:rgba(40,40,30,.55); align-items:center; justify-content:center; padding:20px;">
+  <div style="background:var(--card); border-radius:20px; padding:20px; max-width:320px; width:100%; max-height:80vh; overflow-y:auto;">
+    <div style="font-size:18px; font-weight:800; color:var(--green); text-align:center; margin-bottom:12px;">🏆 しょうごう</div>
+    <div id="trophyList"></div>
+    <button id="trophyClose" style="margin-top:14px; width:100%; padding:12px; border:none; border-radius:12px; background:var(--green); color:#fff; font-size:16px; font-weight:800; cursor:pointer;">とじる</button>
   </div>
 </div>
 
@@ -510,7 +544,9 @@ function load(){
               discipline:50, weight:5, careMiss:0, disciplineMiss:0, wagamama:false,
               babyType:null, childType:null, adultType:null, customImg:{}, gameHi:0,
               dailyGoal:20, todayDate:today(), todayWords:[], lastGoalDate:null, metDates:[],
-              wrongWords:[], petColor:'brown', bg:'meadow' };
+              wrongWords:[], petColor:'brown', bg:'meadow',
+              freezeTickets:0, lastTicketDate:null, rewardHour:null, lastBoxWeek:null,
+              titles:[], sound:true, mastery:{} };
   s=Object.assign({}, def, s||{});  /* 既存データは保持し、新項目だけ デフォルト追加 */
   if(!WORDBANK[s.grade]) s.grade="g3";
   return s;
@@ -522,6 +558,43 @@ function yesterday(){ const d=new Date(today()); d.setDate(d.getDate()-1); retur
 function todayDone(){ return (state.todayDate===today()) && (state.todayWords.length>=state.dailyGoal); }
 function displayStreak(){ return (state.lastGoalDate===today() || state.lastGoalDate===yesterday()) ? state.streak : 0; }
 function todayCount(){ return (state.todayDate===today()) ? state.todayWords.length : 0; }
+
+/* ごほうびタイム（きめた じかんたいは ごほうび2ばい） */
+function isRewardTime(){ if(state.rewardHour==null) return false; const h=new Date().getHours(); return h>=state.rewardHour && h<state.rewardHour+2; }
+/* 今週（月はじまり）の キー と 達成日数 */
+function weekId(ds){ const d=new Date(ds); const day=(d.getDay()+6)%7; d.setDate(d.getDate()-day); return dayStr(d); }
+function thisWeekMet(){ const wk=weekId(today()); return state.metDates.filter(m=>weekId(m)===wk).length + ((state.metDates.indexOf(today())<0 && todayDone())?1:0); }
+function boxAvailable(){ return thisWeekMet()>=5 && state.lastBoxWeek!==weekId(today()); }
+
+/* 効果音（Web Audio・アセット不要） */
+let _ac=null;
+function tone(freq, t0, dur, type){ try{ if(!_ac) _ac=new (window.AudioContext||window.webkitAudioContext)(); const o=_ac.createOscillator(), g=_ac.createGain(); o.type=type||'sine'; o.frequency.value=freq; o.connect(g); g.connect(_ac.destination); const t=_ac.currentTime+t0; g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(0.18,t+0.01); g.gain.exponentialRampToValueAtTime(0.0001,t+dur); o.start(t); o.stop(t+dur+0.02); }catch(e){} }
+function sfx(kind){ if(!state.sound) return;
+  if(kind==='correct'){ tone(660,0,0.12); tone(880,0.09,0.14); }
+  else if(kind==='combo'){ tone(784,0,0.1); tone(988,0.08,0.1); tone(1175,0.16,0.14); }
+  else if(kind==='wrong'){ tone(200,0,0.18,'square'); }
+  else if(kind==='fanfare'){ [523,659,784,1047].forEach((f,i)=>tone(f,i*0.12,0.18)); }
+  else if(kind==='unlock'){ tone(880,0,0.1); tone(1320,0.1,0.18); }
+}
+
+/* 称号 */
+const TITLES=[
+  {id:'w50',name:'たんごの たまご',cond:s=>s.learned>=50},
+  {id:'w100',name:'100ご マスター',cond:s=>s.learned>=100},
+  {id:'w300',name:'300ご マスター',cond:s=>s.learned>=300},
+  {id:'w500',name:'500ご マスター',cond:s=>s.learned>=500},
+  {id:'w1000',name:'1000ご マスター',cond:s=>s.learned>=1000},
+  {id:'s3',name:'3にち つづけたね',cond:s=>s.streak>=3},
+  {id:'s7',name:'1しゅうかん たっせい',cond:s=>s.streak>=7},
+  {id:'s14',name:'2しゅうかん たっせい',cond:s=>s.streak>=14},
+  {id:'s30',name:'1かげつ つづけた えらい！',cond:s=>s.streak>=30},
+  {id:'mst50',name:'50ご かんぺき',cond:s=>masteredCount()>=50},
+  {id:'adult',name:'おとなに そだてた',cond:s=>s.lv>=4}
+];
+function masteredCount(){ let n=0; for(const k in state.mastery){ if(state.mastery[k]>=3) n++; } return n; }
+function checkTitles(){ let got=null; TITLES.forEach(t=>{ if(state.titles.indexOf(t.id)<0 && t.cond(state)){ state.titles.push(t.id); got=t.name; } }); if(got){ bubble('🏆 しょうごう ゲット！'); sfx('fanfare'); } }
+/* おやすみ券：もくひょうの 2ばい やったら 1まい（1にち1まい・さいだい5） */
+function checkTickets(){ if(state.lastTicketDate!==today() && todayCount()>=state.dailyGoal*2){ state.freezeTickets=Math.min(5,state.freezeTickets+1); state.lastTicketDate=today(); bubble('🎫 おやすみ券 ゲット！'); } }
 
 function applyDaily(){
   if(state.todayDate!==today()){ state.todayDate=today(); state.todayWords=[]; }
@@ -601,6 +674,14 @@ function renderGoal(){
     wd.innerHTML=h; }
   document.querySelectorAll('.goalbtn').forEach(b=> b.classList.toggle('sel', (+b.dataset.goal)===state.dailyGoal));
   const wc=document.getElementById('wrongCount'); if(wc) wc.textContent=state.wrongWords.length;
+  // 券・宝箱・称号・ごほうびタイム
+  const tn=document.getElementById('ticketN'); if(tn) tn.textContent=state.freezeTickets;
+  const wm=document.getElementById('weekMet'); if(wm) wm.textContent=Math.min(5,thisWeekMet());
+  const tt=document.getElementById('titleN'); if(tt) tt.textContent=(state.titles.length)+'/'+TITLES.length;
+  const bb=document.getElementById('boxBtn'); if(bb) bb.style.display=boxAvailable()?'block':'none';
+  const rb=document.getElementById('rewardBanner'); if(rb) rb.style.display=isRewardTime()?'block':'none';
+  document.querySelectorAll('#rtset .optbtn').forEach(b=> b.classList.toggle('sel', (b.dataset.h===''?null:+b.dataset.h)===state.rewardHour));
+  document.querySelectorAll('#sndset .optbtn').forEach(b=> b.classList.toggle('sel', (b.dataset.v==='1')===!!state.sound));
   // ホームの うながし
   const nd=document.getElementById('nudge');
   if(nd){ if(done>=goal){ nd.style.display='none'; }
@@ -714,9 +795,12 @@ function renderWordList(){
     const yomi = w[2] ? '<span class="wlyomi">'+escJa(w[2])+'</span>' : '';
     const ez = EZ[w[0]] || EZ[w[0].toLowerCase()];
     const easyLine = ez ? '<div class="wleasy">やさしく：'+escJa(ez)+'</div>' : '';
-    html += '<div class="wlrow"><div class="wltop"><div class="wlen">'+escJa(w[0])+(pos?'<span class="wlpos">'+pos+'</span>':'')+'</div>'+
+    const m=Math.min(3, state.mastery[w[0]]||state.mastery[w[0].toLowerCase()]||0);
+    const stars='<span class="wlmast">'+'★'.repeat(m)+'☆'.repeat(3-m)+'</span>';
+    html += '<div class="wlrow"><div class="wltop"><div class="wlen">'+escJa(w[0])+(pos?'<span class="wlpos">'+pos+'</span>':'')+stars+'</div>'+
             '<div class="wlja">'+yomi+'<span>'+escJa(w[1])+'</span></div></div>'+easyLine+'</div>';
   }
+  document.getElementById('wlCount').textContent = list.length+' ご ／ マスター '+masteredCount()+'こ';
   document.getElementById('wlList').innerHTML = html;
   document.querySelectorAll('#wlGrades .gbtn').forEach(b=> b.classList.toggle('sel', b.dataset.g===wlGrade));
 }
@@ -910,6 +994,24 @@ document.body.addEventListener('touchend', e=>{ if(!swOn) return; swOn=false;
   if(Math.abs(dx)>60 && Math.abs(dx)>Math.abs(dy)*1.5){ swipeTab(dx<0 ? 1 : -1); }
 }, {passive:true});
 document.getElementById('goalset').onclick=(e)=>{ const b=e.target.closest('.goalbtn'); if(!b) return; state.dailyGoal=+b.dataset.goal; save(); renderGoal(); };
+document.getElementById('rtset').onclick=(e)=>{ const b=e.target.closest('.optbtn'); if(!b) return; state.rewardHour = b.dataset.h===''?null:+b.dataset.h; save(); renderGoal(); };
+document.getElementById('sndset').onclick=(e)=>{ const b=e.target.closest('.optbtn'); if(!b) return; state.sound = b.dataset.v==='1'; save(); renderGoal(); if(state.sound) sfx('correct'); };
+document.getElementById('boxBtn').onclick=()=>{
+  if(!boxAvailable()) return;
+  state.lastBoxWeek=weekId(today());
+  state.food+=10; state.freezeTickets=Math.min(5,state.freezeTickets+1); addXp(20);
+  bubble('🎁 たからばこ：えさ+10・おやすみ券+1！'); sfx('fanfare'); cheer(); save(); render();
+};
+function renderTrophies(){
+  document.getElementById('trophyList').innerHTML = TITLES.map(t=>{
+    const got=state.titles.indexOf(t.id)>=0;
+    return '<div class="trow2'+(got?' got':'')+'">'+(got?'🏆':'🔒')+' '+t.name+'</div>';
+  }).join('');
+}
+document.getElementById('trophyChip').onclick=()=>{ renderTrophies(); document.getElementById('trophyModal').style.display='flex'; };
+document.getElementById('trophyClose').onclick=()=>{ document.getElementById('trophyModal').style.display='none'; };
+document.getElementById('ticketChip').onclick=()=>{ bubble('おやすみ券：1日サボっても れんぞくキープ（もくひょうの2ばいで もらえる）'); };
+document.getElementById('boxChip').onclick=()=>{ bubble('1しゅうで 5日 たっせいで たからばこ！'); };
 document.getElementById('celeClose').onclick=()=>{ document.getElementById('goalCele').style.display='none'; render(); };
 document.getElementById('nudge').onclick=()=> gotoTab('learn');
 document.getElementById('goStudy').onclick=startStudy;
@@ -922,14 +1024,14 @@ function addWrong(w){ if(!w) return; if(!state.wrongWords.some(x=>x[0]===w[0])){
 function clearWrong(en){ state.wrongWords=state.wrongWords.filter(x=>x[0]!==en); }
 function startStudy(){
   reviewMode=false;
-  qList=shuffle(currentWords()).slice(0,QPER); qIdx=0; session={correct:0};
+  qList=shuffle(currentWords()).slice(0,QPER); qIdx=0; session={correct:0,combo:0};
   document.getElementById('qTotal').textContent=qList.length;
   show('study'); nextQ();
 }
 function startReview(){
   if(!state.wrongWords.length){ bubble('まちがえた ことばは ないよ！'); return; }
   reviewMode=true;
-  qList=shuffle(state.wrongWords).slice(0,QPER); qIdx=0; session={correct:0};
+  qList=shuffle(state.wrongWords).slice(0,QPER); qIdx=0; session={correct:0,combo:0};
   document.getElementById('qTotal').textContent=qList.length;
   show('study'); nextQ();
 }
@@ -989,33 +1091,50 @@ function recordLearned(en){
   // 目標に たっした しゅんかん
   if(!already && state.todayWords.length===state.dailyGoal){ onGoalReached(); }
 }
+function streakOnGoal(){
+  if(state.lastGoalDate===today()) return;
+  if(state.lastGoalDate===yesterday()){ state.streak++; }
+  else if(state.lastGoalDate){
+    const gap=Math.round((new Date(today())-new Date(state.lastGoalDate))/86400000)-1; /* あいだの サボリ日数 */
+    if(gap>0 && state.freezeTickets>=gap){ state.freezeTickets-=gap; state.streak++; bubble('🎫 おやすみ券で れんぞく キープ！'); }
+    else state.streak=1;
+  } else state.streak=1;
+  state.lastGoalDate=today();
+  if(state.metDates.indexOf(today())<0) state.metDates.push(today());
+  if(state.metDates.length>60) state.metDates=state.metDates.slice(-60);
+}
 function onGoalReached(){
-  if(state.lastGoalDate!==today()){
-    state.streak = (state.lastGoalDate===yesterday()) ? state.streak+1 : 1;
-    state.lastGoalDate=today();
-    if(state.metDates.indexOf(today())<0) state.metDates.push(today());
-    if(state.metDates.length>40) state.metDates=state.metDates.slice(-40);
-  }
-  state.food+=5; state.happy=100; addXp(20);
+  streakOnGoal();
+  state.food+=5; state.happy=100; addXp(20); checkTitles();
   setTimeout(showGoalCelebration, 850);
 }
 function checkUnlock(prevLearned){
   const items=[].concat(COLORS, BGS).filter(it=> it.need>prevLearned && it.need<=state.learned);
-  if(items.length) bubble('あたらしい きせかえ アンロック！');
+  if(items.length){ bubble('あたらしい きせかえ アンロック！'); sfx('unlock'); }
 }
 function answer(btn, ok, en){
   if(btn.classList.contains('ok')||btn.classList.contains('ng')) return;
   if(ok){
     btn.classList.add('ok');
     const prev=state.learned;
-    session.correct++; state.food++; state.learned++; addXp(8); recordLearned(en);
-    clearWrong(en); checkUnlock(prev);
-    document.getElementById('reward').textContent= reviewMode ? 'せいかい！ おぼえたね' : 'せいかい！ えさ +1';
+    session.combo=(session.combo||0)+1;
+    const mult = session.combo>=6?3 : session.combo>=3?2 : 1;
+    const rt = isRewardTime()?2:1;
+    const gain = mult*rt;
+    session.correct++; state.food+=gain; state.learned++; addXp(8*gain);
+    state.mastery[en]=(state.mastery[en]||0)+1;
+    recordLearned(en); clearWrong(en); checkUnlock(prev); checkTickets(); checkTitles();
+    sfx(session.combo>=3?'combo':'correct');
+    let msg='せいかい！';
+    if(mult>1) msg+=' コンボ×'+mult;
+    if(rt>1) msg+=' ⏰2ばい';
+    msg+= reviewMode ? ' おぼえたね' : (' えさ+'+gain);
+    document.getElementById('reward').textContent=msg;
     save();
     setTimeout(()=>{ qIdx++; nextQ(); }, 800);
   } else {
     btn.classList.add('ng');
-    addWrong(curWord);
+    session.combo=0; addWrong(curWord); sfx('wrong');
     document.getElementById('reward').textContent='もういちど！';
   }
 }
