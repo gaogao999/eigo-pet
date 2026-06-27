@@ -250,6 +250,26 @@
     <button class="atab" data-t="kisekae">きせかえ</button>
     <button class="atab" data-t="keifu">けいふ</button>
     <button class="atab" data-t="tango">たんご</button>
+    <button class="atab" data-t="data">データ</button>
+  </div>
+
+  <div id="tab-data" class="atabpane" style="display:none;">
+    <p style="font-size:13px; color:#7a8a76; line-height:1.7; margin:4px 0 12px;">
+      しんちょくは この たんまつに ほぞんされ、アプリの こうしんでは <b>きえません</b>。<br>
+      きしゅへんこうなどに そなえて、ときどき バックアップを とっておくと あんしんです。
+    </p>
+    <div id="dataStat" style="font-size:13px; color:var(--ink); font-weight:700; background:#f3f9ec; border-radius:12px; padding:10px 12px; margin-bottom:14px;"></div>
+
+    <h3 style="font-size:15px; margin:6px 0 6px;">バックアップ（書き出し）</h3>
+    <button id="btnExport" class="study-btn" style="background:#eef4ea; color:var(--green); border:1px solid var(--line);">バックアップコードを つくる</button>
+    <textarea id="exportBox" readonly placeholder="ここに コードが でます" style="width:100%; height:80px; margin-top:8px; padding:10px; border:1px solid var(--line); border-radius:12px; font-size:11px; font-family:monospace; display:none;"></textarea>
+    <button id="btnCopy" style="display:none; width:100%; margin-top:8px; padding:10px; border:1px solid var(--line); background:var(--card); border-radius:12px; font-size:14px; font-weight:700; color:var(--green); cursor:pointer;">コピーする</button>
+
+    <h3 style="font-size:15px; margin:22px 0 6px;">ふっかつ（読み込み）</h3>
+    <p style="font-size:12px; color:#b23b3b; margin:0 0 6px;">⚠ いまの データに 上書きされます</p>
+    <textarea id="importBox" placeholder="バックアップコードを はりつけてね" style="width:100%; height:80px; padding:10px; border:1px solid var(--line); border-radius:12px; font-size:11px; font-family:monospace;"></textarea>
+    <button id="btnImport" class="study-btn" style="margin-top:8px;">この データで ふっかつする</button>
+    <div id="dataMsg" style="text-align:center; font-size:13px; font-weight:700; margin-top:10px; min-height:18px;"></div>
   </div>
 
   <div id="tab-kisekae" class="atabpane" style="display:none;">
@@ -478,22 +498,24 @@ function drawPet(){
 
 /* ---------- state ---------- */
 const KEY='eigopet_v1';
+const BAKKEY=KEY+'_bak';
 const today=()=> new Date().toISOString().slice(0,10);
 let state = load();
 
 function load(){
-  let s; try{ s=JSON.parse(localStorage.getItem(KEY)); }catch(e){}
+  let s=null;
+  for(const k of [KEY, BAKKEY]){ try{ const raw=localStorage.getItem(k); if(raw){ s=JSON.parse(raw); break; } }catch(e){} }
   const def={ name:"ぴよ", lv:1, xp:0, hunger:80, happy:80, food:0, dirty:false,
               streak:1, learned:0, last:today(), grade:"g3",
               discipline:50, weight:5, careMiss:0, disciplineMiss:0, wagamama:false,
               babyType:null, childType:null, adultType:null, customImg:{}, gameHi:0,
               dailyGoal:20, todayDate:today(), todayWords:[], lastGoalDate:null, metDates:[],
               wrongWords:[], petColor:'brown', bg:'meadow' };
-  s=Object.assign({}, def, s||{});
+  s=Object.assign({}, def, s||{});  /* 既存データは保持し、新項目だけ デフォルト追加 */
   if(!WORDBANK[s.grade]) s.grade="g3";
   return s;
 }
-function save(){ localStorage.setItem(KEY, JSON.stringify(state)); }
+function save(){ try{ const s=JSON.stringify(state); localStorage.setItem(KEY, s); localStorage.setItem(BAKKEY, s); }catch(e){} }
 
 const dayStr=(d)=> d.toISOString().slice(0,10);
 function yesterday(){ const d=new Date(today()); d.setDate(d.getDate()-1); return dayStr(d); }
@@ -702,11 +724,50 @@ document.getElementById('wlGrades').onclick=(e)=>{ const b=e.target.closest('.gb
 document.getElementById('wlSearch').oninput=()=> renderWordList();
 
 function setAdminTab(t){
-  ['zukan','kisekae','keifu','tango'].forEach(k=>{ document.getElementById('tab-'+k).style.display = (k===t)?'block':'none'; });
+  ['zukan','kisekae','keifu','tango','data'].forEach(k=>{ document.getElementById('tab-'+k).style.display = (k===t)?'block':'none'; });
   document.querySelectorAll('#atabs .atab').forEach(b=> b.classList.toggle('sel', b.dataset.t===t));
   if(t==='kisekae') renderCosmetics();
+  if(t==='data') renderData();
   window.scrollTo(0,0);
 }
+
+/* ---------- データ バックアップ／ふっかつ ---------- */
+function renderData(){
+  document.getElementById('dataStat').textContent =
+    'なまえ：'+state.name+' ／ レベル '+state.lv+' ／ おぼえた '+state.learned+'こ ／ 🔥'+displayStreak()+'にち';
+  document.getElementById('exportBox').style.display='none';
+  document.getElementById('btnCopy').style.display='none';
+  document.getElementById('importBox').value='';
+  document.getElementById('dataMsg').textContent='';
+}
+function encodeState(){ return btoa(unescape(encodeURIComponent(JSON.stringify(state)))); }
+document.getElementById('btnExport').onclick=()=>{
+  const box=document.getElementById('exportBox');
+  box.value=encodeState(); box.style.display='block';
+  document.getElementById('btnCopy').style.display='block';
+};
+document.getElementById('btnCopy').onclick=()=>{
+  const box=document.getElementById('exportBox'); box.select();
+  const ok=()=>{ document.getElementById('dataMsg').style.color='var(--green)'; document.getElementById('dataMsg').textContent='コピーしました！ メモなどに はっておいてね'; };
+  if(navigator.clipboard){ navigator.clipboard.writeText(box.value).then(ok, ()=>{ try{document.execCommand('copy');ok();}catch(e){} }); }
+  else { try{document.execCommand('copy');ok();}catch(e){} }
+};
+document.getElementById('btnImport').onclick=()=>{
+  const msg=document.getElementById('dataMsg');
+  const code=(document.getElementById('importBox').value||'').trim();
+  if(!code){ msg.style.color='#b23b3b'; msg.textContent='コードを はりつけてね'; return; }
+  let obj=null;
+  try{ obj=JSON.parse(decodeURIComponent(escape(atob(code)))); }catch(e){ try{ obj=JSON.parse(code); }catch(e2){} }
+  if(!obj || typeof obj!=='object' || (obj.lv===undefined && obj.learned===undefined)){
+    msg.style.color='#b23b3b'; msg.textContent='この コードは よみこめません'; return;
+  }
+  if(!confirm('いまの データを この バックアップで 上書きします。よろしいですか？')) return;
+  state=Object.assign({}, state, obj);
+  if(!WORDBANK[state.grade]) state.grade='g3';
+  save();
+  msg.style.color='var(--green)'; msg.textContent='ふっかつしました！';
+  renderData(); render();
+};
 document.getElementById('atabs').onclick=(e)=>{ const b=e.target.closest('.atab'); if(!b) return; setAdminTab(b.dataset.t); };
 
 /* ---------- きせかえ（いろ・はいけい） ---------- */
