@@ -823,6 +823,21 @@ function gotoTab(s){
   show(s); render();
 }
 document.getElementById('tabbar').onclick=(e)=>{ const b=e.target.closest('.tab'); if(!b) return; gotoTab(b.dataset.s); };
+
+/* スワイプで メインタブを いどう */
+function swipeTab(dir){
+  const cur=document.querySelector('.screen.on'); if(!cur || !MAIN_TABS.includes(cur.id)) return;
+  if(document.getElementById('goalCele').style.display==='flex') return;
+  const i=MAIN_TABS.indexOf(cur.id), ni=i+dir;
+  if(ni<0 || ni>=MAIN_TABS.length) return;
+  gotoTab(MAIN_TABS[ni]);
+}
+let swX=0, swY=0, swOn=false;
+document.body.addEventListener('touchstart', e=>{ if(e.touches.length!==1){ swOn=false; return; } swX=e.touches[0].clientX; swY=e.touches[0].clientY; swOn=true; }, {passive:true});
+document.body.addEventListener('touchend', e=>{ if(!swOn) return; swOn=false;
+  const t=e.changedTouches[0], dx=t.clientX-swX, dy=t.clientY-swY;
+  if(Math.abs(dx)>60 && Math.abs(dx)>Math.abs(dy)*1.5){ swipeTab(dx<0 ? 1 : -1); }
+}, {passive:true});
 document.getElementById('goalset').onclick=(e)=>{ const b=e.target.closest('.goalbtn'); if(!b) return; state.dailyGoal=+b.dataset.goal; save(); renderGoal(); };
 document.getElementById('celeClose').onclick=()=>{ document.getElementById('goalCele').style.display='none'; render(); };
 document.getElementById('nudge').onclick=()=> gotoTab('learn');
