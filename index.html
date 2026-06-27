@@ -26,11 +26,11 @@
   .stage{ display:flex; gap:8px; align-items:center; }
   .badge{ font-size:12px; background:#dfeefb; color:#1f5f9c; padding:3px 10px; border-radius:999px; font-weight:700; }
 
-  .yard{ position:relative; height:230px; border-radius:24px; background:#e2eddd;
-         overflow:hidden; border:1px solid var(--line); }
-  .yard .dots{ position:absolute; inset:0; background-image:radial-gradient(rgba(59,109,59,.18) 2px, transparent 2px);
+  .yard{ position:relative; height:230px; border-radius:24px; background:#f1ead7;
+         overflow:hidden; border:1px solid #e2d8bd; }
+  .yard .dots{ position:absolute; inset:0; background-image:radial-gradient(rgba(74,53,38,.10) 2px, transparent 2px);
                background-size:18px 18px; }
-  .ground{ position:absolute; left:0; right:0; bottom:0; height:46px; background:#cfe3c6; }
+  .ground{ position:absolute; left:0; right:0; bottom:0; height:46px; background:#e7dcbf; }
   @keyframes bob{ 0%,100%{transform:translateX(-50%) translateY(0)} 50%{transform:translateX(-50%) translateY(-8px)} }
   @keyframes hop{ 0%{transform:translateX(-50%) translateY(0)} 30%{transform:translateX(-50%) translateY(-22px)} 60%{transform:translateX(-50%) translateY(0)} 80%{transform:translateX(-50%) translateY(-8px)} 100%{transform:translateX(-50%) translateY(0)} }
   #petWrap{ position:absolute; bottom:40px; left:50%; transform:translateX(-50%); animation:bob 1.6s steps(2) infinite; }
@@ -156,7 +156,7 @@ function currentWords(){ return (WORDBANK[state.grade] || WORDBANK.g3).words; }
 
 /* ---------- pixel pet ---------- */
 /* オリジナルの白黒ドット絵（アイロンビーズ風）。o=黒ふち, w=白, g=グレー陰 */
-const PAL={o:"#23241f", w:"#fbfbf6", g:"#c9cabf"};
+const PAL={o:"#4a3526", w:"#faf6ec", g:"#d8cdb2"};
 const EGG=[
 ".....oooo.....","...oowwwwoo...","..owwwwwwwwo..",".owwwwwwwwwwo.",
 ".owwwwwwwwwwo.",".owwowwwwowwo.",".owwwwwwwwwwo.",".owowwwwwwowo.",
