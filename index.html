@@ -81,7 +81,8 @@
   .ch.ok{ background:#e1f5e7; border-color:#aee3bf; color:#1f7a44; }
   .ch.ng{ background:#fdeaea; border-color:#f3c4c4; color:#b23b3b; }
   .reward{ text-align:center; margin-top:20px; font-size:16px; font-weight:700; color:var(--green); min-height:22px; }
-  #adminGallery{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .ggrid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .gstage{ font-size:14px; font-weight:700; color:var(--green); margin:16px 0 8px; }
   .gcard{ background:var(--card); border:1px solid var(--line); border-radius:14px; padding:8px; text-align:center; }
   .gsprite{ height:84px; border-radius:10px; background:#f1ead7; display:flex; align-items:center; justify-content:center; }
   .gname{ font-size:13px; font-weight:700; margin-top:6px; }
@@ -228,38 +229,71 @@ const ADULT_WILD2=[ /* わんぱく・ODD（つの） */
 "owwwwwwwwwwwwo","owooowwwwooowo","owwwwwwwwwwwwo","owoooooooowwwo",
 "owwwwwwwwwwwwo",".owwwwwwwwwwo.","..owwwwwwwwo..","..oo.oo..oo...",".............."];
 
-const ADULTS={
-  good_e:  {map:ADULT_GOOD,    name:'ニコリ',  desc:'れいぎ ただしい よいこ。みんなに やさしい。'},
-  good_o:  {map:ADULT_GOOD2,   name:'ハナミ',  desc:'おはなが だいすき。のんびりやさん。'},
-  normal_e:{map:ADULT,         name:'マルオ',  desc:'げんきで すなおな ふつうの子。'},
-  normal_o:{map:ADULT_NORMAL2, name:'ポヨン',  desc:'おっとり マイペース。たべるの だいすき。'},
-  wild_e:  {map:ADULT_WILD,    name:'トゲオ',  desc:'やんちゃで げんきいっぱい。いたずらっ子。'},
-  wild_o:  {map:ADULT_WILD2,   name:'ツノマル',desc:'まけずぎらいの あばれんぼう。'}
+/* あかちゃん・ODD（ねぼすけ） */
+const BABY2=[
+".......o......","......ooo.....","....oooooo....","...owwwwwwo...",
+"..owwwwwwwwo..",".owooowwooowwo",".owwwwwwwwwwwo",".owwwwoowwwwwo",
+"..owwwwwwwwo..","...owwwwwwo...","....oooooo....","....o.oo.o...."];
+/* こども（3体追加） */
+const KID2=[ /* たれ耳 */
+"..oo......oo..","..ow......wo..","..oowwwwwwoo..",".owwwwwwwwwwo.",
+"owwoowwwwoowwo","owwwwwwwwwwwwo","owwwwoooooowwo","owwwwwwwwwwwwo",
+".owwwwwwwwwwo.","..owwwwwwwwo..","...oo.oo.oo..."];
+const KID3=[ /* くるりん毛・大きな目 */
+"......oo......",".....o........","....oooooo....","...owwwwwwo...",
+"..owwwwwwwwo..",".owooowwooowwo",".owooowwooowwo",".owwwwwwwwwwwo",
+".owwwooooowwwo","..owwwwwwwwo..","...owwwwwwo...","....oooooo...."];
+const KID4=[ /* まるまる・ほっぺ */
+"....oooooo....","...owwwwwwo...","..owwwwwwwwo..",".owwwwwwwwwwo.",
+"owwwwwwwwwwwwo","owwoowwwwoowwo","owwwwwwwwwwwwo","owwgwwwwwwgwwo",
+"owwwwoooowwwwo","owwwwwwwwwwwwo",".owwgwwwwgwwo.","..owwwwwwwwo..","...oo.oo.oo..."];
+/* おとな・STARティア（さいこう）2体 */
+const ADULT_STAR=[ /* かんむり */
+"...o.o.o.o....","...oooooooo...","..oowwwwwwoo..",".owwwwwwwwwwo.",
+"owwwwwwwwwwwwo","owwoowwwwoowwo","owwwwwwwwwwwwo","owwgwowwowgwwo",
+"owwwwooooowwwo","owwwwwwwwwwwwo",".owwwwwwwwwwo.","..owwwwwwwwo..","...oo.oo.oo..."];
+const ADULT_STAR2=[ /* わっか */
+"...oooooo.....","...o....o.....","..oowwwwwwoo..",".owwwwwwwwwwo.",
+"owwwwwwwwwwwwo","owwowwwwwwowwo","owwwwwwwwwwwwo","owwwgwwwwgwwwo",
+"owwwowwwwowwwo","owwwwooooowwwo",".owwwwwwwwwwo.","..owwwwwwwwo..","...oo.oo.oo..."];
+
+const BABIES={
+  e:{map:BABY,  name:'ぴよ',  desc:'うまれたて。げんきに めをさます あかちゃん。'},
+  o:{map:BABY2, name:'すぴか',desc:'うまれたて。よく ねる ねぼすけ あかちゃん。'}
 };
+const CHILDREN={
+  e_g:{map:KID,  name:'ぴょん', desc:'すなおで げんきな こども。'},
+  e_b:{map:KID2, name:'みみ',   desc:'たれ耳の あまえんぼう こども。'},
+  o_g:{map:KID3, name:'くるり', desc:'おめめ ぱっちりの げんき こども。'},
+  o_b:{map:KID4, name:'ぷく',   desc:'まるまる たべるの だいすき こども。'}
+};
+const ADULTS={
+  star_e:  {map:ADULT_STAR,   name:'カンムリ',desc:'せわ かんぺき！ どうどうとした おとな。'},
+  star_o:  {map:ADULT_STAR2,  name:'テンシ',  desc:'せわ かんぺき！ やさしさ あふれる おとな。'},
+  good_e:  {map:ADULT_GOOD,   name:'ニコリ',  desc:'れいぎ ただしい よいこ。みんなに やさしい。'},
+  good_o:  {map:ADULT_GOOD2,  name:'ハナミ',  desc:'おはなが だいすき。のんびりやさん。'},
+  normal_e:{map:ADULT,        name:'マルオ',  desc:'げんきで すなおな ふつうの子。'},
+  normal_o:{map:ADULT_NORMAL2,name:'ポヨン',  desc:'おっとり マイペース。たべるの だいすき。'},
+  wild_e:  {map:ADULT_WILD,   name:'トゲオ',  desc:'やんちゃで げんきいっぱい。いたずらっ子。'},
+  wild_o:  {map:ADULT_WILD2,  name:'ツノマル',desc:'まけずぎらいの あばれんぼう。'}
+};
+function babyInfo(){ return BABIES[state.babyType] || BABIES.e; }
+function childInfo(){ return CHILDREN[state.childType] || CHILDREN.e_g; }
 function adultInfo(){
   let k=state.adultType;
   if(ADULTS[k]) return ADULTS[k];
   if(k && ADULTS[k+'_e']) return ADULTS[k+'_e']; /* 旧データ移行 */
   return ADULTS.normal_e;
 }
-function stageKey(){
-  if(state.lv>=4) return 'adult_'+(state.adultType||'normal');
-  if(state.lv>=3) return 'child';
-  if(state.lv>=2) return 'baby';
-  return 'egg';
-}
 function adultMap(){ return adultInfo().map; }
 function petMap(){
   if(state.lv>=4) return adultMap();
-  if(state.lv>=3) return KID;
-  if(state.lv>=2) return BABY;
+  if(state.lv>=3) return childInfo().map;
+  if(state.lv>=2) return babyInfo().map;
   return EGG;
 }
 function drawPet(){
-  const petImg=document.getElementById('petImg'), petSvg=document.getElementById('pet');
-  const custom = state.customImg && state.customImg[stageKey()];
-  if(custom){ petImg.src=custom; petImg.style.display='block'; petSvg.style.display='none'; return; }
-  petImg.style.display='none'; petSvg.style.display='block';
+  const petSvg=document.getElementById('pet');
   const map=petMap(), ps=8, BOX=120;
   const cols=Math.max.apply(null, map.map(r=>r.length)), rows=map.length;
   const ox=Math.round((BOX-cols*ps)/2), oy=Math.round((BOX-rows*ps)/2);
@@ -280,7 +314,8 @@ function load(){
   let s; try{ s=JSON.parse(localStorage.getItem(KEY)); }catch(e){}
   const def={ name:"ぴよ", lv:1, xp:0, hunger:80, happy:80, food:0, dirty:false,
               streak:1, learned:0, last:today(), grade:"g3",
-              discipline:50, weight:5, careMiss:0, disciplineMiss:0, wagamama:false, adultType:null, customImg:{} };
+              discipline:50, weight:5, careMiss:0, disciplineMiss:0, wagamama:false,
+              babyType:null, childType:null, adultType:null, customImg:{} };
   s=Object.assign({}, def, s||{});
   if(!WORDBANK[s.grade]) s.grade="g3";
   return s;
@@ -308,22 +343,22 @@ function addXp(n){
   state.xp+=n;
   while(state.xp>=need() && state.lv<5){
     state.xp-=need(); state.lv++;
-    if(state.lv===4 && !state.adultType){
-      const miss=state.careMiss + state.disciplineMiss;
-      const tier = miss<=1 ? 'good' : miss<=4 ? 'normal' : 'wild';
-      const parity = (state.learned % 2 === 0) ? 'e' : 'o';
+    const parity = (state.learned % 2 === 0) ? 'e' : 'o';
+    const miss = state.careMiss + state.disciplineMiss;
+    if(state.lv===2 && !state.babyType){ state.babyType = parity; }
+    else if(state.lv===3 && !state.childType){ state.childType = (state.babyType||'e')+'_'+(miss<=2?'g':'b'); }
+    else if(state.lv===4 && !state.adultType){
+      const tier = miss===0 ? 'star' : miss<=2 ? 'good' : miss<=5 ? 'normal' : 'wild';
       state.adultType = tier+'_'+parity;
-      bubble("おとなになった！ "+adultInfo().name);
-    } else {
-      bubble(stageName()+"になった！");
     }
+    bubble(stageName()+"になった！");
   }
   if(state.lv>=5) state.xp=Math.min(state.xp, need());
 }
 function stageName(){
   if(state.lv>=4) return "おとな（"+adultInfo().name+"）";
-  if(state.lv>=3) return "こども";
-  if(state.lv>=2) return "あかちゃん";
+  if(state.lv>=3) return "こども（"+childInfo().name+"）";
+  if(state.lv>=2) return "あかちゃん（"+babyInfo().name+"）";
   return "タマゴ";
 }
 
@@ -407,35 +442,30 @@ function spriteSVG(map, cell){
   }
   return '<svg width="'+(cols*cell)+'" height="'+(rows*cell)+'" viewBox="0 0 '+(cols*cell)+' '+(rows*cell)+'" shape-rendering="crispEdges">'+s+'</svg>';
 }
-const ALL_CHARS=[
-  [EGG,'タマゴ','もうすぐ うまれるよ。たいせつに あたためてね。'],
-  [BABY,'あかちゃん','うまれたて。よく たべて よく ねる。'],
-  [KID,'こども','げんきに そだちちゅう。あそぶのが だいすき。'],
-  [ADULTS.good_e.map,  'ニコリ（よいこ）',   ADULTS.good_e.desc],
-  [ADULTS.good_o.map,  'ハナミ（よいこ）',   ADULTS.good_o.desc],
-  [ADULTS.normal_e.map,'マルオ（ふつう）',   ADULTS.normal_e.desc],
-  [ADULTS.normal_o.map,'ポヨン（ふつう）',   ADULTS.normal_o.desc],
-  [ADULTS.wild_e.map,  'トゲオ（わんぱく）', ADULTS.wild_e.desc],
-  [ADULTS.wild_o.map,  'ツノマル（わんぱく）',ADULTS.wild_o.desc]
-];
 function tnode(map, label, small){
   return '<div class="tnode'+(small?' small':'')+'"><div class="tsprite">'+spriteSVG(map,small?3:4)+'</div><div class="tlabel">'+label+'</div></div>';
 }
+function gcardHTML(m,n,d){
+  return '<div class="gcard"><div class="gsprite">'+spriteSVG(m,5)+'</div><div class="gname">'+n+'</div><div class="gdesc">'+d+'</div></div>';
+}
+function gridHTML(list){ return '<div class="ggrid">'+list.map(c=>gcardHTML(c.map,c.name,c.desc)).join('')+'</div>'; }
 function renderAdmin(){
-  const g=document.getElementById('adminGallery'); g.innerHTML='';
-  ALL_CHARS.forEach(([m,n,d])=>{
-    const card=document.createElement('div'); card.className='gcard';
-    card.innerHTML='<div class="gsprite">'+spriteSVG(m,5)+'</div><div class="gname">'+n+'</div><div class="gdesc">'+d+'</div>';
-    g.appendChild(card);
-  });
-  let tree =
-    tnode(EGG,'タマゴ')+'<div class="tarrow">↓</div>'+
-    tnode(BABY,'あかちゃん')+'<div class="tarrow">↓</div>'+
-    tnode(KID,'こども')+'<div class="tarrow">↓ わかれる</div>'+
-    '<div class="eohead"><span>EVEN（おぼえた数が ぐうすう）</span><span>ODD（きすう）</span></div>';
-  [['good','よいこ'],['normal','ふつう'],['wild','わんぱく']].forEach(([t,tl])=>{
-    tree += '<div class="tiertag">'+tl+'（せわ・しつけ '+(t==='good'?'◎':t==='normal'?'○':'△')+'）</div>'+
-      '<div class="trow">'+tnode(ADULTS[t+'_e'].map, ADULTS[t+'_e'].name, true)+tnode(ADULTS[t+'_o'].map, ADULTS[t+'_o'].name, true)+'</div>';
+  document.getElementById('adminGallery').innerHTML =
+    '<div class="gstage">タマゴ</div>'+gridHTML([{map:EGG,name:'タマゴ',desc:'もうすぐ うまれるよ。たいせつに あたためてね。'}])+
+    '<div class="gstage">あかちゃん（2しゅるい）</div>'+gridHTML(Object.values(BABIES))+
+    '<div class="gstage">こども（4しゅるい）</div>'+gridHTML(Object.values(CHILDREN))+
+    '<div class="gstage">おとな（8しゅるい）</div>'+gridHTML(Object.values(ADULTS));
+
+  let tree = tnode(EGG,'タマゴ')+'<div class="tarrow">↓ うまれる（おぼえた数の ぐうすう/きすう）</div>';
+  tree += '<div class="eohead"><span>EVEN（ぐうすう）</span><span>ODD（きすう）</span></div>';
+  tree += '<div class="trow">'+tnode(BABIES.e.map,BABIES.e.name,true)+tnode(BABIES.o.map,BABIES.o.name,true)+'</div>';
+  tree += '<div class="tarrow">↓ せわが よい / わるい で わかれる</div>';
+  tree += '<div class="trow">'+tnode(CHILDREN.e_g.map,CHILDREN.e_g.name,true)+tnode(CHILDREN.o_g.map,CHILDREN.o_g.name,true)+'</div>';
+  tree += '<div class="trow">'+tnode(CHILDREN.e_b.map,CHILDREN.e_b.name,true)+tnode(CHILDREN.o_b.map,CHILDREN.o_b.name,true)+'</div>';
+  tree += '<div class="tarrow">↓ せわ・しつけの しつで 4だんかい</div>';
+  [['star','さいこう ◎◎'],['good','よい ◎'],['normal','ふつう ○'],['wild','わんぱく △']].forEach(([t,tl])=>{
+    tree += '<div class="tiertag">'+tl+'</div><div class="trow">'+
+      tnode(ADULTS[t+'_e'].map,ADULTS[t+'_e'].name,true)+tnode(ADULTS[t+'_o'].map,ADULTS[t+'_o'].name,true)+'</div>';
   });
   document.getElementById('adminTree').innerHTML = tree;
 }
