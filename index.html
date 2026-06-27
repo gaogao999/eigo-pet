@@ -81,13 +81,16 @@
   .ch.ok{ background:#e1f5e7; border-color:#aee3bf; color:#1f7a44; }
   .ch.ng{ background:#fdeaea; border-color:#f3c4c4; color:#b23b3b; }
   .reward{ text-align:center; margin-top:20px; font-size:16px; font-weight:700; color:var(--green); min-height:22px; }
-  .crow{ display:flex; align-items:center; gap:12px; padding:12px 2px; border-bottom:1px solid var(--line); }
-  .cprev{ width:54px; height:54px; flex:none; border-radius:12px; background:#f1ead7; border:1px solid #e2d8bd; display:flex; align-items:center; justify-content:center; overflow:hidden; font-size:10px; color:#a99; }
-  .cprev img{ width:100%; height:100%; object-fit:contain; image-rendering:pixelated; }
-  .crow .clabel{ flex:1; font-size:14px; font-weight:700; }
-  .crow .cfile{ display:none; }
-  .crow .cpick, .crow .creset{ border:1px solid var(--line); background:var(--card); border-radius:10px; padding:8px 10px; font-size:13px; font-weight:700; color:var(--green); cursor:pointer; }
-  .crow .creset{ color:#b23b3b; }
+  #adminGallery{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .gcard{ background:var(--card); border:1px solid var(--line); border-radius:14px; padding:8px; text-align:center; }
+  .gsprite{ height:84px; border-radius:10px; background:#f1ead7; display:flex; align-items:center; justify-content:center; }
+  .gname{ font-size:13px; font-weight:700; margin-top:6px; }
+  .tnode{ display:flex; flex-direction:column; align-items:center; gap:3px; }
+  .tsprite{ width:64px; height:64px; border-radius:12px; background:#f1ead7; display:flex; align-items:center; justify-content:center; }
+  .tnode.small .tsprite{ width:52px; height:52px; }
+  .tlabel{ font-size:12px; font-weight:700; }
+  .tarrow{ text-align:center; color:#b7c3b2; font-size:20px; line-height:1; margin:6px 0; }
+  .trow{ display:flex; justify-content:space-around; gap:6px; }
 </style>
 </head>
 <body>
@@ -97,7 +100,7 @@
   <div class="topbar">
     <div class="name" id="petName">ぴよ</div>
     <div class="stage">
-      <button id="openCustom" aria-label="きせかえ" style="border:1px solid var(--line); background:var(--card); border-radius:999px; padding:3px 10px; font-size:13px; font-weight:700; color:var(--green); cursor:pointer;">🎨 きせかえ</button>
+      <button id="openAdmin" aria-label="せってい" style="border:1px solid var(--line); background:var(--card); border-radius:999px; padding:3px 10px; font-size:14px; font-weight:700; color:var(--green); cursor:pointer;">⚙️</button>
       <span class="badge" id="stageBadge">あかちゃん</span>
       <span class="pill">Lv.<span id="lv">1</span></span>
     </div>
@@ -156,17 +159,22 @@
   <div class="reward" id="reward"></div>
 </section>
 
-<!-- CUSTOM (きせかえ) -->
-<section id="custom" class="screen">
+<!-- ADMIN (かんりしゃ) -->
+<section id="admin" class="screen">
   <div class="qhead">
-    <button class="back" id="backCustom">‹</button>
-    <div class="qprog">キャラのきせかえ</div>
+    <button class="back" id="backAdmin">‹</button>
+    <div class="qprog">かんりしゃページ</div>
     <div style="width:34px"></div>
   </div>
-  <p style="font-size:13px; color:#7a8a76; line-height:1.6; margin:0 0 8px;">
-    じぶんで かいた えを よみこめます。だんかいごとに がぞうを えらんでね（じぶんの オリジナルがぞう だけ つかってね）。
+
+  <h3 style="font-size:15px; margin:6px 0 10px;">キャラずかん</h3>
+  <div id="adminGallery"></div>
+
+  <h3 style="font-size:15px; margin:22px 0 4px;">しんかの けいふ</h3>
+  <p style="font-size:12px; color:#7a8a76; margin:0 0 12px;">
+    せわミス・しつけミスが <b>すくない</b>ほど「よいこ」、<b>おおい</b>ほど「わんぱく」に育ちます。
   </p>
-  <div id="customList"></div>
+  <div id="adminTree"></div>
 </section>
 
 <script src="words.js"></script>
@@ -358,43 +366,35 @@ document.getElementById('grades').onclick=(e)=>{
   bubble(WORDBANK[state.grade].label);
 };
 
-/* ---------- きせかえ（カスタム画像） ---------- */
-const CUSTOM_STAGES=[['egg','タマゴ'],['baby','あかちゃん'],['child','こども'],
-  ['adult_good','おとな(よいこ)'],['adult_normal','おとな(ふつう)'],['adult_wild','おとな(わんぱく)']];
-function importImg(key, file){
-  if(!file) return;
-  const r=new FileReader();
-  r.onload=()=>{ const img=new Image(); img.onload=()=>{
-    const max=160, sc=Math.min(max/img.width, max/img.height, 1);
-    const cw=Math.max(1,Math.round(img.width*sc)), ch=Math.max(1,Math.round(img.height*sc));
-    const c=document.createElement('canvas'); c.width=cw; c.height=ch;
-    const ctx=c.getContext('2d'); ctx.imageSmoothingEnabled=false; ctx.drawImage(img,0,0,cw,ch);
-    try{ state.customImg[key]=c.toDataURL('image/png'); save(); render(); renderCustom(); }
-    catch(e){ alert('がぞうが おおきすぎます。ちいさい えを つかってね。'); }
-  }; img.onerror=()=>alert('この がぞうは よみこめません。'); img.src=r.result; };
-  r.readAsDataURL(file);
+/* ---------- かんりしゃページ（キャラずかん・進化の系譜） ---------- */
+function spriteSVG(map, cell){
+  const cols=Math.max.apply(null, map.map(r=>r.length)), rows=map.length;
+  let s='';
+  for(let y=0;y<map.length;y++)for(let x=0;x<map[y].length;x++){
+    const c=map[y][x]; if(PAL[c]) s+='<rect x="'+(x*cell)+'" y="'+(y*cell)+'" width="'+cell+'" height="'+cell+'" fill="'+PAL[c]+'"/>';
+  }
+  return '<svg width="'+(cols*cell)+'" height="'+(rows*cell)+'" viewBox="0 0 '+(cols*cell)+' '+(rows*cell)+'" shape-rendering="crispEdges">'+s+'</svg>';
 }
-function renderCustom(){
-  const box=document.getElementById('customList'); box.innerHTML='';
-  CUSTOM_STAGES.forEach(([key,label])=>{
-    const row=document.createElement('div'); row.className='crow';
-    const prev=document.createElement('div'); prev.className='cprev';
-    const cur=state.customImg && state.customImg[key];
-    if(cur){ const im=document.createElement('img'); im.src=cur; prev.appendChild(im); }
-    else prev.textContent='デフォルト';
-    const lab=document.createElement('div'); lab.className='clabel'; lab.textContent=label;
-    const pick=document.createElement('label'); pick.className='cpick'; pick.textContent='えをえらぶ';
-    const inp=document.createElement('input'); inp.type='file'; inp.accept='image/*'; inp.className='cfile';
-    inp.onchange=(e)=>{ importImg(key, e.target.files[0]); };
-    pick.appendChild(inp);
-    const rst=document.createElement('button'); rst.className='creset'; rst.textContent='もどす';
-    rst.onclick=()=>{ delete state.customImg[key]; save(); render(); renderCustom(); };
-    row.append(prev, lab, pick, rst);
-    box.appendChild(row);
+const ALL_CHARS=[[EGG,'タマゴ'],[BABY,'あかちゃん'],[KID,'こども'],
+  [ADULT_GOOD,'おとな（よいこ）'],[ADULT,'おとな（ふつう）'],[ADULT_WILD,'おとな（わんぱく）']];
+function tnode(map, label, small){
+  return '<div class="tnode'+(small?' small':'')+'"><div class="tsprite">'+spriteSVG(map,small?3:4)+'</div><div class="tlabel">'+label+'</div></div>';
+}
+function renderAdmin(){
+  const g=document.getElementById('adminGallery'); g.innerHTML='';
+  ALL_CHARS.forEach(([m,n])=>{
+    const card=document.createElement('div'); card.className='gcard';
+    card.innerHTML='<div class="gsprite">'+spriteSVG(m,5)+'</div><div class="gname">'+n+'</div>';
+    g.appendChild(card);
   });
+  document.getElementById('adminTree').innerHTML =
+    tnode(EGG,'タマゴ')+'<div class="tarrow">↓</div>'+
+    tnode(BABY,'あかちゃん')+'<div class="tarrow">↓</div>'+
+    tnode(KID,'こども')+'<div class="tarrow">↓ わかれる</div>'+
+    '<div class="trow">'+tnode(ADULT_GOOD,'よいこ',true)+tnode(ADULT,'ふつう',true)+tnode(ADULT_WILD,'わんぱく',true)+'</div>';
 }
-document.getElementById('openCustom').onclick=()=>{ renderCustom(); show('custom'); };
-document.getElementById('backCustom').onclick=()=>{ show('home'); render(); };
+document.getElementById('openAdmin').onclick=()=>{ renderAdmin(); show('admin'); };
+document.getElementById('backAdmin').onclick=()=>{ show('home'); render(); };
 
 /* ---------- study ---------- */
 let session, qIdx, qList;
