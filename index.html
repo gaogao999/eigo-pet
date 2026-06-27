@@ -81,6 +81,10 @@
   .ch.ok{ background:#e1f5e7; border-color:#aee3bf; color:#1f7a44; }
   .ch.ng{ background:#fdeaea; border-color:#f3c4c4; color:#b23b3b; }
   .reward{ text-align:center; margin-top:20px; font-size:16px; font-weight:700; color:var(--green); min-height:22px; }
+  #easyHint{ display:none; margin-top:14px; background:#fff7e8; border:1px solid #f0e3c4; border-radius:16px; padding:16px; text-align:center; }
+  #easyHint .ehlabel{ font-size:12px; font-weight:700; color:#b88a2a; }
+  #easyHint .ehword{ font-size:18px; font-weight:800; color:#4a3526; margin-top:2px; }
+  #easyHint .ehmean{ font-size:22px; font-weight:800; color:#1f7a44; margin-top:6px; line-height:1.4; }
   .atabs{ display:grid; grid-template-columns:repeat(3,1fr); gap:6px; margin:6px 0 14px; background:#e9efe3; padding:4px; border-radius:12px; }
   .atab{ border:none; background:transparent; border-radius:9px; padding:9px 0; font-size:14px; font-weight:700; color:#7a8a76; cursor:pointer; }
   .atab.sel{ background:var(--card); color:var(--green); box-shadow:0 1px 2px rgba(0,0,0,.06); }
@@ -171,9 +175,11 @@
     <div class="qhint">この えいごの いみは？</div>
     <div class="qword" id="qword">apple</div>
     <button class="speak" id="speak">🔊 きく</button>
+    <div style="font-size:11px; color:#aab4a4; margin-top:6px;">えいごを ながおしすると やさしいいみ</div>
   </div>
   <div class="choices" id="choices"></div>
   <div class="reward" id="reward"></div>
+  <div id="easyHint"></div>
 </section>
 
 <!-- ADMIN (かんりしゃ) -->
@@ -652,7 +658,37 @@ function choiceHtml(w){
   const yomi=w[2] ? '<span class="yomi">'+escJa(w[2])+'</span>' : '';
   return yomi+base;
 }
+
+/* やさしいいみ：くわしいデータが あれば つかい、なければ ひらがなで かんたんに */
+const EASY = {
+  "retire":"しごとを やめること","breathe":"いきを すること","foolish":"おばかな こと",
+  "abhor":"とっても きらいなこと","environment":"まわりの しぜん","recommend":"いいよと すすめること",
+  "improve":"もっと よくすること","reduce":"へらすこと","instead":"そのかわりに",
+  "vehicle":"くるまなどの のりもの","symmetry":"ひだりと みぎが おなじかたち",
+  "specific":"とくべつな ひとつ","beneficial":"やくに たつこと","decision":"きめること",
+  "increase":"ふやすこと","decrease":"へらすこと","describe":"ことばで せつめいすること",
+  "imagine":"あたまの なかで おもいうかべること","achieve":"がんばって できること",
+  "available":"つかえる じょうたい","prepare":"したくを すること","protect":"まもること",
+  "manufacture":"こうじょうで つくること","negotiate":"はなしあって きめること"
+};
+function firstSenseKana(w){ const s=(w[2]||w[1]||''); return s.split(/[，,、]/)[0].trim(); }
+function easyText(w){ return EASY[(w[0]||'').toLowerCase()] || firstSenseKana(w); }
+function showEasy(w){
+  const box=document.getElementById('easyHint');
+  box.innerHTML='<div class="ehlabel">やさしいいみ</div><div class="ehword">'+escJa(w[0])+'</div><div class="ehmean">'+escJa(easyText(w))+'</div>';
+  box.style.display='block';
+}
+(function(){
+  const el=document.getElementById('qword'); let t=null;
+  const start=()=>{ t=setTimeout(()=>{ if(qList&&qList[qIdx]) showEasy(qList[qIdx]); }, 450); };
+  const cancel=()=>{ if(t){ clearTimeout(t); t=null; } };
+  el.addEventListener('touchstart', start, {passive:true});
+  el.addEventListener('touchend', cancel); el.addEventListener('touchmove', cancel);
+  el.addEventListener('mousedown', start); el.addEventListener('mouseup', cancel); el.addEventListener('mouseleave', cancel);
+})();
+
 function nextQ(){
+  document.getElementById('easyHint').style.display='none';
   if(qIdx>=qList.length){ finishStudy(); return; }
   const correct=qList[qIdx];
   const en=correct[0], ja=correct[1];
