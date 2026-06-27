@@ -81,6 +81,13 @@
   .ch.ok{ background:#e1f5e7; border-color:#aee3bf; color:#1f7a44; }
   .ch.ng{ background:#fdeaea; border-color:#f3c4c4; color:#b23b3b; }
   .reward{ text-align:center; margin-top:20px; font-size:16px; font-weight:700; color:var(--green); min-height:22px; }
+  .crow{ display:flex; align-items:center; gap:12px; padding:12px 2px; border-bottom:1px solid var(--line); }
+  .cprev{ width:54px; height:54px; flex:none; border-radius:12px; background:#f1ead7; border:1px solid #e2d8bd; display:flex; align-items:center; justify-content:center; overflow:hidden; font-size:10px; color:#a99; }
+  .cprev img{ width:100%; height:100%; object-fit:contain; image-rendering:pixelated; }
+  .crow .clabel{ flex:1; font-size:14px; font-weight:700; }
+  .crow .cfile{ display:none; }
+  .crow .cpick, .crow .creset{ border:1px solid var(--line); background:var(--card); border-radius:10px; padding:8px 10px; font-size:13px; font-weight:700; color:var(--green); cursor:pointer; }
+  .crow .creset{ color:#b23b3b; }
 </style>
 </head>
 <body>
@@ -90,6 +97,7 @@
   <div class="topbar">
     <div class="name" id="petName">ぴよ</div>
     <div class="stage">
+      <button id="openCustom" aria-label="きせかえ" style="border:1px solid var(--line); background:var(--card); border-radius:999px; padding:3px 10px; font-size:13px; font-weight:700; color:var(--green); cursor:pointer;">🎨 きせかえ</button>
       <span class="badge" id="stageBadge">あかちゃん</span>
       <span class="pill">Lv.<span id="lv">1</span></span>
     </div>
@@ -100,7 +108,7 @@
     <div class="ground"></div>
     <div id="bubble"></div>
     <div id="wagamark" style="position:absolute; top:24px; left:50%; transform:translateX(46px); font-size:30px; font-weight:800; color:#e0792f; display:none;">！</div>
-    <div id="petWrap"><svg id="pet" width="126" height="108" shape-rendering="crispEdges"></svg></div>
+    <div id="petWrap"><svg id="pet" width="126" height="108" shape-rendering="crispEdges"></svg><img id="petImg" alt="" style="display:none; width:120px; height:120px; image-rendering:pixelated; object-fit:contain;"></div>
     <div id="poop"><svg width="30" height="26" shape-rendering="crispEdges">
       <rect x="6" y="15" width="18" height="7" fill="#7a5a2a"/><rect x="9" y="9" width="11" height="6" fill="#9c7438"/><rect x="12" y="4" width="6" height="5" fill="#9c7438"/></svg></div>
   </div>
@@ -148,6 +156,19 @@
   <div class="reward" id="reward"></div>
 </section>
 
+<!-- CUSTOM (きせかえ) -->
+<section id="custom" class="screen">
+  <div class="qhead">
+    <button class="back" id="backCustom">‹</button>
+    <div class="qprog">キャラのきせかえ</div>
+    <div style="width:34px"></div>
+  </div>
+  <p style="font-size:13px; color:#7a8a76; line-height:1.6; margin:0 0 8px;">
+    じぶんで かいた えを よみこめます。だんかいごとに がぞうを えらんでね（じぶんの オリジナルがぞう だけ つかってね）。
+  </p>
+  <div id="customList"></div>
+</section>
+
 <script src="words.js"></script>
 <script>
 /* ---------- word bank (WORDBANK comes from words.js) ---------- */
@@ -183,6 +204,12 @@ const ADULT_WILD=[ /* わんぱく型（とげとげ＋にやり） */
 "owwwwwwwwwwwwo","owowwwwwwwwowo","owwwwwwwwwwwwo","owoooooooowwo.".slice(0,14),
 "owwwwwwwwwwwwo",".owwwwwwwwwwo.","..owwwwwwwwo..","..o.oo..oo.o.."];
 
+function stageKey(){
+  if(state.lv>=4) return 'adult_'+(state.adultType||'normal');
+  if(state.lv>=3) return 'child';
+  if(state.lv>=2) return 'baby';
+  return 'egg';
+}
 function adultMap(){ return state.adultType==='good'?ADULT_GOOD : state.adultType==='wild'?ADULT_WILD : ADULT; }
 function petMap(){
   if(state.lv>=4) return adultMap();
@@ -191,11 +218,15 @@ function petMap(){
   return EGG;
 }
 function drawPet(){
+  const petImg=document.getElementById('petImg'), petSvg=document.getElementById('pet');
+  const custom = state.customImg && state.customImg[stageKey()];
+  if(custom){ petImg.src=custom; petImg.style.display='block'; petSvg.style.display='none'; return; }
+  petImg.style.display='none'; petSvg.style.display='block';
   const map=petMap(), ps=8; let s='';
   for(let y=0;y<map.length;y++)for(let x=0;x<map[y].length;x++){
     const c=map[y][x]; if(PAL[c]) s+='<rect x="'+(x*ps)+'" y="'+(y*ps)+'" width="'+ps+'" height="'+ps+'" fill="'+PAL[c]+'"/>';
   }
-  document.getElementById('pet').innerHTML=s;
+  petSvg.innerHTML=s;
 }
 
 /* ---------- state ---------- */
@@ -207,7 +238,7 @@ function load(){
   let s; try{ s=JSON.parse(localStorage.getItem(KEY)); }catch(e){}
   const def={ name:"ぴよ", lv:1, xp:0, hunger:80, happy:80, food:0, dirty:false,
               streak:1, learned:0, last:today(), grade:"g3",
-              discipline:50, weight:5, careMiss:0, disciplineMiss:0, wagamama:false, adultType:null };
+              discipline:50, weight:5, careMiss:0, disciplineMiss:0, wagamama:false, adultType:null, customImg:{} };
   s=Object.assign({}, def, s||{});
   if(!WORDBANK[s.grade]) s.grade="g3";
   return s;
@@ -322,6 +353,44 @@ document.getElementById('grades').onclick=(e)=>{
   state.grade=b.dataset.g; save(); render();
   bubble(WORDBANK[state.grade].label);
 };
+
+/* ---------- きせかえ（カスタム画像） ---------- */
+const CUSTOM_STAGES=[['egg','タマゴ'],['baby','あかちゃん'],['child','こども'],
+  ['adult_good','おとな(よいこ)'],['adult_normal','おとな(ふつう)'],['adult_wild','おとな(わんぱく)']];
+function importImg(key, file){
+  if(!file) return;
+  const r=new FileReader();
+  r.onload=()=>{ const img=new Image(); img.onload=()=>{
+    const max=160, sc=Math.min(max/img.width, max/img.height, 1);
+    const cw=Math.max(1,Math.round(img.width*sc)), ch=Math.max(1,Math.round(img.height*sc));
+    const c=document.createElement('canvas'); c.width=cw; c.height=ch;
+    const ctx=c.getContext('2d'); ctx.imageSmoothingEnabled=false; ctx.drawImage(img,0,0,cw,ch);
+    try{ state.customImg[key]=c.toDataURL('image/png'); save(); render(); renderCustom(); }
+    catch(e){ alert('がぞうが おおきすぎます。ちいさい えを つかってね。'); }
+  }; img.onerror=()=>alert('この がぞうは よみこめません。'); img.src=r.result; };
+  r.readAsDataURL(file);
+}
+function renderCustom(){
+  const box=document.getElementById('customList'); box.innerHTML='';
+  CUSTOM_STAGES.forEach(([key,label])=>{
+    const row=document.createElement('div'); row.className='crow';
+    const prev=document.createElement('div'); prev.className='cprev';
+    const cur=state.customImg && state.customImg[key];
+    if(cur){ const im=document.createElement('img'); im.src=cur; prev.appendChild(im); }
+    else prev.textContent='デフォルト';
+    const lab=document.createElement('div'); lab.className='clabel'; lab.textContent=label;
+    const pick=document.createElement('label'); pick.className='cpick'; pick.textContent='えをえらぶ';
+    const inp=document.createElement('input'); inp.type='file'; inp.accept='image/*'; inp.className='cfile';
+    inp.onchange=(e)=>{ importImg(key, e.target.files[0]); };
+    pick.appendChild(inp);
+    const rst=document.createElement('button'); rst.className='creset'; rst.textContent='もどす';
+    rst.onclick=()=>{ delete state.customImg[key]; save(); render(); renderCustom(); };
+    row.append(prev, lab, pick, rst);
+    box.appendChild(row);
+  });
+}
+document.getElementById('openCustom').onclick=()=>{ renderCustom(); show('custom'); };
+document.getElementById('backCustom').onclick=()=>{ show('home'); render(); };
 
 /* ---------- study ---------- */
 let session, qIdx, qList;
