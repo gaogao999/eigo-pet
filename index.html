@@ -135,6 +135,11 @@
   .goalbtn{ border:1px solid var(--line); background:var(--card); border-radius:10px; padding:5px 12px; margin-left:6px; font-size:14px; font-weight:700; color:#7a8a76; cursor:pointer; }
   .goalbtn.sel{ background:var(--green); color:#fff; border-color:var(--green); }
   #nudge{ display:none; text-align:center; background:#fff7e8; border:1px solid #f0e3c4; border-radius:14px; padding:10px 12px; margin-top:12px; font-size:13px; font-weight:700; color:#b88a2a; cursor:pointer; }
+  .cosgrid{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+  .coscard{ border:1px solid var(--line); background:var(--card); border-radius:14px; padding:10px 6px; display:flex; flex-direction:column; align-items:center; gap:6px; font-size:12px; font-weight:700; color:var(--ink); cursor:pointer; }
+  .coscard.sel{ border:2px solid var(--green); }
+  .coscard.locked{ opacity:.55; color:#9aa896; cursor:default; }
+  .cosswatch{ width:46px; height:46px; border-radius:10px; overflow:hidden; display:flex; flex-direction:column; justify-content:flex-end; }
 </style>
 </head>
 <body>
@@ -206,6 +211,7 @@
     <button class="gbtn" data-g="g2">英検2級</button>
   </div>
   <button class="study-btn" id="goStudy">📚 えいごの べんきょう</button>
+  <button class="study-btn" id="goReview" style="background:#eef4ea; color:var(--green); border:1px solid var(--line); margin-top:10px;">🔁 ふくしゅう（まちがえた <span id="wrongCount">0</span>こ）</button>
   <div class="goalset" id="goalset">1にちの もくひょう：
     <button class="goalbtn" data-goal="10">10</button>
     <button class="goalbtn" data-goal="20">20</button>
@@ -241,8 +247,17 @@
 
   <div class="atabs" id="atabs">
     <button class="atab sel" data-t="zukan">ずかん</button>
+    <button class="atab" data-t="kisekae">きせかえ</button>
     <button class="atab" data-t="keifu">けいふ</button>
     <button class="atab" data-t="tango">たんご</button>
+  </div>
+
+  <div id="tab-kisekae" class="atabpane" style="display:none;">
+    <p style="font-size:12px; color:#7a8a76; margin:4px 0 10px;">たくさん おぼえると、いろや はいけいが ふえるよ！</p>
+    <h3 style="font-size:15px; margin:6px 0 8px;">キャラの いろ</h3>
+    <div id="colorList" class="cosgrid"></div>
+    <h3 style="font-size:15px; margin:18px 0 8px;">はいけい</h3>
+    <div id="bgList" class="cosgrid"></div>
   </div>
 
   <div id="tab-zukan" class="atabpane">
@@ -318,6 +333,32 @@ function currentWords(){ return (WORDBANK[state.grade] || WORDBANK.g3).words; }
 /* ---------- pixel pet ---------- */
 /* オリジナルの白黒ドット絵（アイロンビーズ風）。o=黒ふち, w=白, g=グレー陰 */
 const PAL={o:"#4a3526", w:"#faf6ec", g:"#d8cdb2"};
+/* きせかえ：キャラの色（おぼえた数で アンロック） */
+const COLORS=[
+  {id:'brown', name:'ちゃいろ', need:0,   o:'#4a3526'},
+  {id:'green', name:'みどり',   need:30,  o:'#3b6d3b'},
+  {id:'blue',  name:'あお',     need:80,  o:'#2a5a8a'},
+  {id:'pink',  name:'ピンク',   need:150, o:'#b04a72'},
+  {id:'purple',name:'むらさき', need:250, o:'#6a4aa0'},
+  {id:'red',   name:'あか',     need:400, o:'#a83232'}
+];
+/* きせかえ：はいけい */
+const BGS=[
+  {id:'meadow', name:'はらっぱ',  need:0,   bg:'#f1ead7', ground:'#e7dcbf', dot:'rgba(74,53,38,.10)'},
+  {id:'sky',    name:'そら',      need:50,  bg:'#e3f0f7', ground:'#cfe4ef', dot:'rgba(40,80,110,.10)'},
+  {id:'sunset', name:'ゆうやけ',  need:120, bg:'#fbeede', ground:'#f3d9b8', dot:'rgba(150,90,40,.10)'},
+  {id:'forest', name:'もり',      need:200, bg:'#e2efdc', ground:'#cfe3c6', dot:'rgba(50,90,40,.12)'},
+  {id:'night',  name:'よる',      need:320, bg:'#2a2f45', ground:'#1f2336', dot:'rgba(255,255,255,.12)'}
+];
+function curColor(){ return COLORS.find(c=>c.id===state.petColor) || COLORS[0]; }
+function curBg(){ return BGS.find(b=>b.id===state.bg) || BGS[0]; }
+function currentPAL(){ return {o:curColor().o, w:PAL.w, g:PAL.g}; }
+function applyBg(){
+  const b=curBg();
+  const y=document.querySelector('.yard'); if(y) y.style.background=b.bg;
+  const g=document.querySelector('.ground'); if(g) g.style.background=b.ground;
+  const d=document.querySelector('.yard .dots'); if(d) d.style.backgroundImage='radial-gradient('+b.dot+' 2px, transparent 2px)';
+}
 const EGG=[
 ".....oooo.....","...oowwwwoo...","..owwwwwwwwo..",".owwwwwwwwwwo.",
 ".owwwgwwgwwwo.",".owwwwwwwwwwo.",".owwoowwoowwwo",".owwwoowwwwwo.",
@@ -425,12 +466,14 @@ function drawPet(){
   const map=petMap(), ps=8, BOX=120;
   const cols=Math.max.apply(null, map.map(r=>r.length)), rows=map.length;
   const ox=Math.round((BOX-cols*ps)/2), oy=Math.round((BOX-rows*ps)/2);
+  const P=currentPAL();
   let s='';
   for(let y=0;y<map.length;y++)for(let x=0;x<map[y].length;x++){
-    const c=map[y][x]; if(PAL[c]) s+='<rect x="'+(ox+x*ps)+'" y="'+(oy+y*ps)+'" width="'+ps+'" height="'+ps+'" fill="'+PAL[c]+'"/>';
+    const c=map[y][x]; if(P[c]) s+='<rect x="'+(ox+x*ps)+'" y="'+(oy+y*ps)+'" width="'+ps+'" height="'+ps+'" fill="'+P[c]+'"/>';
   }
   petSvg.setAttribute('width',BOX); petSvg.setAttribute('height',BOX); petSvg.setAttribute('viewBox','0 0 '+BOX+' '+BOX);
   petSvg.innerHTML=s;
+  applyBg();
 }
 
 /* ---------- state ---------- */
@@ -444,7 +487,8 @@ function load(){
               streak:1, learned:0, last:today(), grade:"g3",
               discipline:50, weight:5, careMiss:0, disciplineMiss:0, wagamama:false,
               babyType:null, childType:null, adultType:null, customImg:{}, gameHi:0,
-              dailyGoal:20, todayDate:today(), todayWords:[], lastGoalDate:null, metDates:[] };
+              dailyGoal:20, todayDate:today(), todayWords:[], lastGoalDate:null, metDates:[],
+              wrongWords:[], petColor:'brown', bg:'meadow' };
   s=Object.assign({}, def, s||{});
   if(!WORDBANK[s.grade]) s.grade="g3";
   return s;
@@ -534,6 +578,7 @@ function renderGoal(){
       h+='<div class="wdot'+(met?' met':'')+'">'+W[d.getDay()]+'</div>'; }
     wd.innerHTML=h; }
   document.querySelectorAll('.goalbtn').forEach(b=> b.classList.toggle('sel', (+b.dataset.goal)===state.dailyGoal));
+  const wc=document.getElementById('wrongCount'); if(wc) wc.textContent=state.wrongWords.length;
   // ホームの うながし
   const nd=document.getElementById('nudge');
   if(nd){ if(done>=goal){ nd.style.display='none'; }
@@ -657,11 +702,32 @@ document.getElementById('wlGrades').onclick=(e)=>{ const b=e.target.closest('.gb
 document.getElementById('wlSearch').oninput=()=> renderWordList();
 
 function setAdminTab(t){
-  ['zukan','keifu','tango'].forEach(k=>{ document.getElementById('tab-'+k).style.display = (k===t)?'block':'none'; });
+  ['zukan','kisekae','keifu','tango'].forEach(k=>{ document.getElementById('tab-'+k).style.display = (k===t)?'block':'none'; });
   document.querySelectorAll('#atabs .atab').forEach(b=> b.classList.toggle('sel', b.dataset.t===t));
+  if(t==='kisekae') renderCosmetics();
   window.scrollTo(0,0);
 }
 document.getElementById('atabs').onclick=(e)=>{ const b=e.target.closest('.atab'); if(!b) return; setAdminTab(b.dataset.t); };
+
+/* ---------- きせかえ（いろ・はいけい） ---------- */
+function cosCard(kind, it, locked, sel){
+  const swatch = kind==='color'
+    ? '<div class="cosswatch" style="background:'+it.w+'; border:3px solid '+it.o+';"></div>'
+    : '<div class="cosswatch" style="background:'+it.bg+';"><div style="height:30%; background:'+it.ground+';"></div></div>';
+  const lbl = locked ? ('🔒 '+it.need+'ご') : it.name;
+  return '<button class="coscard'+(sel?' sel':'')+(locked?' locked':'')+'" data-kind="'+kind+'" data-id="'+it.id+'"'+(locked?' disabled':'')+'>'+swatch+'<span>'+lbl+'</span></button>';
+}
+function renderCosmetics(){
+  const cl=document.getElementById('colorList');
+  cl.innerHTML = COLORS.map(c=> cosCard('color', c, state.learned<c.need, state.petColor===c.id)).join('');
+  const bl=document.getElementById('bgList');
+  bl.innerHTML = BGS.map(b=> cosCard('bg', b, state.learned<b.need, state.bg===b.id)).join('');
+}
+function equipCos(kind, id){
+  if(kind==='color') state.petColor=id; else state.bg=id;
+  save(); render(); renderCosmetics();
+}
+document.getElementById('tab-kisekae').onclick=(e)=>{ const b=e.target.closest('.coscard'); if(!b||b.disabled) return; equipCos(b.dataset.kind, b.dataset.id); };
 
 document.getElementById('backAdmin').onclick=()=>{ gotoTab('home'); };
 
@@ -761,11 +827,23 @@ document.getElementById('goalset').onclick=(e)=>{ const b=e.target.closest('.goa
 document.getElementById('celeClose').onclick=()=>{ document.getElementById('goalCele').style.display='none'; render(); };
 document.getElementById('nudge').onclick=()=> gotoTab('learn');
 document.getElementById('goStudy').onclick=startStudy;
+document.getElementById('goReview').onclick=startReview;
 document.getElementById('back').onclick=()=>{ show('learn'); render(); };
 
 function shuffle(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){const j=(Math.random()*(i+1))|0;[a[i],a[j]]=[a[j],a[i]];} return a; }
+let curWord=null, reviewMode=false;
+function addWrong(w){ if(!w) return; if(!state.wrongWords.some(x=>x[0]===w[0])){ state.wrongWords.push([w[0],w[1],w[2]||'',w[3]||'']); if(state.wrongWords.length>200) state.wrongWords=state.wrongWords.slice(-200); } }
+function clearWrong(en){ state.wrongWords=state.wrongWords.filter(x=>x[0]!==en); }
 function startStudy(){
+  reviewMode=false;
   qList=shuffle(currentWords()).slice(0,QPER); qIdx=0; session={correct:0};
+  document.getElementById('qTotal').textContent=qList.length;
+  show('study'); nextQ();
+}
+function startReview(){
+  if(!state.wrongWords.length){ bubble('まちがえた ことばは ないよ！'); return; }
+  reviewMode=true;
+  qList=shuffle(state.wrongWords).slice(0,QPER); qIdx=0; session={correct:0};
   document.getElementById('qTotal').textContent=qList.length;
   show('study'); nextQ();
 }
@@ -800,7 +878,7 @@ function attachLongPress(el, cb){
 function nextQ(){
   document.getElementById('easyHint').style.display='none';
   if(qIdx>=qList.length){ finishStudy(); return; }
-  const correct=qList[qIdx];
+  const correct=qList[qIdx]; curWord=correct;
   const en=correct[0], ja=correct[1];
   document.getElementById('qNo').textContent=qIdx+1;
   const qw=document.getElementById('qword');
@@ -835,22 +913,29 @@ function onGoalReached(){
   state.food+=5; state.happy=100; addXp(20);
   setTimeout(showGoalCelebration, 850);
 }
+function checkUnlock(prevLearned){
+  const items=[].concat(COLORS, BGS).filter(it=> it.need>prevLearned && it.need<=state.learned);
+  if(items.length) bubble('あたらしい きせかえ アンロック！');
+}
 function answer(btn, ok, en){
   if(btn.classList.contains('ok')||btn.classList.contains('ng')) return;
   if(ok){
     btn.classList.add('ok');
+    const prev=state.learned;
     session.correct++; state.food++; state.learned++; addXp(8); recordLearned(en);
-    document.getElementById('reward').textContent='せいかい！ えさ +1';
+    clearWrong(en); checkUnlock(prev);
+    document.getElementById('reward').textContent= reviewMode ? 'せいかい！ おぼえたね' : 'せいかい！ えさ +1';
     save();
     setTimeout(()=>{ qIdx++; nextQ(); }, 800);
   } else {
     btn.classList.add('ng');
+    addWrong(curWord);
     document.getElementById('reward').textContent='もういちど！';
   }
 }
 function finishStudy(){
-  bubble('えさ '+session.correct+'こ ゲット！');
-  show('home'); cheer(); render();
+  bubble(reviewMode ? 'ふくしゅう おつかれさま！' : ('えさ '+session.correct+'こ ゲット！'));
+  show('learn'); cheer(); render();
 }
 let enVoice=null;
 function pickVoice(){
