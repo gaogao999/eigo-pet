@@ -85,8 +85,8 @@
   #easyHint .ehlabel{ font-size:12px; font-weight:700; color:#b88a2a; }
   #easyHint .ehword{ font-size:18px; font-weight:800; color:#4a3526; margin-top:2px; }
   #easyHint .ehmean{ font-size:22px; font-weight:800; color:#1f7a44; margin-top:6px; line-height:1.4; }
-  .atabs{ display:grid; grid-template-columns:repeat(3,1fr); gap:6px; margin:6px 0 14px; background:#e9efe3; padding:4px; border-radius:12px; }
-  .atab{ border:none; background:transparent; border-radius:9px; padding:9px 0; font-size:14px; font-weight:700; color:#7a8a76; cursor:pointer; }
+  .atabs{ display:grid; grid-template-columns:repeat(5,1fr); gap:3px; margin:6px 0 14px; background:#e9efe3; padding:4px; border-radius:12px; }
+  .atab{ border:none; background:transparent; border-radius:9px; padding:9px 0; font-size:12px; font-weight:700; color:#7a8a76; cursor:pointer; white-space:nowrap; }
   .atab.sel{ background:var(--card); color:var(--green); box-shadow:0 1px 2px rgba(0,0,0,.06); }
   .atab:active{ transform:scale(.97); }
   .ggrid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
@@ -723,7 +723,9 @@ function renderWordList(){
 document.getElementById('wlGrades').onclick=(e)=>{ const b=e.target.closest('.gbtn'); if(!b) return; wlGrade=b.dataset.g; renderWordList(); };
 document.getElementById('wlSearch').oninput=()=> renderWordList();
 
+let curAdminTab='zukan';
 function setAdminTab(t){
+  curAdminTab=t;
   ['zukan','kisekae','keifu','tango','data'].forEach(k=>{ document.getElementById('tab-'+k).style.display = (k===t)?'block':'none'; });
   document.querySelectorAll('#atabs .atab').forEach(b=> b.classList.toggle('sel', b.dataset.t===t));
   if(t==='kisekae') renderCosmetics();
@@ -885,13 +887,21 @@ function gotoTab(s){
 }
 document.getElementById('tabbar').onclick=(e)=>{ const b=e.target.closest('.tab'); if(!b) return; gotoTab(b.dataset.s); };
 
-/* スワイプで メインタブを いどう */
+/* スワイプで タブを いどう（dir:+1=左スワイプ/次へ, -1=右スワイプ/前へ） */
+const ADMIN_TABS=['zukan','kisekae','keifu','tango','data'];
 function swipeTab(dir){
-  const cur=document.querySelector('.screen.on'); if(!cur || !MAIN_TABS.includes(cur.id)) return;
+  const cur=document.querySelector('.screen.on'); if(!cur) return;
   if(document.getElementById('goalCele').style.display==='flex') return;
-  const i=MAIN_TABS.indexOf(cur.id), ni=i+dir;
-  if(ni<0 || ni>=MAIN_TABS.length) return;
-  gotoTab(MAIN_TABS[ni]);
+  if(cur.id==='admin'){
+    const i=ADMIN_TABS.indexOf(curAdminTab), ni=i+dir;
+    if(ni>=0 && ni<ADMIN_TABS.length){ setAdminTab(ADMIN_TABS[ni]); return; }
+    if(dir<0 && i<=0){ gotoTab('learn'); }   /* 先頭から右スワイプ → がくしゅう */
+    return;
+  }
+  if(MAIN_TABS.includes(cur.id)){
+    const i=MAIN_TABS.indexOf(cur.id), ni=i+dir;
+    if(ni>=0 && ni<MAIN_TABS.length) gotoTab(MAIN_TABS[ni]);
+  }
 }
 let swX=0, swY=0, swOn=false;
 document.body.addEventListener('touchstart', e=>{ if(e.touches.length!==1){ swOn=false; return; } swX=e.touches[0].clientX; swY=e.touches[0].clientY; swOn=true; }, {passive:true});
