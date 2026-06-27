@@ -175,7 +175,7 @@
     <div class="qhint">この えいごの いみは？</div>
     <div class="qword" id="qword">apple</div>
     <button class="speak" id="speak">🔊 きく</button>
-    <div style="font-size:11px; color:#aab4a4; margin-top:6px;">えいごを ながおしすると やさしいいみ</div>
+    <div style="font-size:11px; color:#aab4a4; margin-top:6px;">こたえを ながおしすると やさしいいみ</div>
   </div>
   <div class="choices" id="choices"></div>
   <div class="reward" id="reward"></div>
@@ -675,17 +675,17 @@ function firstSenseKana(w){ const s=(w[2]||w[1]||''); return s.split(/[，,、]/
 function easyText(w){ return EASY[(w[0]||'').toLowerCase()] || firstSenseKana(w); }
 function showEasy(w){
   const box=document.getElementById('easyHint');
-  box.innerHTML='<div class="ehlabel">やさしいいみ</div><div class="ehword">'+escJa(w[0])+'</div><div class="ehmean">'+escJa(easyText(w))+'</div>';
+  box.innerHTML='<div class="ehlabel">やさしいいみ</div><div class="ehmean">'+escJa(easyText(w))+'</div>';
   box.style.display='block';
 }
-(function(){
-  const el=document.getElementById('qword'); let t=null;
-  const start=()=>{ t=setTimeout(()=>{ if(qList&&qList[qIdx]) showEasy(qList[qIdx]); }, 450); };
+function attachLongPress(el, cb){
+  let t=null;
+  const start=()=>{ el._lp=false; t=setTimeout(()=>{ el._lp=true; cb(); }, 450); };
   const cancel=()=>{ if(t){ clearTimeout(t); t=null; } };
   el.addEventListener('touchstart', start, {passive:true});
   el.addEventListener('touchend', cancel); el.addEventListener('touchmove', cancel);
   el.addEventListener('mousedown', start); el.addEventListener('mouseup', cancel); el.addEventListener('mouseleave', cancel);
-})();
+}
 
 function nextQ(){
   document.getElementById('easyHint').style.display='none';
@@ -702,7 +702,8 @@ function nextQ(){
   const box=document.getElementById('choices'); box.innerHTML='';
   opts.forEach(o=>{
     const b=document.createElement('button'); b.className='ch'; b.innerHTML=choiceHtml(o);
-    b.onclick=()=>answer(b, o===correct, en);
+    b.onclick=()=>{ if(b._lp){ b._lp=false; return; } answer(b, o===correct, en); };
+    attachLongPress(b, ()=>showEasy(o));
     box.appendChild(b);
   });
   speak(en);
