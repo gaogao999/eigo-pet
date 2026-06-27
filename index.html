@@ -99,6 +99,7 @@
     <div class="dots"></div>
     <div class="ground"></div>
     <div id="bubble"></div>
+    <div id="wagamark" style="position:absolute; top:24px; left:50%; transform:translateX(46px); font-size:30px; font-weight:800; color:#e0792f; display:none;">！</div>
     <div id="petWrap"><svg id="pet" width="126" height="108" shape-rendering="crispEdges"></svg></div>
     <div id="poop"><svg width="30" height="26" shape-rendering="crispEdges">
       <rect x="6" y="15" width="18" height="7" fill="#7a5a2a"/><rect x="9" y="9" width="11" height="6" fill="#9c7438"/><rect x="12" y="4" width="6" height="5" fill="#9c7438"/></svg></div>
@@ -107,12 +108,15 @@
   <div class="stats">
     <div class="stat"><span class="ic">🍚</span><div class="bar"><i id="hungerBar" style="background:var(--food)"></i></div></div>
     <div class="stat"><span class="ic" style="color:var(--happy)">😊</span><div class="bar"><i id="happyBar" style="background:var(--happy)"></i></div></div>
+    <div class="stat"><span class="ic">📏</span><div class="bar"><i id="discBar" style="background:#9b7bd4"></i></div></div>
     <div class="stat"><span class="ic" style="color:var(--xp)">⭐</span><div class="bar"><i id="xpBar" style="background:var(--xp)"></i></div></div>
   </div>
 
   <div class="care">
     <button class="cbtn" id="bFeed">🍚 ごはん<span class="cnt" id="foodCnt">えさ 0</span></button>
+    <button class="cbtn" id="bSnack">🍬 おかし<span class="cnt">たいじゅう+</span></button>
     <button class="cbtn" id="bPlay">🎮 あそぶ<span class="cnt">むりょう</span></button>
+    <button class="cbtn" id="bScold">📏 しつけ<span class="cnt" id="scoldCnt">わがまま時</span></button>
     <button class="cbtn" id="bClean">🧹 そうじ<span class="cnt" id="cleanCnt">きれい</span></button>
   </div>
 
@@ -123,7 +127,7 @@
   </div>
   <button class="study-btn" id="goStudy">📚 えいごの べんきょう</button>
   <div style="text-align:center; margin-top:12px; font-size:13px; color:#7a8a76; font-weight:700;">
-    🔥 <span id="streak">1</span>にち れんぞく ／ おぼえた <span id="learned">0</span>こ
+    🔥 <span id="streak">1</span>にち ／ おぼえた <span id="learned">0</span>こ ／ たいじゅう <span id="weight">5</span>g
   </div>
   <div id="rev" style="text-align:center; margin-top:8px; font-size:11px; color:#b7c3b2;"></div>
 </section>
@@ -160,12 +164,31 @@ const KID=[
 "....o....o....","...ooo..ooo...","..oobbbbbboo..",".obbbbbbbbbbo.",
 ".obboobboobbo.",".obbllllllbbo.",".obbbbbbbbbbo.",".obbbooooobbo.",
 ".obbbbbbbbbbo.","..obbbbbbbbo..","...oo.oo.oo...","...o....o....."];
-const ADULT=[
+const EGG=[
+".....oooo.....","....obbbbo....","...obbbbbbo...","..obbbbbbbbo..",
+".obbbbbbbbbbo.",".obbblbbblbbo.",".obbbbbbbbbbo.",".obblbbbbblbo.",
+".obbbbbbbbbbo.","..obbbbbbbbo..","...obbbbbbo...","....oooooo...."];
+/* おとな（進化分岐3種） */
+const ADULT=[ /* ふつう型 */
 "..o.o..o.o....","..ooo..ooo....",".obbbbbbbbbbo.","obbbbbbbbbbbbo",
-"obboobbbboobbo","obbbbbbbbbbbbo","obbbbbbbbbbbbo","obbbooooooobo".padEnd(14,'o'),
+"obboobbbboobbo","obbbbbbbbbbbbo","obbbbbbbbbbbbo","obbbooooooobbo",
 "obbbbbbbbbbbbo",".obbbbbbbbbbo.","..obbbbbbbbo..","..o.o..o.o...."];
+const ADULT_GOOD=[ /* よいこ型（アンテナ＋にっこり） */
+"....o..o......","....o..o......","..oobbbbbboo..",".obbbbbbbbbbo.",
+"obboobbbboobbo","obbbbbbbbbbbbo","obbbbbbbbbbbbo","obbbboooobbbbo",
+"obbbbbbbbbbbbo",".obbbbbbbbbbo.","..obbbbbbbbo..","...oo.oo.oo..."];
+const ADULT_WILD=[ /* わんぱく型（とげとげ＋にやり） */
+"o.o.o.o.o.o...",".ooo.ooo.oo...",".obbbbbbbbbbo.","obbbbbbbbbbbbo",
+"obbobbbbbbobbo","obbbbbbbbbbbbo","obbbbbbbbbbbbo","obboooooooobbo",
+"obbbbbbbbbbbbo",".obbbbbbbbbbo.","..obbbbbbbbo..","..o.oo..oo.o.."];
 
-function petMap(){ return state.lv>=4?ADULT : state.lv>=2?KID : BABY; }
+function adultMap(){ return state.adultType==='good'?ADULT_GOOD : state.adultType==='wild'?ADULT_WILD : ADULT; }
+function petMap(){
+  if(state.lv>=4) return adultMap();
+  if(state.lv>=3) return KID;
+  if(state.lv>=2) return BABY;
+  return EGG;
+}
 function drawPet(){
   const map=petMap(), ps=8; let s='';
   for(let y=0;y<map.length;y++)for(let x=0;x<map[y].length;x++){
@@ -181,9 +204,11 @@ let state = load();
 
 function load(){
   let s; try{ s=JSON.parse(localStorage.getItem(KEY)); }catch(e){}
-  if(!s) s={ name:"ぴよ", lv:1, xp:0, hunger:80, happy:80, food:0, dirty:false,
-            streak:1, learned:0, last:today() };
-  if(!s.grade || !WORDBANK[s.grade]) s.grade="g3";
+  const def={ name:"ぴよ", lv:1, xp:0, hunger:80, happy:80, food:0, dirty:false,
+              streak:1, learned:0, last:today(), grade:"g3",
+              discipline:50, weight:5, careMiss:0, disciplineMiss:0, wagamama:false, adultType:null };
+  s=Object.assign({}, def, s||{});
+  if(!WORDBANK[s.grade]) s.grade="g3";
   return s;
 }
 function save(){ localStorage.setItem(KEY, JSON.stringify(state)); }
@@ -195,6 +220,10 @@ function applyDaily(){
   state.streak = (diff===1)? state.streak+1 : 1;
   state.hunger=Math.max(0, state.hunger - 30*Math.min(diff,3));
   state.happy =Math.max(0, state.happy  - 20*Math.min(diff,3));
+  state.discipline=Math.max(0, state.discipline - 5*Math.min(diff,3));
+  // おなか/ごきげんが空のまま放置 → お世話ミス
+  if(state.hunger===0) state.careMiss++;
+  if(state.happy===0) state.careMiss++;
   state.last=today();
   save();
 }
@@ -203,10 +232,24 @@ function applyDaily(){
 function need(){ return state.lv*40; }
 function addXp(n){
   state.xp+=n;
-  while(state.xp>=need() && state.lv<5){ state.xp-=need(); state.lv++; bubble("レベルアップ！"); }
+  while(state.xp>=need() && state.lv<5){
+    state.xp-=need(); state.lv++;
+    if(state.lv===4 && !state.adultType){
+      const miss=state.careMiss + state.disciplineMiss;
+      state.adultType = miss<=1 ? 'good' : miss<=4 ? 'normal' : 'wild';
+      bubble("おとなになった！ "+(state.adultType==='good'?'よいこ':state.adultType==='wild'?'わんぱく':'ふつう')+"タイプ");
+    } else {
+      bubble(stageName()+"になった！");
+    }
+  }
   if(state.lv>=5) state.xp=Math.min(state.xp, need());
 }
-function stageName(){ return state.lv>=4?"おとな" : state.lv>=2?"こども" : "あかちゃん"; }
+function stageName(){
+  if(state.lv>=4){ return state.adultType==='good'?"おとな(よいこ)" : state.adultType==='wild'?"おとな(わんぱく)" : "おとな"; }
+  if(state.lv>=3) return "こども";
+  if(state.lv>=2) return "あかちゃん";
+  return "タマゴ";
+}
 
 /* ---------- render ---------- */
 function pct(v){ return Math.max(0,Math.min(100,Math.round(v)))+'%'; }
@@ -216,12 +259,16 @@ function render(){
   document.getElementById('stageBadge').textContent=stageName();
   document.getElementById('hungerBar').style.width=pct(state.hunger);
   document.getElementById('happyBar').style.width=pct(state.happy);
+  document.getElementById('discBar').style.width=pct(state.discipline);
   document.getElementById('xpBar').style.width=pct(state.xp/need()*100);
   document.getElementById('foodCnt').textContent='えさ '+state.food;
   document.getElementById('cleanCnt').textContent=state.dirty?'よごれてる':'きれい';
+  document.getElementById('scoldCnt').textContent=state.wagamama?'いまだ！':'わがまま時';
   document.getElementById('streak').textContent=state.streak;
   document.getElementById('learned').textContent=state.learned;
+  document.getElementById('weight').textContent=Math.round(state.weight);
   document.getElementById('poop').style.display=state.dirty?'block':'none';
+  document.getElementById('wagamark').style.display=(state.wagamama && state.lv>=2)?'block':'none';
   document.querySelectorAll('.gbtn').forEach(b=> b.classList.toggle('sel', b.dataset.g===state.grade));
   drawPet();
 }
@@ -238,13 +285,27 @@ function cheer(){
 /* ---------- care ---------- */
 document.getElementById('bFeed').onclick=()=>{
   if(state.food<=0){ bubble("べんきょうして えさをあつめよう"); return; }
-  state.food--; state.hunger=Math.min(100,state.hunger+25); state.happy=Math.min(100,state.happy+8);
-  addXp(5); if(Math.random()<0.45) state.dirty=true;
+  state.food--; state.hunger=Math.min(100,state.hunger+25); state.happy=Math.min(100,state.happy+5);
+  state.weight+=1; addXp(5); if(Math.random()<0.45) state.dirty=true;
   bubble("もぐもぐ"); cheer(); save(); render();
 };
+document.getElementById('bSnack').onclick=()=>{
+  state.happy=Math.min(100,state.happy+14); state.weight+=3;
+  if(Math.random()<0.5) state.dirty=true;
+  bubble("おいしい！ でも たいじゅう+"); cheer(); save(); render();
+};
 document.getElementById('bPlay').onclick=()=>{
-  state.happy=Math.min(100,state.happy+18); addXp(5);
+  state.happy=Math.min(100,state.happy+18); state.weight=Math.max(5,state.weight-1); addXp(5);
   bubble("たのしい！"); cheer(); save(); render();
+};
+document.getElementById('bScold').onclick=()=>{
+  if(state.wagamama){
+    state.wagamama=false; state.discipline=Math.min(100,state.discipline+12);
+    clearTimeout(wagaTimer); bubble("いいこ だね！"); cheer();
+  } else {
+    state.discipline=Math.max(0,state.discipline-6); bubble("いまは しからないで…");
+  }
+  save(); render();
 };
 document.getElementById('bClean').onclick=()=>{
   if(state.dirty){ state.dirty=false; state.happy=Math.min(100,state.happy+10); bubble("ぴかぴか"); }
@@ -341,6 +402,20 @@ function speak(en){
   }catch(e){}
 }
 document.getElementById('speak').onclick=()=> speak(document.getElementById('qword').textContent);
+
+/* ---------- わがままサイン（しつけ） ---------- */
+let wagaTimer=null;
+function homeVisible(){ return document.getElementById('home').classList.contains('on') && !document.hidden; }
+function triggerWagamama(){
+  if(state.wagamama || state.lv<2) return;
+  state.wagamama=true; render(); bubble("！ かまって！");
+  clearTimeout(wagaTimer);
+  wagaTimer=setTimeout(()=>{
+    if(state.wagamama){ state.wagamama=false; state.disciplineMiss++;
+      state.discipline=Math.max(0,state.discipline-4); save(); render(); }
+  }, 22000);
+}
+setInterval(()=>{ if(homeVisible() && !state.wagamama && Math.random()<0.5) triggerWagamama(); }, 30000);
 
 /* ---------- boot ---------- */
 applyDaily();
