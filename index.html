@@ -155,32 +155,33 @@ const QPER = 5;
 function currentWords(){ return (WORDBANK[state.grade] || WORDBANK.g3).words; }
 
 /* ---------- pixel pet ---------- */
-const PAL={o:"#3b6d3b", b:"#7ec97e", l:"#a8e0a8"};
-const BABY=[
-".....oooo.....","...oobbbboo...","..obbllllbbo..",".obbllllllbbo.",
-".obboobboobbo.",".obbllllllbbo.",".obbllllllbbo.",".obbboooobbbo.",
-"..obbllllbbo..","..obbbbbbbbo..","...o.ooo.o....","...o.o.o.o...."];
-const KID=[
-"....o....o....","...ooo..ooo...","..oobbbbbboo..",".obbbbbbbbbbo.",
-".obboobboobbo.",".obbllllllbbo.",".obbbbbbbbbbo.",".obbbooooobbo.",
-".obbbbbbbbbbo.","..obbbbbbbbo..","...oo.oo.oo...","...o....o....."];
+/* オリジナルの白黒ドット絵（アイロンビーズ風）。o=黒ふち, w=白, g=グレー陰 */
+const PAL={o:"#23241f", w:"#fbfbf6", g:"#c9cabf"};
 const EGG=[
-".....oooo.....","....obbbbo....","...obbbbbbo...","..obbbbbbbbo..",
-".obbbbbbbbbbo.",".obbblbbblbbo.",".obbbbbbbbbbo.",".obblbbbbblbo.",
-".obbbbbbbbbbo.","..obbbbbbbbo..","...obbbbbbo...","....oooooo...."];
+".....oooo.....","...oowwwwoo...","..owwwwwwwwo..",".owwwwwwwwwwo.",
+".owwwwwwwwwwo.",".owwowwwwowwo.",".owwwwwwwwwwo.",".owowwwwwwowo.",
+".owwwwwwwwwwo.","..owwwwwwwwo..","...oowwwwoo...","....oooooo...."];
+const BABY=[
+"......o.......","......o.......","....oooooo....","...owwwwwwo...",
+"..owwwwwwwwo..",".owwoowwoowwo.",".owwwwwwwwwwo.",".owwwwoowwwwo.",
+"..owwwwwwwwo..","...owwwwwwo...","....oooooo...."];
+const KID=[
+"...o......o...","...oo....oo...","..oowwwwwwoo..",".owwwwwwwwwwo.",
+".owwoowwwoowo.",".owwwwwwwwwwo.",".owwwooooowwo.",".owwwwwwwwwwo.",
+"..owwwwwwwwo..","...oo.oo.oo...","...o.....o...."];
 /* おとな（進化分岐3種） */
 const ADULT=[ /* ふつう型 */
-"..o.o..o.o....","..ooo..ooo....",".obbbbbbbbbbo.","obbbbbbbbbbbbo",
-"obboobbbboobbo","obbbbbbbbbbbbo","obbbbbbbbbbbbo","obbbooooooobbo",
-"obbbbbbbbbbbbo",".obbbbbbbbbbo.","..obbbbbbbbo..","..o.o..o.o...."];
-const ADULT_GOOD=[ /* よいこ型（アンテナ＋にっこり） */
-"....o..o......","....o..o......","..oobbbbbboo..",".obbbbbbbbbbo.",
-"obboobbbboobbo","obbbbbbbbbbbbo","obbbbbbbbbbbbo","obbbboooobbbbo",
-"obbbbbbbbbbbbo",".obbbbbbbbbbo.","..obbbbbbbbo..","...oo.oo.oo..."];
+"....o..o......","....o..o......","..oowwwwwwoo..",".owwwwwwwwwwo.",
+"owwwwwwwwwwwwo","owwoowwwwoowwo","owwwwwwwwwwwwo","owwwwooooowwwo",
+"owwwwwwwwwwwwo",".owwwwwwwwwwo.","..owwwwwwwwo..","...oo.oo.oo..."];
+const ADULT_GOOD=[ /* よいこ型（ボール付きアンテナ＋にっこり） */
+"...oo..oo.....","....o..o......","..oowwwwwwoo..",".owwwwwwwwwwo.",
+"owwwwwwwwwwwwo","owwoowwwwoowwo","owwwwwwwwwwwwo","owwowooooowowo",
+"owwwwwwwwwwwwo",".owwwwwwwwwwo.","..owwwwwwwwo..","...oo.oo.oo..."];
 const ADULT_WILD=[ /* わんぱく型（とげとげ＋にやり） */
-"o.o.o.o.o.o...",".ooo.ooo.oo...",".obbbbbbbbbbo.","obbbbbbbbbbbbo",
-"obbobbbbbbobbo","obbbbbbbbbbbbo","obbbbbbbbbbbbo","obboooooooobbo",
-"obbbbbbbbbbbbo",".obbbbbbbbbbo.","..obbbbbbbbo..","..o.oo..oo.o.."];
+"o.o.o..o.o.o..",".o.o.o.o.o.o..","..oowwwwwwoo..",".owwwwwwwwwwo.",
+"owwwwwwwwwwwwo","owowwwwwwwwowo","owwwwwwwwwwwwo","owoooooooowwo.".slice(0,14),
+"owwwwwwwwwwwwo",".owwwwwwwwwwo.","..owwwwwwwwo..","..o.oo..oo.o.."];
 
 function adultMap(){ return state.adultType==='good'?ADULT_GOOD : state.adultType==='wild'?ADULT_WILD : ADULT; }
 function petMap(){
