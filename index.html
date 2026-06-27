@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>えいごペット</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="えいごペット">
+<meta name="theme-color" content="#eef4ea">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="manifest" href="manifest.webmanifest">
+<style>
+  :root{ --green:#3b6d3b; --green2:#5a8f4f; --bg:#eef4ea; --card:#ffffff; --line:#dfe8da;
+         --food:#ef9f27; --happy:#3fb98a; --xp:#3b8ad4; --ink:#27402a; }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body{ margin:0; height:100%; }
+  body{ font-family:-apple-system,"Hiragino Maru Gothic ProN","Hiragino Sans",sans-serif;
+        background:var(--bg); color:var(--ink); overscroll-behavior:none;
+        padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom); user-select:none; }
+  .screen{ max-width:440px; margin:0 auto; padding:14px 16px 24px; display:none; }
+  .screen.on{ display:block; }
+  .topbar{ display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+  .name{ font-size:20px; font-weight:700; color:var(--green); }
+  .pill{ font-size:13px; background:#e3efdd; color:var(--green); padding:4px 12px; border-radius:999px; font-weight:700; }
+  .stage{ display:flex; gap:8px; align-items:center; }
+  .badge{ font-size:12px; background:#dfeefb; color:#1f5f9c; padding:3px 10px; border-radius:999px; font-weight:700; }
+
+  .yard{ position:relative; height:230px; border-radius:24px; background:#e2eddd;
+         overflow:hidden; border:1px solid var(--line); }
+  .yard .dots{ position:absolute; inset:0; background-image:radial-gradient(rgba(59,109,59,.18) 2px, transparent 2px);
+               background-size:18px 18px; }
+  .ground{ position:absolute; left:0; right:0; bottom:0; height:46px; background:#cfe3c6; }
+  @keyframes bob{ 0%,100%{transform:translateX(-50%) translateY(0)} 50%{transform:translateX(-50%) translateY(-8px)} }
+  @keyframes hop{ 0%{transform:translateX(-50%) translateY(0)} 30%{transform:translateX(-50%) translateY(-22px)} 60%{transform:translateX(-50%) translateY(0)} 80%{transform:translateX(-50%) translateY(-8px)} 100%{transform:translateX(-50%) translateY(0)} }
+  #petWrap{ position:absolute; bottom:40px; left:50%; transform:translateX(-50%); animation:bob 1.6s steps(2) infinite; }
+  #petWrap.happy{ animation:hop .6s 2; }
+  #poop{ position:absolute; bottom:44px; left:34px; display:none; }
+  #bubble{ position:absolute; top:14px; left:50%; transform:translateX(-50%);
+           background:#fff; border:1px solid var(--line); border-radius:999px;
+           padding:5px 14px; font-size:14px; font-weight:700; color:var(--green); opacity:0; transition:opacity .2s; }
+
+  .stats{ margin:14px 0 6px; display:flex; flex-direction:column; gap:9px; }
+  .stat{ display:flex; align-items:center; gap:10px; }
+  .stat .ic{ width:24px; text-align:center; font-size:18px; }
+  .bar{ flex:1; height:11px; border-radius:8px; background:#e0e8db; overflow:hidden; }
+  .bar > i{ display:block; height:100%; width:0; transition:width .35s; }
+
+  .care{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-top:14px; }
+  .cbtn{ border:1px solid var(--line); background:var(--card); border-radius:16px; padding:12px 0;
+         display:flex; flex-direction:column; align-items:center; gap:5px; font-size:13px; font-weight:700; color:var(--ink); cursor:pointer; }
+  .cbtn i{ font-size:26px; color:var(--green); }
+  .cbtn:active{ transform:scale(.96); }
+  .cbtn .cnt{ font-size:11px; color:#7a8a76; font-weight:700; }
+
+  .study-btn{ margin-top:16px; width:100%; border:none; border-radius:18px; padding:18px; font-size:19px; font-weight:800;
+              background:var(--green); color:#fff; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; }
+  .study-btn:active{ transform:scale(.98); }
+
+  /* study screen */
+  .qhead{ display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; }
+  .back{ background:none; border:none; font-size:26px; color:var(--green); cursor:pointer; padding:4px; }
+  .qprog{ font-size:14px; font-weight:700; color:#7a8a76; }
+  .qcard{ background:var(--card); border:1px solid var(--line); border-radius:24px; padding:26px 20px; text-align:center; }
+  .qhint{ font-size:14px; color:#7a8a76; font-weight:700; margin-bottom:10px; }
+  .qicon{ font-size:64px; color:var(--green); }
+  .qword{ font-size:42px; font-weight:800; letter-spacing:1px; margin:6px 0 2px; color:var(--ink); }
+  .speak{ background:#e3efdd; border:none; color:var(--green); border-radius:999px; padding:8px 18px; font-size:15px; font-weight:700; margin-top:8px; cursor:pointer; }
+  .choices{ display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:20px; }
+  .ch{ border:1px solid var(--line); background:var(--card); border-radius:18px; padding:18px 0; font-size:22px; font-weight:800; color:var(--ink); cursor:pointer; }
+  .ch:active{ transform:scale(.97); }
+  .ch.ok{ background:#e1f5e7; border-color:#aee3bf; color:#1f7a44; }
+  .ch.ng{ background:#fdeaea; border-color:#f3c4c4; color:#b23b3b; }
+  .reward{ text-align:center; margin-top:20px; font-size:16px; font-weight:700; color:var(--green); min-height:22px; }
+</style>
+</head>
+<body>
+
+<!-- HOME -->
+<section id="home" class="screen on">
+  <div class="topbar">
+    <div class="name" id="petName">ぴよ</div>
+    <div class="stage">
+      <span class="badge" id="stageBadge">あかちゃん</span>
+      <span class="pill">Lv.<span id="lv">1</span></span>
+    </div>
+  </div>
+
+  <div class="yard">
+    <div class="dots"></div>
+    <div class="ground"></div>
+    <div id="bubble"></div>
+    <div id="petWrap"><svg id="pet" width="126" height="108" shape-rendering="crispEdges"></svg></div>
+    <div id="poop"><svg width="30" height="26" shape-rendering="crispEdges">
+      <rect x="6" y="15" width="18" height="7" fill="#7a5a2a"/><rect x="9" y="9" width="11" height="6" fill="#9c7438"/><rect x="12" y="4" width="6" height="5" fill="#9c7438"/></svg></div>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><span class="ic">🍚</span><div class="bar"><i id="hungerBar" style="background:var(--food)"></i></div></div>
+    <div class="stat"><span class="ic" style="color:var(--happy)">😊</span><div class="bar"><i id="happyBar" style="background:var(--happy)"></i></div></div>
+    <div class="stat"><span class="ic" style="color:var(--xp)">⭐</span><div class="bar"><i id="xpBar" style="background:var(--xp)"></i></div></div>
+  </div>
+
+  <div class="care">
+    <button class="cbtn" id="bFeed">🍚 ごはん<span class="cnt" id="foodCnt">えさ 0</span></button>
+    <button class="cbtn" id="bPlay">🎮 あそぶ<span class="cnt">むりょう</span></button>
+    <button class="cbtn" id="bClean">🧹 そうじ<span class="cnt" id="cleanCnt">きれい</span></button>
+  </div>
+
+  <button class="study-btn" id="goStudy">📚 えいごの べんきょう</button>
+  <div style="text-align:center; margin-top:12px; font-size:13px; color:#7a8a76; font-weight:700;">
+    🔥 <span id="streak">1</span>にち れんぞく ／ おぼえた <span id="learned">0</span>こ
+  </div>
+</section>
+
+<!-- STUDY -->
+<section id="study" class="screen">
+  <div class="qhead">
+    <button class="back" id="back">‹</button>
+    <div class="qprog"><span id="qNo">1</span> / <span id="qTotal">5</span> もん</div>
+    <div style="width:34px"></div>
+  </div>
+  <div class="qcard">
+    <div class="qhint">この えいごの いみは？</div>
+    <div class="qword" id="qword">apple</div>
+    <button class="speak" id="speak">🔊 きく</button>
+  </div>
+  <div class="choices" id="choices"></div>
+  <div class="reward" id="reward"></div>
+</section>
+
+<script>
+/* ---------- word bank ---------- */
+const WORDS = [
+  ["apple","りんご"],["dog","いぬ"],["cat","ねこ"],["sun","たいよう"],["star","ほし"],
+  ["house","いえ"],["fish","さかな"],["car","くるま"],["book","ほん"],["flower","はな"],
+  ["moon","つき"],["tree","き"],["bird","とり"],["cloud","くも"],["rain","あめ"],
+  ["egg","たまご"],["milk","ぎゅうにゅう"],["bread","パン"],["cake","ケーキ"],["candy","あめ(おかし)"],
+  ["bus","バス"],["train","でんしゃ"],["bike","じてんしゃ"],["ship","ふね"],["plane","ひこうき"],
+  ["hand","て"],["foot","あし"],["eye","め"],["nose","はな(かお)"],["mouth","くち"],
+  ["red","あか"],["blue","あお"],["green","みどり"],["white","しろ"],["black","くろ"],
+  ["one","いち"],["two","に"],["three","さん"],["big","おおきい"],["small","ちいさい"],
+  ["hot","あつい"],["cold","つめたい"],["happy","うれしい"],["run","はしる"],["jump","ジャンプする"]
+];
+const QPER = 5;
+
+/* ---------- pixel pet ---------- */
+const PAL={o:"#3b6d3b", b:"#7ec97e", l:"#a8e0a8"};
+const BABY=[
+".....oooo.....","...oobbbboo...","..obbllllbbo..",".obbllllllbbo.",
+".obboobboobbo.",".obbllllllbbo.",".obbllllllbbo.",".obbboooobbbo.",
+"..obbllllbbo..","..obbbbbbbbo..","...o.ooo.o....","...o.o.o.o...."];
+const KID=[
+"....o....o....","...ooo..ooo...","..oobbbbbboo..",".obbbbbbbbbbo.",
+".obboobboobbo.",".obbllllllbbo.",".obbbbbbbbbbo.",".obbbooooobbo.",
+".obbbbbbbbbbo.","..obbbbbbbbo..","...oo.oo.oo...","...o....o....."];
+const ADULT=[
+"..o.o..o.o....","..ooo..ooo....",".obbbbbbbbbbo.","obbbbbbbbbbbbo",
+"obboobbbboobbo","obbbbbbbbbbbbo","obbbbbbbbbbbbo","obbbooooooobo".padEnd(14,'o'),
+"obbbbbbbbbbbbo",".obbbbbbbbbbo.","..obbbbbbbbo..","..o.o..o.o...."];
+
+function petMap(){ return state.lv>=4?ADULT : state.lv>=2?KID : BABY; }
+function drawPet(){
+  const map=petMap(), ps=8; let s='';
+  for(let y=0;y<map.length;y++)for(let x=0;x<map[y].length;x++){
+    const c=map[y][x]; if(PAL[c]) s+='<rect x="'+(x*ps)+'" y="'+(y*ps)+'" width="'+ps+'" height="'+ps+'" fill="'+PAL[c]+'"/>';
+  }
+  document.getElementById('pet').innerHTML=s;
+}
+
+/* ---------- state ---------- */
+const KEY='eigopet_v1';
+const today=()=> new Date().toISOString().slice(0,10);
+let state = load();
+
+function load(){
+  let s; try{ s=JSON.parse(localStorage.getItem(KEY)); }catch(e){}
+  if(!s) s={ name:"ぴよ", lv:1, xp:0, hunger:80, happy:80, food:0, dirty:false,
+            streak:1, learned:0, last:today() };
+  return s;
+}
+function save(){ localStorage.setItem(KEY, JSON.stringify(state)); }
+
+function applyDaily(){
+  if(state.last===today()) return;
+  const prev=new Date(state.last), now=new Date(today());
+  const diff=Math.round((now-prev)/86400000);
+  state.streak = (diff===1)? state.streak+1 : 1;
+  state.hunger=Math.max(0, state.hunger - 30*Math.min(diff,3));
+  state.happy =Math.max(0, state.happy  - 20*Math.min(diff,3));
+  state.last=today();
+  save();
+}
+
+/* ---------- level ---------- */
+function need(){ return state.lv*40; }
+function addXp(n){
+  state.xp+=n;
+  while(state.xp>=need() && state.lv<5){ state.xp-=need(); state.lv++; bubble("レベルアップ！"); }
+  if(state.lv>=5) state.xp=Math.min(state.xp, need());
+}
+function stageName(){ return state.lv>=4?"おとな" : state.lv>=2?"こども" : "あかちゃん"; }
+
+/* ---------- render ---------- */
+function pct(v){ return Math.max(0,Math.min(100,Math.round(v)))+'%'; }
+function render(){
+  document.getElementById('petName').textContent=state.name;
+  document.getElementById('lv').textContent=state.lv;
+  document.getElementById('stageBadge').textContent=stageName();
+  document.getElementById('hungerBar').style.width=pct(state.hunger);
+  document.getElementById('happyBar').style.width=pct(state.happy);
+  document.getElementById('xpBar').style.width=pct(state.xp/need()*100);
+  document.getElementById('foodCnt').textContent='えさ '+state.food;
+  document.getElementById('cleanCnt').textContent=state.dirty?'よごれてる':'きれい';
+  document.getElementById('streak').textContent=state.streak;
+  document.getElementById('learned').textContent=state.learned;
+  document.getElementById('poop').style.display=state.dirty?'block':'none';
+  drawPet();
+}
+let bubT;
+function bubble(t){
+  const b=document.getElementById('bubble'); b.textContent=t; b.style.opacity=1;
+  clearTimeout(bubT); bubT=setTimeout(()=>b.style.opacity=0,1100);
+}
+function cheer(){
+  const w=document.getElementById('petWrap'); w.classList.add('happy');
+  setTimeout(()=>w.classList.remove('happy'),1200);
+}
+
+/* ---------- care ---------- */
+document.getElementById('bFeed').onclick=()=>{
+  if(state.food<=0){ bubble("べんきょうして えさをあつめよう"); return; }
+  state.food--; state.hunger=Math.min(100,state.hunger+25); state.happy=Math.min(100,state.happy+8);
+  addXp(5); if(Math.random()<0.45) state.dirty=true;
+  bubble("もぐもぐ"); cheer(); save(); render();
+};
+document.getElementById('bPlay').onclick=()=>{
+  state.happy=Math.min(100,state.happy+18); addXp(5);
+  bubble("たのしい！"); cheer(); save(); render();
+};
+document.getElementById('bClean').onclick=()=>{
+  if(state.dirty){ state.dirty=false; state.happy=Math.min(100,state.happy+10); bubble("ぴかぴか"); }
+  else bubble("きれいだよ");
+  save(); render();
+};
+document.getElementById('petName').onclick=()=>{
+  const n=prompt("ペットの なまえは？", state.name);
+  if(n && n.trim()){ state.name=n.trim().slice(0,8); save(); render(); }
+};
+
+/* ---------- study ---------- */
+let session, qIdx, qList;
+function show(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));
+  document.getElementById(id).classList.add('on');
+  window.scrollTo(0,0);
+}
+document.getElementById('goStudy').onclick=startStudy;
+document.getElementById('back').onclick=()=>{ show('home'); render(); };
+
+function shuffle(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){const j=(Math.random()*(i+1))|0;[a[i],a[j]]=[a[j],a[i]];} return a; }
+function startStudy(){
+  qList=shuffle(WORDS).slice(0,QPER); qIdx=0; session={correct:0};
+  document.getElementById('qTotal').textContent=QPER;
+  show('study'); nextQ();
+}
+function nextQ(){
+  if(qIdx>=qList.length){ finishStudy(); return; }
+  const [en,ja]=qList[qIdx];
+  document.getElementById('qNo').textContent=qIdx+1;
+  document.getElementById('qword').textContent=en;
+  document.getElementById('reward').textContent='';
+  // wrong options
+  const others=shuffle(WORDS.filter(w=>w[0]!==en)).slice(0,3).map(w=>w[1]);
+  const opts=shuffle([ja,...others]);
+  const box=document.getElementById('choices'); box.innerHTML='';
+  opts.forEach(o=>{
+    const b=document.createElement('button'); b.className='ch'; b.textContent=o;
+    b.onclick=()=>answer(b,o===ja,en);
+    box.appendChild(b);
+  });
+  speak(en);
+}
+function answer(btn, ok, en){
+  if(btn.classList.contains('ok')||btn.classList.contains('ng')) return;
+  if(ok){
+    btn.classList.add('ok');
+    session.correct++; state.food++; state.learned++; addXp(8);
+    document.getElementById('reward').textContent='せいかい！ えさ +1';
+    save();
+    setTimeout(()=>{ qIdx++; nextQ(); }, 800);
+  } else {
+    btn.classList.add('ng');
+    document.getElementById('reward').textContent='もういちど！';
+  }
+}
+function finishStudy(){
+  bubble('えさ '+session.correct+'こ ゲット！');
+  show('home'); cheer(); render();
+}
+function speak(en){
+  try{
+    const u=new SpeechSynthesisUtterance(en); u.lang='en-US'; u.rate=0.85;
+    speechSynthesis.cancel(); speechSynthesis.speak(u);
+  }catch(e){}
+}
+document.getElementById('speak').onclick=()=> speak(document.getElementById('qword').textContent);
+
+/* ---------- boot ---------- */
+applyDaily();
+render();
+</script>
+</body>
+</html>
