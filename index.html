@@ -572,11 +572,11 @@ function startGame(){
   const petW=Math.max.apply(null,map.map(r=>r.length))*cell, petH=map.length*cell;
   if(game) cancelAnimationFrame(game.raf);
   game={ ctx,W,H,groundY,map,cell,petW,petH,
-    px:34, py:groundY-petH, vy:0, onGround:true,
+    px:34, py:groundY-petH, vy:0, onGround:true, jumps:0,
     obs:[], speed:2.4, t:0, score:0, over:false, raf:0 };
   loopGame();
 }
-function jump(){ if(game && !game.over && game.onGround){ game.vy=-9.6; game.onGround=false; } }
+function jump(){ if(game && !game.over && game.jumps<2){ game.vy=-9.6; game.jumps++; game.onGround=false; } }
 function loopGame(){
   const g=game; if(!g || g.over) return;
   g.t++; g.speed += 0.0009;
@@ -589,12 +589,12 @@ function loopGame(){
   // 物理（重力）＋当たり判定（上面に着地はOK・横からの衝突のみアウト）
   const prevFeet=g.py+g.petH;
   g.vy += 0.55; g.py += g.vy; g.onGround=false;
-  if(g.py >= g.groundY-g.petH){ g.py=g.groundY-g.petH; g.vy=0; g.onGround=true; }
+  if(g.py >= g.groundY-g.petH){ g.py=g.groundY-g.petH; g.vy=0; g.onGround=true; g.jumps=0; }
   const pl=g.px+5, pr=g.px+g.petW-5;
   for(const o of g.obs){
     const ol=o.x, orr=o.x+o.w, top=g.groundY-o.h;
     if(pl<orr && pr>ol){
-      if(g.vy>=0 && prevFeet<=top+6 && g.py+g.petH>=top){ g.py=top-g.petH; g.vy=0; g.onGround=true; }
+      if(g.vy>=0 && prevFeet<=top+6 && g.py+g.petH>=top){ g.py=top-g.petH; g.vy=0; g.onGround=true; g.jumps=0; }
       else if(g.py+g.petH>top){ endGame(); return; }
     }
   }

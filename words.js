@@ -1,5 +1,5 @@
 /* eiken words + yomi + pos  src:eiken-csv / yomi:pykakasi (一部データ補正済み) */
-const APP_REV = "rev20";
+const APP_REV = "rev21";
 const POS_JA = {"noun": "名詞", "verb": "動詞", "adjective": "形容詞", "adverb": "副詞", "phrase": "熟語", "preposition": "前置詞", "conjunction": "接続詞", "pronoun": "代名詞"};
 const WORDBANK = {
   g3: {
