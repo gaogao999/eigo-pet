@@ -580,17 +580,23 @@ function jump(){ if(game && !game.over && game.onGround){ game.vy=-9.6; game.onG
 function loopGame(){
   const g=game; if(!g || g.over) return;
   g.t++; g.speed += 0.0009;
-  g.vy += 0.55; g.py += g.vy;
-  if(g.py >= g.groundY-g.petH){ g.py=g.groundY-g.petH; g.vy=0; g.onGround=true; }
   if(g.obs.length===0 || (g.W - g.obs[g.obs.length-1].x) > (150+Math.random()*130)){
     g.obs.push({x:g.W, w:14+Math.floor(Math.random()*8), h:18+Math.floor(Math.random()*22)});
   }
   g.obs.forEach(o=>o.x-=g.speed);
   g.obs=g.obs.filter(o=>o.x+o.w>-4);
   g.score=Math.floor(g.t/6);
-  const pb={x:g.px+5, y:g.py+3, w:g.petW-10, h:g.petH-5};
-  for(const o of g.obs){ const oy=g.groundY-o.h;
-    if(pb.x<o.x+o.w && pb.x+pb.w>o.x && pb.y<oy+o.h && pb.y+pb.h>oy){ endGame(); return; }
+  // 物理（重力）＋当たり判定（上面に着地はOK・横からの衝突のみアウト）
+  const prevFeet=g.py+g.petH;
+  g.vy += 0.55; g.py += g.vy; g.onGround=false;
+  if(g.py >= g.groundY-g.petH){ g.py=g.groundY-g.petH; g.vy=0; g.onGround=true; }
+  const pl=g.px+5, pr=g.px+g.petW-5;
+  for(const o of g.obs){
+    const ol=o.x, orr=o.x+o.w, top=g.groundY-o.h;
+    if(pl<orr && pr>ol){
+      if(g.vy>=0 && prevFeet<=top+6 && g.py+g.petH>=top){ g.py=top-g.petH; g.vy=0; g.onGround=true; }
+      else if(g.py+g.petH>top){ endGame(); return; }
+    }
   }
   const ctx=g.ctx;
   ctx.clearRect(0,0,g.W,g.H);
