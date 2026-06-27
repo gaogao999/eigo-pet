@@ -180,29 +180,29 @@ function currentWords(){ return (WORDBANK[state.grade] || WORDBANK.g3).words; }
 const PAL={o:"#4a3526", w:"#faf6ec", g:"#d8cdb2"};
 const EGG=[
 ".....oooo.....","...oowwwwoo...","..owwwwwwwwo..",".owwwwwwwwwwo.",
-".owwwwwwwwwwo.",".owwowwwwowwo.",".owwwwwwwwwwo.",".owowwwwwwowo.",
-".owwwwwwwwwwo.","..owwwwwwwwo..","...oowwwwoo...","....oooooo...."];
+".owwwgwwgwwwo.",".owwwwwwwwwwo.",".owwoowwoowwwo",".owwwoowwwwwo.",
+".owwwwwwwwwwo.","..owwwwwwwwo..","...owwwwwwo...","....oooooo...."];
 const BABY=[
-"......o.......","......o.......","....oooooo....","...owwwwwwo...",
-"..owwwwwwwwo..",".owwoowwoowwo.",".owwwwwwwwwwo.",".owwwwoowwwwo.",
-"..owwwwwwwwo..","...owwwwwwo...","....oooooo...."];
+"......oo......",".....o..o.....","....oooooo....","...owwwwwwo...",
+"..owwwwwwwwo..",".owwoowwwoowwo","owwwwwwwwwwwwo",".owwwggwwwwwo.",
+".owwwoooowwwwo","..owwwwwwwwo..","...owwwwwwo...","....oooooo....","....o.oo.o...."];
 const KID=[
-"...o......o...","...oo....oo...","..oowwwwwwoo..",".owwwwwwwwwwo.",
-".owwoowwwoowo.",".owwwwwwwwwwo.",".owwwooooowwo.",".owwwwwwwwwwo.",
-"..owwwwwwwwo..","...oo.oo.oo...","...o.....o...."];
+"..o........o..","..oo......oo..",".ooowwwwwwooo.",".owwwwwwwwwwwo",
+"owwwoowwwoowwo","owwwwwwwwwwwwo","owwwwoooooowwo","owwwwwwwwwwwwo",
+".owwwwwwwwwwo.","o.owwwwwwwwo.o","...owwwwwwo...","....oooooo....","...oo.oo.oo..."];
 /* おとな（進化分岐3種） */
 const ADULT=[ /* ふつう型 */
 "....o..o......","....o..o......","..oowwwwwwoo..",".owwwwwwwwwwo.",
-"owwwwwwwwwwwwo","owwoowwwwoowwo","owwwwwwwwwwwwo","owwwwooooowwwo",
-"owwwwwwwwwwwwo",".owwwwwwwwwwo.","..owwwwwwwwo..","...oo.oo.oo..."];
+"owwwwwwwwwwwwo","owwoowwwwoowwo","owwwwwwwwwwwwo","owwggwwwwggwwo",
+"owwwwoooowwwwo","owwwwwwwwwwwwo",".owwwwwwwwwwo.","..owwwwwwwwo..","...oo.oo.oo..."];
 const ADULT_GOOD=[ /* よいこ型（ボール付きアンテナ＋にっこり） */
 "...oo..oo.....","....o..o......","..oowwwwwwoo..",".owwwwwwwwwwo.",
-"owwwwwwwwwwwwo","owwoowwwwoowwo","owwwwwwwwwwwwo","owwowooooowowo",
-"owwwwwwwwwwwwo",".owwwwwwwwwwo.","..owwwwwwwwo..","...oo.oo.oo..."];
+"owwwwwwwwwwwwo","owwowwwwwwowwo","owwwwwwwwwwwwo","owwgwwwwwwgwwo",
+"owwwowwwwowwwo","owwwwooooowwwo",".owwwwwwwwwwo.","..owwwwwwwwo..","...oo.oo.oo..."];
 const ADULT_WILD=[ /* わんぱく型（とげとげ＋にやり） */
 "o.o.o..o.o.o..",".o.o.o.o.o.o..","..oowwwwwwoo..",".owwwwwwwwwwo.",
-"owwwwwwwwwwwwo","owowwwwwwwwowo","owwwwwwwwwwwwo","owoooooooowwo.".slice(0,14),
-"owwwwwwwwwwwwo",".owwwwwwwwwwo.","..owwwwwwwwo..","..o.oo..oo.o.."];
+"owwwwwwwwwwwwo","owowwwwwwwwowo","owwwwwwwwwwwwo","owoooooooowwwo",
+"owwwwwwwwwwwwo","oowwwwwwwwwwoo",".owwwwwwwwwwo.","..owwwwwwwwo..","..o.oo..oo.o.."];
 
 function stageKey(){
   if(state.lv>=4) return 'adult_'+(state.adultType||'normal');
@@ -222,10 +222,14 @@ function drawPet(){
   const custom = state.customImg && state.customImg[stageKey()];
   if(custom){ petImg.src=custom; petImg.style.display='block'; petSvg.style.display='none'; return; }
   petImg.style.display='none'; petSvg.style.display='block';
-  const map=petMap(), ps=8; let s='';
+  const map=petMap(), ps=8, BOX=120;
+  const cols=Math.max.apply(null, map.map(r=>r.length)), rows=map.length;
+  const ox=Math.round((BOX-cols*ps)/2), oy=Math.round((BOX-rows*ps)/2);
+  let s='';
   for(let y=0;y<map.length;y++)for(let x=0;x<map[y].length;x++){
-    const c=map[y][x]; if(PAL[c]) s+='<rect x="'+(x*ps)+'" y="'+(y*ps)+'" width="'+ps+'" height="'+ps+'" fill="'+PAL[c]+'"/>';
+    const c=map[y][x]; if(PAL[c]) s+='<rect x="'+(ox+x*ps)+'" y="'+(oy+y*ps)+'" width="'+ps+'" height="'+ps+'" fill="'+PAL[c]+'"/>';
   }
+  petSvg.setAttribute('width',BOX); petSvg.setAttribute('height',BOX); petSvg.setAttribute('viewBox','0 0 '+BOX+' '+BOX);
   petSvg.innerHTML=s;
 }
 
