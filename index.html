@@ -143,7 +143,7 @@
   <div class="care">
     <button class="cbtn" id="bFeed">🍚 ごはん<span class="cnt" id="foodCnt">えさ 0</span></button>
     <button class="cbtn" id="bSnack">🍬 おかし<span class="cnt">たいじゅう+</span></button>
-    <button class="cbtn" id="bPlay">🎮 あそぶ<span class="cnt">むりょう</span></button>
+    <button class="cbtn" id="bPlay">🎮 あそぶ<span class="cnt">えさ1で ゲーム</span></button>
     <button class="cbtn" id="bScold">📏 しつけ<span class="cnt" id="scoldCnt">わがまま時</span></button>
     <button class="cbtn" id="bClean">🧹 そうじ<span class="cnt" id="cleanCnt">きれい</span></button>
   </div>
@@ -211,6 +211,30 @@
     <div id="wlCount" style="font-size:12px; color:#7a8a76; margin-bottom:6px;"></div>
     <div id="wlList"></div>
   </div>
+</section>
+
+<!-- GAME (ジャンプ) -->
+<section id="game" class="screen">
+  <div class="qhead">
+    <button class="back" id="backGame">‹</button>
+    <div class="qprog">ジャンプゲーム</div>
+    <div style="width:34px"></div>
+  </div>
+  <div style="text-align:center; font-size:13px; color:#7a8a76; margin-bottom:8px;">タップで ジャンプ！ しょうがいぶつを よけよう</div>
+  <div style="position:relative;">
+    <canvas id="gcanvas" width="340" height="200" style="width:100%; background:#f1ead7; border:1px solid #e2d8bd; border-radius:14px; display:block; touch-action:manipulation;"></canvas>
+    <div id="gscore" style="position:absolute; top:10px; right:16px; font-size:15px; font-weight:700; color:#4a3526;">0</div>
+    <div id="gover" style="position:absolute; inset:0; display:none; flex-direction:column; align-items:center; justify-content:center; gap:10px; background:rgba(241,234,215,.93); border-radius:14px;">
+      <div style="font-size:18px; font-weight:700;">ゲームオーバー</div>
+      <div id="goverScore" style="font-size:15px;"></div>
+      <div id="goverReward" style="font-size:14px; color:var(--green); font-weight:700;"></div>
+      <div style="display:flex; gap:10px;">
+        <button class="cbtn" id="gRetry" style="padding:10px 18px;">もういちど</button>
+        <button class="cbtn" id="gHome" style="padding:10px 18px;">もどる</button>
+      </div>
+    </div>
+  </div>
+  <button id="gJump" style="width:100%; margin-top:12px; padding:16px; font-size:18px; font-weight:800; background:var(--green); color:#fff; border:none; border-radius:16px; cursor:pointer;">ジャンプ</button>
 </section>
 
 <script src="words.js"></script>
@@ -347,7 +371,7 @@ function load(){
   const def={ name:"ぴよ", lv:1, xp:0, hunger:80, happy:80, food:0, dirty:false,
               streak:1, learned:0, last:today(), grade:"g3",
               discipline:50, weight:5, careMiss:0, disciplineMiss:0, wagamama:false,
-              babyType:null, childType:null, adultType:null, customImg:{} };
+              babyType:null, childType:null, adultType:null, customImg:{}, gameHi:0 };
   s=Object.assign({}, def, s||{});
   if(!WORDBANK[s.grade]) s.grade="g3";
   return s;
@@ -438,8 +462,9 @@ document.getElementById('bSnack').onclick=()=>{
   bubble("おいしい！ でも たいじゅう+"); cheer(); save(); render();
 };
 document.getElementById('bPlay').onclick=()=>{
-  state.happy=Math.min(100,state.happy+18); state.weight=Math.max(5,state.weight-1); addXp(5);
-  bubble("たのしい！"); cheer(); save(); render();
+  if(state.food<=0){ bubble("べんきょうして えさを あつめよう"); return; }
+  state.food--; state.weight=Math.max(5,state.weight-1); save(); render();
+  startGame();
 };
 document.getElementById('bScold').onclick=()=>{
   if(state.wagamama){
@@ -530,6 +555,74 @@ document.getElementById('atabs').onclick=(e)=>{ const b=e.target.closest('.atab'
 
 document.getElementById('openAdmin').onclick=()=>{ renderAdmin(); wlGrade=state.grade; renderWordList(); setAdminTab('zukan'); show('admin'); };
 document.getElementById('backAdmin').onclick=()=>{ show('home'); render(); };
+
+/* ---------- ミニゲーム①：ジャンプ ---------- */
+let game=null;
+function drawPetCanvas(ctx,map,ox,oy,cell){
+  for(let y=0;y<map.length;y++)for(let x=0;x<map[y].length;x++){
+    const c=map[y][x]; if(PAL[c]){ ctx.fillStyle=PAL[c]; ctx.fillRect(ox+x*cell, oy+y*cell, cell, cell); }
+  }
+}
+function startGame(){
+  show('game');
+  document.getElementById('gover').style.display='none';
+  const cv=document.getElementById('gcanvas'), ctx=cv.getContext('2d');
+  const W=cv.width, H=cv.height, groundY=H-26;
+  const map=petMap(), cell=3;
+  const petW=Math.max.apply(null,map.map(r=>r.length))*cell, petH=map.length*cell;
+  if(game) cancelAnimationFrame(game.raf);
+  game={ ctx,W,H,groundY,map,cell,petW,petH,
+    px:34, py:groundY-petH, vy:0, onGround:true,
+    obs:[], speed:2.4, t:0, score:0, over:false, raf:0 };
+  loopGame();
+}
+function jump(){ if(game && !game.over && game.onGround){ game.vy=-9.6; game.onGround=false; } }
+function loopGame(){
+  const g=game; if(!g || g.over) return;
+  g.t++; g.speed += 0.0009;
+  g.vy += 0.55; g.py += g.vy;
+  if(g.py >= g.groundY-g.petH){ g.py=g.groundY-g.petH; g.vy=0; g.onGround=true; }
+  if(g.obs.length===0 || (g.W - g.obs[g.obs.length-1].x) > (150+Math.random()*130)){
+    g.obs.push({x:g.W, w:14+Math.floor(Math.random()*8), h:18+Math.floor(Math.random()*22)});
+  }
+  g.obs.forEach(o=>o.x-=g.speed);
+  g.obs=g.obs.filter(o=>o.x+o.w>-4);
+  g.score=Math.floor(g.t/6);
+  const pb={x:g.px+5, y:g.py+3, w:g.petW-10, h:g.petH-5};
+  for(const o of g.obs){ const oy=g.groundY-o.h;
+    if(pb.x<o.x+o.w && pb.x+pb.w>o.x && pb.y<oy+o.h && pb.y+pb.h>oy){ endGame(); return; }
+  }
+  const ctx=g.ctx;
+  ctx.clearRect(0,0,g.W,g.H);
+  ctx.fillStyle='#e0d3b0'; ctx.fillRect(0,g.groundY,g.W,g.H-g.groundY);
+  ctx.fillStyle='#4a3526'; ctx.fillRect(0,g.groundY,g.W,2);
+  g.obs.forEach(o=>{ ctx.fillStyle='#7a5a2a'; ctx.fillRect(o.x,g.groundY-o.h,o.w,o.h); ctx.fillStyle='#4a3526'; ctx.fillRect(o.x,g.groundY-o.h,o.w,2); });
+  drawPetCanvas(ctx,g.map,g.px,Math.round(g.py),g.cell);
+  document.getElementById('gscore').textContent=g.score;
+  g.raf=requestAnimationFrame(loopGame);
+}
+function endGame(){
+  const g=game; g.over=true; cancelAnimationFrame(g.raf);
+  const sc=g.score;
+  const happyGain=Math.min(30, 6+Math.floor(sc/4));
+  state.happy=Math.min(100, state.happy+happyGain);
+  let eBonus = sc>=40?2 : sc>=20?1 : 0;
+  state.food+=eBonus; addXp(5);
+  if(sc>(state.gameHi||0)) state.gameHi=sc;
+  save();
+  document.getElementById('goverScore').textContent='スコア '+sc+'（さいこう '+state.gameHi+'）';
+  document.getElementById('goverReward').textContent='ごきげん +'+happyGain+(eBonus?' ／ えさ +'+eBonus:'');
+  document.getElementById('gover').style.display='flex';
+}
+function leaveGame(){ if(game){ game.over=true; cancelAnimationFrame(game.raf); } show('home'); render(); }
+(function(){
+  const cv=document.getElementById('gcanvas');
+  cv.addEventListener('pointerdown', (e)=>{ e.preventDefault(); jump(); });
+  document.getElementById('gJump').onclick=jump;
+  document.getElementById('gRetry').onclick=startGame;
+  document.getElementById('gHome').onclick=leaveGame;
+  document.getElementById('backGame').onclick=leaveGame;
+})();
 
 /* ---------- study ---------- */
 let session, qIdx, qList;
