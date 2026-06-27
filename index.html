@@ -125,6 +125,16 @@
   .tab.sel .ti{ filter:none; }
   .tab:active{ transform:scale(.95); }
   body.hastab .screen.on{ padding-bottom:78px; }
+  .goalcard{ display:flex; align-items:center; gap:14px; background:var(--card); border:1px solid var(--line); border-radius:16px; padding:14px; margin-bottom:14px; }
+  #ringFg{ transition:stroke-dashoffset .5s; }
+  .goalinfo{ flex:1; }
+  .weekdots{ display:flex; gap:5px; }
+  .wdot{ flex:1; text-align:center; font-size:10px; font-weight:700; color:#aab4a4; background:#eef2e8; border-radius:6px; padding:3px 0; }
+  .wdot.met{ background:#3fb98a; color:#fff; }
+  .goalset{ text-align:center; margin-top:16px; font-size:13px; color:#7a8a76; font-weight:700; }
+  .goalbtn{ border:1px solid var(--line); background:var(--card); border-radius:10px; padding:5px 12px; margin-left:6px; font-size:14px; font-weight:700; color:#7a8a76; cursor:pointer; }
+  .goalbtn.sel{ background:var(--green); color:#fff; border-color:var(--green); }
+  #nudge{ display:none; text-align:center; background:#fff7e8; border:1px solid #f0e3c4; border-radius:14px; padding:10px 12px; margin-top:12px; font-size:13px; font-weight:700; color:#b88a2a; cursor:pointer; }
 </style>
 </head>
 <body>
@@ -164,6 +174,7 @@
     <button class="cbtn" id="bClean">🧹 そうじ<span class="cnt" id="cleanCnt">きれい</span></button>
   </div>
 
+  <div id="nudge"></div>
   <div style="text-align:center; margin-top:14px; font-size:13px; color:#7a8a76; font-weight:700;">
     たいじゅう <span id="weight">5</span>g ／ 🔥 <span id="streak">1</span>にち つづけてるよ
   </div>
@@ -172,16 +183,33 @@
 
 <!-- LEARN -->
 <section id="learn" class="screen">
-  <h2 style="font-size:20px; margin:6px 0 4px;">がくしゅう</h2>
-  <p style="font-size:13px; color:#7a8a76; margin:0 0 12px;">きゅうを えらんで、えいごの クイズに ちょうせん！</p>
+  <h2 style="font-size:20px; margin:6px 0 10px;">がくしゅう</h2>
+
+  <div class="goalcard">
+    <svg viewBox="0 0 80 80" width="84" height="84" class="ring">
+      <circle cx="40" cy="40" r="32" fill="none" stroke="#e3efdd" stroke-width="8"/>
+      <circle id="ringFg" cx="40" cy="40" r="32" fill="none" stroke="#3fb98a" stroke-width="8" stroke-linecap="round"
+              stroke-dasharray="201" stroke-dashoffset="201" transform="rotate(-90 40 40)"/>
+      <text id="ringText" x="40" y="46" text-anchor="middle" font-size="17" font-weight="800" fill="#3b6d3b">0/20</text>
+    </svg>
+    <div class="goalinfo">
+      <div style="font-size:13px; color:#7a8a76; font-weight:700;">きょうの もくひょう</div>
+      <div id="goalMsg" style="font-size:16px; font-weight:800; color:var(--green); margin:2px 0 8px;">あと 20こ！</div>
+      <div class="weekdots" id="weekdots"></div>
+      <div style="font-size:13px; color:#7a8a76; font-weight:700; margin-top:6px;">🔥 <span id="streakL">0</span>にち れんぞく ／ おぼえた <span id="learned">0</span>こ</div>
+    </div>
+  </div>
+
   <div class="grades" id="grades">
     <button class="gbtn" data-g="g3">英検3級</button>
     <button class="gbtn" data-g="jun2">英検準2級</button>
     <button class="gbtn" data-g="g2">英検2級</button>
   </div>
   <button class="study-btn" id="goStudy">📚 えいごの べんきょう</button>
-  <div style="text-align:center; margin-top:16px; font-size:14px; color:#7a8a76; font-weight:700;">
-    🔥 <span id="streakL">1</span>にち れんぞく ／ おぼえた <span id="learned">0</span>こ
+  <div class="goalset" id="goalset">1にちの もくひょう：
+    <button class="goalbtn" data-goal="10">10</button>
+    <button class="goalbtn" data-goal="20">20</button>
+    <button class="goalbtn" data-goal="30">30</button>
   </div>
 </section>
 
@@ -263,6 +291,16 @@
   </div>
   <button id="gJump" style="width:100%; margin-top:12px; padding:16px; font-size:18px; font-weight:800; background:var(--green); color:#fff; border:none; border-radius:16px; cursor:pointer;">ジャンプ</button>
 </section>
+
+<div id="goalCele" style="display:none; position:fixed; inset:0; z-index:100; background:rgba(40,40,30,.55); align-items:center; justify-content:center; padding:24px;">
+  <div style="background:var(--card); border-radius:20px; padding:26px 22px; text-align:center; max-width:300px; width:100%;">
+    <div style="font-size:44px;">🎉</div>
+    <div style="font-size:19px; font-weight:800; color:var(--green); margin:8px 0 4px;">きょうの もくひょう たっせい！</div>
+    <div id="celeMsg" style="font-size:14px; color:var(--ink); line-height:1.6;"></div>
+    <div id="celeReward" style="font-size:14px; color:var(--green); font-weight:700; margin-top:10px;"></div>
+    <button id="celeClose" style="margin-top:16px; width:100%; padding:14px; border:none; border-radius:14px; background:var(--green); color:#fff; font-size:17px; font-weight:800; cursor:pointer;">やったー！</button>
+  </div>
+</div>
 
 <nav id="tabbar">
   <button class="tab sel" data-s="home"><span class="ti">🐣</span>そだてる</button>
@@ -405,22 +443,28 @@ function load(){
   const def={ name:"ぴよ", lv:1, xp:0, hunger:80, happy:80, food:0, dirty:false,
               streak:1, learned:0, last:today(), grade:"g3",
               discipline:50, weight:5, careMiss:0, disciplineMiss:0, wagamama:false,
-              babyType:null, childType:null, adultType:null, customImg:{}, gameHi:0 };
+              babyType:null, childType:null, adultType:null, customImg:{}, gameHi:0,
+              dailyGoal:20, todayDate:today(), todayWords:[], lastGoalDate:null, metDates:[] };
   s=Object.assign({}, def, s||{});
   if(!WORDBANK[s.grade]) s.grade="g3";
   return s;
 }
 function save(){ localStorage.setItem(KEY, JSON.stringify(state)); }
 
+const dayStr=(d)=> d.toISOString().slice(0,10);
+function yesterday(){ const d=new Date(today()); d.setDate(d.getDate()-1); return dayStr(d); }
+function todayDone(){ return (state.todayDate===today()) && (state.todayWords.length>=state.dailyGoal); }
+function displayStreak(){ return (state.lastGoalDate===today() || state.lastGoalDate===yesterday()) ? state.streak : 0; }
+function todayCount(){ return (state.todayDate===today()) ? state.todayWords.length : 0; }
+
 function applyDaily(){
+  if(state.todayDate!==today()){ state.todayDate=today(); state.todayWords=[]; }
   if(state.last===today()) return;
   const prev=new Date(state.last), now=new Date(today());
   const diff=Math.round((now-prev)/86400000);
-  state.streak = (diff===1)? state.streak+1 : 1;
   state.hunger=Math.max(0, state.hunger - 30*Math.min(diff,3));
   state.happy =Math.max(0, state.happy  - 20*Math.min(diff,3));
   state.discipline=Math.max(0, state.discipline - 5*Math.min(diff,3));
-  // おなか/ごきげんが空のまま放置 → お世話ミス
   if(state.hunger===0) state.careMiss++;
   if(state.happy===0) state.careMiss++;
   state.last=today();
@@ -465,14 +509,42 @@ function render(){
   document.getElementById('foodCnt').textContent='えさ '+state.food;
   document.getElementById('cleanCnt').textContent=state.dirty?'よごれてる':'きれい';
   document.getElementById('scoldCnt').textContent=state.wagamama?'いまだ！':'わがまま時';
-  document.getElementById('streak').textContent=state.streak;
-  document.getElementById('streakL').textContent=state.streak;
   document.getElementById('learned').textContent=state.learned;
   document.getElementById('weight').textContent=Math.round(state.weight);
   document.getElementById('poop').style.display=state.dirty?'block':'none';
   document.getElementById('wagamark').style.display=(state.wagamama && state.lv>=2)?'block':'none';
   document.querySelectorAll('.gbtn').forEach(b=> b.classList.toggle('sel', b.dataset.g===state.grade));
   drawPet();
+  renderGoal();
+}
+function renderGoal(){
+  const goal=state.dailyGoal, done=todayCount(), circ=201, pct=Math.min(1, done/goal);
+  const fg=document.getElementById('ringFg'); if(fg) fg.setAttribute('stroke-dashoffset', Math.round(circ*(1-pct)));
+  const rt=document.getElementById('ringText'); if(rt) rt.textContent=done+'/'+goal;
+  const msg=document.getElementById('goalMsg');
+  if(msg){ if(done>=goal){ msg.textContent='🎉 たっせい！'; msg.style.color='#1f7a44'; }
+           else { msg.textContent='あと '+(goal-done)+'こ！'; msg.style.color='var(--green)'; } }
+  const ds=displayStreak();
+  const sl=document.getElementById('streakL'); if(sl) sl.textContent=ds;
+  const sh=document.getElementById('streak'); if(sh) sh.textContent=ds;
+  const wd=document.getElementById('weekdots');
+  if(wd){ let h=''; const W='日月火水木金土';
+    for(let i=6;i>=0;i--){ const d=new Date(today()); d.setDate(d.getDate()-i); const dd=dayStr(d);
+      const met = state.metDates.indexOf(dd)>=0 || (dd===today() && done>=goal);
+      h+='<div class="wdot'+(met?' met':'')+'">'+W[d.getDay()]+'</div>'; }
+    wd.innerHTML=h; }
+  document.querySelectorAll('.goalbtn').forEach(b=> b.classList.toggle('sel', (+b.dataset.goal)===state.dailyGoal));
+  // ホームの うながし
+  const nd=document.getElementById('nudge');
+  if(nd){ if(done>=goal){ nd.style.display='none'; }
+    else { nd.style.display='block';
+      nd.textContent = done>0 ? ('きょうは あと '+(goal-done)+'こ！ がくしゅうしよう →') : ('きょうの べんきょうを はじめよう！ →'); } }
+}
+function showGoalCelebration(){
+  document.getElementById('celeMsg').innerHTML='きょう '+state.dailyGoal+'こ おぼえたよ！<br>🔥 '+displayStreak()+'にち れんぞく';
+  document.getElementById('celeReward').textContent='ごほうび：えさ +5 ／ ごきげん まんたん';
+  document.getElementById('goalCele').style.display='flex';
+  cheer();
 }
 let bubT;
 function bubble(t){
@@ -685,6 +757,9 @@ function gotoTab(s){
   show(s); render();
 }
 document.getElementById('tabbar').onclick=(e)=>{ const b=e.target.closest('.tab'); if(!b) return; gotoTab(b.dataset.s); };
+document.getElementById('goalset').onclick=(e)=>{ const b=e.target.closest('.goalbtn'); if(!b) return; state.dailyGoal=+b.dataset.goal; save(); renderGoal(); };
+document.getElementById('celeClose').onclick=()=>{ document.getElementById('goalCele').style.display='none'; render(); };
+document.getElementById('nudge').onclick=()=> gotoTab('learn');
 document.getElementById('goStudy').onclick=startStudy;
 document.getElementById('back').onclick=()=>{ show('learn'); render(); };
 
@@ -743,11 +818,28 @@ function nextQ(){
   });
   speak(en);
 }
+function recordLearned(en){
+  if(state.todayDate!==today()){ state.todayDate=today(); state.todayWords=[]; }
+  const k=en.toLowerCase(), already=state.todayWords.indexOf(k)>=0;
+  if(!already) state.todayWords.push(k);
+  // 目標に たっした しゅんかん
+  if(!already && state.todayWords.length===state.dailyGoal){ onGoalReached(); }
+}
+function onGoalReached(){
+  if(state.lastGoalDate!==today()){
+    state.streak = (state.lastGoalDate===yesterday()) ? state.streak+1 : 1;
+    state.lastGoalDate=today();
+    if(state.metDates.indexOf(today())<0) state.metDates.push(today());
+    if(state.metDates.length>40) state.metDates=state.metDates.slice(-40);
+  }
+  state.food+=5; state.happy=100; addXp(20);
+  setTimeout(showGoalCelebration, 850);
+}
 function answer(btn, ok, en){
   if(btn.classList.contains('ok')||btn.classList.contains('ng')) return;
   if(ok){
     btn.classList.add('ok');
-    session.correct++; state.food++; state.learned++; addXp(8);
+    session.correct++; state.food++; state.learned++; addXp(8); recordLearned(en);
     document.getElementById('reward').textContent='せいかい！ えさ +1';
     save();
     setTimeout(()=>{ qIdx++; nextQ(); }, 800);
