@@ -114,6 +114,17 @@
   .tlabel{ font-size:12px; font-weight:700; }
   .tarrow{ text-align:center; color:#b7c3b2; font-size:20px; line-height:1; margin:6px 0; }
   .trow{ display:flex; justify-content:space-around; gap:6px; }
+  #tabbar{ position:fixed; left:0; right:0; bottom:0; z-index:50; display:none;
+           grid-template-columns:repeat(3,1fr); background:var(--card);
+           border-top:1px solid var(--line); padding:6px 0 calc(6px + env(safe-area-inset-bottom)); }
+  #tabbar.on{ display:grid; }
+  .tab{ border:none; background:transparent; display:flex; flex-direction:column; align-items:center; gap:2px;
+        font-size:11px; font-weight:700; color:#9aa896; cursor:pointer; padding:4px 0; }
+  .tab .ti{ font-size:22px; line-height:1; filter:grayscale(1) opacity(.6); }
+  .tab.sel{ color:var(--green); }
+  .tab.sel .ti{ filter:none; }
+  .tab:active{ transform:scale(.95); }
+  body.hastab .screen.on{ padding-bottom:78px; }
 </style>
 </head>
 <body>
@@ -123,7 +134,6 @@
   <div class="topbar">
     <div class="name" id="petName">ぴよ</div>
     <div class="stage">
-      <button id="openAdmin" aria-label="せってい" style="border:1px solid var(--line); background:var(--card); border-radius:999px; padding:3px 10px; font-size:14px; font-weight:700; color:var(--green); cursor:pointer;">⚙️</button>
       <span class="badge" id="stageBadge">あかちゃん</span>
       <span class="pill">Lv.<span id="lv">1</span></span>
     </div>
@@ -154,16 +164,25 @@
     <button class="cbtn" id="bClean">🧹 そうじ<span class="cnt" id="cleanCnt">きれい</span></button>
   </div>
 
+  <div style="text-align:center; margin-top:14px; font-size:13px; color:#7a8a76; font-weight:700;">
+    たいじゅう <span id="weight">5</span>g ／ 🔥 <span id="streak">1</span>にち つづけてるよ
+  </div>
+  <div id="rev" style="text-align:center; margin-top:8px; font-size:11px; color:#b7c3b2;"></div>
+</section>
+
+<!-- LEARN -->
+<section id="learn" class="screen">
+  <h2 style="font-size:20px; margin:6px 0 4px;">がくしゅう</h2>
+  <p style="font-size:13px; color:#7a8a76; margin:0 0 12px;">きゅうを えらんで、えいごの クイズに ちょうせん！</p>
   <div class="grades" id="grades">
     <button class="gbtn" data-g="g3">英検3級</button>
     <button class="gbtn" data-g="jun2">英検準2級</button>
     <button class="gbtn" data-g="g2">英検2級</button>
   </div>
   <button class="study-btn" id="goStudy">📚 えいごの べんきょう</button>
-  <div style="text-align:center; margin-top:12px; font-size:13px; color:#7a8a76; font-weight:700;">
-    🔥 <span id="streak">1</span>にち ／ おぼえた <span id="learned">0</span>こ ／ たいじゅう <span id="weight">5</span>g
+  <div style="text-align:center; margin-top:16px; font-size:14px; color:#7a8a76; font-weight:700;">
+    🔥 <span id="streakL">1</span>にち れんぞく ／ おぼえた <span id="learned">0</span>こ
   </div>
-  <div id="rev" style="text-align:center; margin-top:8px; font-size:11px; color:#b7c3b2;"></div>
 </section>
 
 <!-- STUDY -->
@@ -244,6 +263,12 @@
   </div>
   <button id="gJump" style="width:100%; margin-top:12px; padding:16px; font-size:18px; font-weight:800; background:var(--green); color:#fff; border:none; border-radius:16px; cursor:pointer;">ジャンプ</button>
 </section>
+
+<nav id="tabbar">
+  <button class="tab sel" data-s="home"><span class="ti">🐣</span>そだてる</button>
+  <button class="tab" data-s="learn"><span class="ti">📚</span>がくしゅう</button>
+  <button class="tab" data-s="admin"><span class="ti">⚙️</span>せってい</button>
+</nav>
 
 <script src="words.js"></script>
 <script src="easy.js"></script>
@@ -441,6 +466,7 @@ function render(){
   document.getElementById('cleanCnt').textContent=state.dirty?'よごれてる':'きれい';
   document.getElementById('scoldCnt').textContent=state.wagamama?'いまだ！':'わがまま時';
   document.getElementById('streak').textContent=state.streak;
+  document.getElementById('streakL').textContent=state.streak;
   document.getElementById('learned').textContent=state.learned;
   document.getElementById('weight').textContent=Math.round(state.weight);
   document.getElementById('poop').style.display=state.dirty?'block':'none';
@@ -565,8 +591,7 @@ function setAdminTab(t){
 }
 document.getElementById('atabs').onclick=(e)=>{ const b=e.target.closest('.atab'); if(!b) return; setAdminTab(b.dataset.t); };
 
-document.getElementById('openAdmin').onclick=()=>{ renderAdmin(); wlGrade=state.grade; renderWordList(); setAdminTab('zukan'); show('admin'); };
-document.getElementById('backAdmin').onclick=()=>{ show('home'); render(); };
+document.getElementById('backAdmin').onclick=()=>{ gotoTab('home'); };
 
 /* ---------- ミニゲーム①：ジャンプ ---------- */
 let game=null;
@@ -644,13 +669,24 @@ function leaveGame(){ if(game){ game.over=true; cancelAnimationFrame(game.raf); 
 
 /* ---------- study ---------- */
 let session, qIdx, qList;
+const MAIN_TABS=['home','learn','admin'];
 function show(id){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));
   document.getElementById(id).classList.add('on');
+  const tb=document.getElementById('tabbar');
+  if(MAIN_TABS.includes(id)){
+    tb.classList.add('on');
+    document.querySelectorAll('#tabbar .tab').forEach(b=> b.classList.toggle('sel', b.dataset.s===id));
+  } else { tb.classList.remove('on'); }
   window.scrollTo(0,0);
 }
+function gotoTab(s){
+  if(s==='admin'){ renderAdmin(); wlGrade=state.grade; renderWordList(); setAdminTab('zukan'); }
+  show(s); render();
+}
+document.getElementById('tabbar').onclick=(e)=>{ const b=e.target.closest('.tab'); if(!b) return; gotoTab(b.dataset.s); };
 document.getElementById('goStudy').onclick=startStudy;
-document.getElementById('back').onclick=()=>{ show('home'); render(); };
+document.getElementById('back').onclick=()=>{ show('learn'); render(); };
 
 function shuffle(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){const j=(Math.random()*(i+1))|0;[a[i],a[j]]=[a[j],a[i]];} return a; }
 function startStudy(){
@@ -763,6 +799,8 @@ setInterval(()=>{ if(homeVisible() && !state.wagamama && Math.random()<0.5) trig
 
 /* ---------- boot ---------- */
 applyDaily();
+document.body.classList.add('hastab');
+show('home');
 render();
 try{ document.getElementById('rev').textContent = 'バージョン '+(typeof APP_REV!=='undefined'?APP_REV:'?'); }catch(e){}
 </script>
