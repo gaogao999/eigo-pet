@@ -663,7 +663,8 @@ function choiceHtml(w){
 /* やさしいいみ：EASY(easy.js)に あれば つかい、なければ ひらがなで かんたんに */
 function firstSenseKana(w){ const s=(w[2]||w[1]||''); return s.split(/[，,、]/)[0].trim(); }
 function easyText(w){
-  const e=(typeof EASY!=='undefined') ? EASY[(w[0]||'').toLowerCase()] : null;
+  const k=(w[0]||'');
+  const e=(typeof EASY!=='undefined') ? (EASY[k] || EASY[k.toLowerCase()]) : null;
   return e || firstSenseKana(w);
 }
 function showEasy(w){
