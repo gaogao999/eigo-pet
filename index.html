@@ -85,6 +85,9 @@
   .gcard{ background:var(--card); border:1px solid var(--line); border-radius:14px; padding:8px; text-align:center; }
   .gsprite{ height:84px; border-radius:10px; background:#f1ead7; display:flex; align-items:center; justify-content:center; }
   .gname{ font-size:13px; font-weight:700; margin-top:6px; }
+  .gdesc{ font-size:11px; color:#7a8a76; line-height:1.4; margin-top:3px; }
+  .eohead{ display:grid; grid-template-columns:1fr 1fr; gap:6px; margin:8px 0 4px; text-align:center; font-size:11px; font-weight:700; color:#7a8a76; }
+  .tiertag{ font-size:12px; font-weight:700; color:var(--green); margin:10px 0 2px; text-align:center; }
   .tnode{ display:flex; flex-direction:column; align-items:center; gap:3px; }
   .tsprite{ width:64px; height:64px; border-radius:12px; background:#f1ead7; display:flex; align-items:center; justify-content:center; }
   .tnode.small .tsprite{ width:52px; height:52px; }
@@ -211,14 +214,41 @@ const ADULT_WILD=[ /* わんぱく型（とげとげ＋にやり） */
 "o.o.o..o.o.o..",".o.o.o.o.o.o..","..oowwwwwwoo..",".owwwwwwwwwwo.",
 "owwwwwwwwwwwwo","owowwwwwwwwowo","owwwwwwwwwwwwo","owoooooooowwwo",
 "owwwwwwwwwwwwo","oowwwwwwwwwwoo",".owwwwwwwwwwo.","..owwwwwwwwo..","..o.oo..oo.o.."];
+/* ODD側（きすう）の3体 */
+const ADULT_GOOD2=[ /* よいこ・ODD（おはな） */
+"....o.o.o.....",".....ooo......","..oowwwwwwoo..",".owwwwwwwwwwo.",
+"owwwwwwwwwwwwo","owwowwwwwwowwo","owwwwwwwwwwwwo","owwwgwwwwgwwwo",
+"owwwwoooowwwwo","owwwwwwwwwwwwo",".owwwwwwwwwwo.","..owwwwwwwwo..","...oo.oo.oo..."];
+const ADULT_NORMAL2=[ /* ふつう・ODD（1本アンテナ・おっとり） */
+".......o......",".......o......","..oowwwwwwoo..",".owwwwwwwwwwo.",
+"owwwwwwwwwwwwo","owwoowwwwoowwo","owwwwwwwwwwwwo","owwwwwwwwwwwwo",
+"owwwoowwwoowwo","owwwwwwwwwwwwo",".owwwwwwwwwwo.","..owwwwwwwwo..","...o.o..o.o..."];
+const ADULT_WILD2=[ /* わんぱく・ODD（つの） */
+".oo......oo...","..oo....oo....","..oowwwwwwoo..",".owwwwwwwwwwo.",
+"owwwwwwwwwwwwo","owooowwwwooowo","owwwwwwwwwwwwo","owoooooooowwwo",
+"owwwwwwwwwwwwo",".owwwwwwwwwwo.","..owwwwwwwwo..","..oo.oo..oo...",".............."];
 
+const ADULTS={
+  good_e:  {map:ADULT_GOOD,    name:'ニコリ',  desc:'れいぎ ただしい よいこ。みんなに やさしい。'},
+  good_o:  {map:ADULT_GOOD2,   name:'ハナミ',  desc:'おはなが だいすき。のんびりやさん。'},
+  normal_e:{map:ADULT,         name:'マルオ',  desc:'げんきで すなおな ふつうの子。'},
+  normal_o:{map:ADULT_NORMAL2, name:'ポヨン',  desc:'おっとり マイペース。たべるの だいすき。'},
+  wild_e:  {map:ADULT_WILD,    name:'トゲオ',  desc:'やんちゃで げんきいっぱい。いたずらっ子。'},
+  wild_o:  {map:ADULT_WILD2,   name:'ツノマル',desc:'まけずぎらいの あばれんぼう。'}
+};
+function adultInfo(){
+  let k=state.adultType;
+  if(ADULTS[k]) return ADULTS[k];
+  if(k && ADULTS[k+'_e']) return ADULTS[k+'_e']; /* 旧データ移行 */
+  return ADULTS.normal_e;
+}
 function stageKey(){
   if(state.lv>=4) return 'adult_'+(state.adultType||'normal');
   if(state.lv>=3) return 'child';
   if(state.lv>=2) return 'baby';
   return 'egg';
 }
-function adultMap(){ return state.adultType==='good'?ADULT_GOOD : state.adultType==='wild'?ADULT_WILD : ADULT; }
+function adultMap(){ return adultInfo().map; }
 function petMap(){
   if(state.lv>=4) return adultMap();
   if(state.lv>=3) return KID;
@@ -280,8 +310,10 @@ function addXp(n){
     state.xp-=need(); state.lv++;
     if(state.lv===4 && !state.adultType){
       const miss=state.careMiss + state.disciplineMiss;
-      state.adultType = miss<=1 ? 'good' : miss<=4 ? 'normal' : 'wild';
-      bubble("おとなになった！ "+(state.adultType==='good'?'よいこ':state.adultType==='wild'?'わんぱく':'ふつう')+"タイプ");
+      const tier = miss<=1 ? 'good' : miss<=4 ? 'normal' : 'wild';
+      const parity = (state.learned % 2 === 0) ? 'e' : 'o';
+      state.adultType = tier+'_'+parity;
+      bubble("おとなになった！ "+adultInfo().name);
     } else {
       bubble(stageName()+"になった！");
     }
@@ -289,7 +321,7 @@ function addXp(n){
   if(state.lv>=5) state.xp=Math.min(state.xp, need());
 }
 function stageName(){
-  if(state.lv>=4){ return state.adultType==='good'?"おとな(よいこ)" : state.adultType==='wild'?"おとな(わんぱく)" : "おとな"; }
+  if(state.lv>=4) return "おとな（"+adultInfo().name+"）";
   if(state.lv>=3) return "こども";
   if(state.lv>=2) return "あかちゃん";
   return "タマゴ";
@@ -375,23 +407,37 @@ function spriteSVG(map, cell){
   }
   return '<svg width="'+(cols*cell)+'" height="'+(rows*cell)+'" viewBox="0 0 '+(cols*cell)+' '+(rows*cell)+'" shape-rendering="crispEdges">'+s+'</svg>';
 }
-const ALL_CHARS=[[EGG,'タマゴ'],[BABY,'あかちゃん'],[KID,'こども'],
-  [ADULT_GOOD,'おとな（よいこ）'],[ADULT,'おとな（ふつう）'],[ADULT_WILD,'おとな（わんぱく）']];
+const ALL_CHARS=[
+  [EGG,'タマゴ','もうすぐ うまれるよ。たいせつに あたためてね。'],
+  [BABY,'あかちゃん','うまれたて。よく たべて よく ねる。'],
+  [KID,'こども','げんきに そだちちゅう。あそぶのが だいすき。'],
+  [ADULTS.good_e.map,  'ニコリ（よいこ）',   ADULTS.good_e.desc],
+  [ADULTS.good_o.map,  'ハナミ（よいこ）',   ADULTS.good_o.desc],
+  [ADULTS.normal_e.map,'マルオ（ふつう）',   ADULTS.normal_e.desc],
+  [ADULTS.normal_o.map,'ポヨン（ふつう）',   ADULTS.normal_o.desc],
+  [ADULTS.wild_e.map,  'トゲオ（わんぱく）', ADULTS.wild_e.desc],
+  [ADULTS.wild_o.map,  'ツノマル（わんぱく）',ADULTS.wild_o.desc]
+];
 function tnode(map, label, small){
   return '<div class="tnode'+(small?' small':'')+'"><div class="tsprite">'+spriteSVG(map,small?3:4)+'</div><div class="tlabel">'+label+'</div></div>';
 }
 function renderAdmin(){
   const g=document.getElementById('adminGallery'); g.innerHTML='';
-  ALL_CHARS.forEach(([m,n])=>{
+  ALL_CHARS.forEach(([m,n,d])=>{
     const card=document.createElement('div'); card.className='gcard';
-    card.innerHTML='<div class="gsprite">'+spriteSVG(m,5)+'</div><div class="gname">'+n+'</div>';
+    card.innerHTML='<div class="gsprite">'+spriteSVG(m,5)+'</div><div class="gname">'+n+'</div><div class="gdesc">'+d+'</div>';
     g.appendChild(card);
   });
-  document.getElementById('adminTree').innerHTML =
+  let tree =
     tnode(EGG,'タマゴ')+'<div class="tarrow">↓</div>'+
     tnode(BABY,'あかちゃん')+'<div class="tarrow">↓</div>'+
     tnode(KID,'こども')+'<div class="tarrow">↓ わかれる</div>'+
-    '<div class="trow">'+tnode(ADULT_GOOD,'よいこ',true)+tnode(ADULT,'ふつう',true)+tnode(ADULT_WILD,'わんぱく',true)+'</div>';
+    '<div class="eohead"><span>EVEN（おぼえた数が ぐうすう）</span><span>ODD（きすう）</span></div>';
+  [['good','よいこ'],['normal','ふつう'],['wild','わんぱく']].forEach(([t,tl])=>{
+    tree += '<div class="tiertag">'+tl+'（せわ・しつけ '+(t==='good'?'◎':t==='normal'?'○':'△')+'）</div>'+
+      '<div class="trow">'+tnode(ADULTS[t+'_e'].map, ADULTS[t+'_e'].name, true)+tnode(ADULTS[t+'_o'].map, ADULTS[t+'_o'].name, true)+'</div>';
+  });
+  document.getElementById('adminTree').innerHTML = tree;
 }
 document.getElementById('openAdmin').onclick=()=>{ renderAdmin(); show('admin'); };
 document.getElementById('backAdmin').onclick=()=>{ show('home'); render(); };

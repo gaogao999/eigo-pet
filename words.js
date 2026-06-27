@@ -1,5 +1,5 @@
 /* eiken words + yomi(hiragana) + pos  src:eiken-csv / yomi:pykakasi */
-const APP_REV = "rev14";
+const APP_REV = "rev15";
 const POS_JA = {"noun": "名詞", "verb": "動詞", "adjective": "形容詞", "adverb": "副詞", "phrase": "熟語", "preposition": "前置詞", "conjunction": "接続詞", "pronoun": "代名詞"};
 const WORDBANK = {
   g3: {
