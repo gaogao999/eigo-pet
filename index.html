@@ -75,8 +75,9 @@
   .choices{ display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:20px; }
   .ch{ border:1px solid var(--line); background:var(--card); border-radius:18px; padding:16px 10px; font-size:17px; font-weight:700; color:var(--ink); cursor:pointer; min-height:60px; display:flex; align-items:center; justify-content:center; text-align:center; line-height:1.3; word-break:break-word; }
   .ch:active{ transform:scale(.97); }
-  .ch ruby rt{ font-size:11px; font-weight:400; color:#8a9a86; }
-  .ch.ok ruby rt, .ch.ng ruby rt{ color:inherit; opacity:.75; }
+  .ch ruby{ ruby-align:center; }
+  .ch ruby rt{ font-size:9px; line-height:1; font-weight:400; color:#8a9a86; letter-spacing:-.3px; }
+  .ch.ok ruby rt, .ch.ng ruby rt{ color:inherit; opacity:.7; }
   .ch.ok{ background:#e1f5e7; border-color:#aee3bf; color:#1f7a44; }
   .ch.ng{ background:#fdeaea; border-color:#f3c4c4; color:#b23b3b; }
   .reward{ text-align:center; margin-top:20px; font-size:16px; font-weight:700; color:var(--green); min-height:22px; }
