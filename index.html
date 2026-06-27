@@ -309,9 +309,24 @@ function finishStudy(){
   bubble('えさ '+session.correct+'こ ゲット！');
   show('home'); cheer(); render();
 }
+let enVoice=null;
+function pickVoice(){
+  const vs=(window.speechSynthesis?speechSynthesis.getVoices():[]).filter(v=>/^en[-_]?/i.test(v.lang));
+  if(!vs.length) return null;
+  // prefer known natural English voices, then any en-US
+  const pref=['Samantha','Karen','Daniel','Aaron','Moira','Tessa','Serena','Allison','Ava','Nicky','Google US English','Microsoft'];
+  for(const name of pref){ const v=vs.find(v=>v.name.includes(name)); if(v) return v; }
+  return vs.find(v=>/en[-_]US/i.test(v.lang)) || vs[0];
+}
+function ensureVoice(){ if(!enVoice) enVoice=pickVoice(); return enVoice; }
+if(window.speechSynthesis){ speechSynthesis.onvoiceschanged=()=>{ enVoice=pickVoice(); }; ensureVoice(); }
 function speak(en){
   try{
-    const u=new SpeechSynthesisUtterance(en); u.lang='en-US'; u.rate=0.85;
+    if(!window.speechSynthesis) return;
+    const u=new SpeechSynthesisUtterance(en);
+    const v=ensureVoice();
+    if(v){ u.voice=v; u.lang=v.lang; } else { u.lang='en-US'; }
+    u.rate=0.8; u.pitch=1.0;
     speechSynthesis.cancel(); speechSynthesis.speak(u);
   }catch(e){}
 }
