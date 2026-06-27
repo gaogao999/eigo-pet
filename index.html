@@ -99,8 +99,10 @@
   .tiertag{ font-size:12px; font-weight:700; color:var(--green); margin:10px 0 2px; text-align:center; }
   .wlgrades{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
   #wlList{ max-height:60vh; overflow-y:auto; border:1px solid var(--line); border-radius:12px; }
-  .wlrow{ display:flex; align-items:center; justify-content:space-between; gap:10px; padding:9px 12px; border-bottom:1px solid var(--line); }
+  .wlrow{ display:flex; flex-direction:column; gap:5px; padding:9px 12px; border-bottom:1px solid var(--line); }
   .wlrow:last-child{ border-bottom:none; }
+  .wltop{ display:flex; align-items:center; justify-content:space-between; gap:10px; }
+  .wleasy{ font-size:13px; color:#1f7a44; background:#f3f9ec; border-radius:8px; padding:5px 9px; }
   .wlen{ font-size:16px; font-weight:700; }
   .wlpos{ font-size:10px; font-weight:700; color:#7a8a76; background:#eef2e8; border-radius:6px; padding:1px 6px; margin-left:6px; }
   .wlja{ text-align:right; }
@@ -540,12 +542,15 @@ function renderWordList(){
   const q = (document.getElementById('wlSearch').value||'').trim().toLowerCase();
   const list = q ? words.filter(w=> w[0].toLowerCase().indexOf(q)>=0 || (w[1]||'').indexOf(q)>=0 || (w[2]||'').indexOf(q)>=0 ) : words;
   document.getElementById('wlCount').textContent = list.length+' ご';
+  const EZ = (typeof EASY!=='undefined') ? EASY : {};
   let html='';
   for(let i=0;i<list.length;i++){
     const w=list[i], pos=POS_JA[w[3]]||w[3]||'';
     const yomi = w[2] ? '<span class="wlyomi">'+escJa(w[2])+'</span>' : '';
-    html += '<div class="wlrow"><div class="wlen">'+escJa(w[0])+(pos?'<span class="wlpos">'+pos+'</span>':'')+'</div>'+
-            '<div class="wlja">'+yomi+'<span>'+escJa(w[1])+'</span></div></div>';
+    const ez = EZ[w[0]] || EZ[w[0].toLowerCase()];
+    const easyLine = ez ? '<div class="wleasy">やさしく：'+escJa(ez)+'</div>' : '';
+    html += '<div class="wlrow"><div class="wltop"><div class="wlen">'+escJa(w[0])+(pos?'<span class="wlpos">'+pos+'</span>':'')+'</div>'+
+            '<div class="wlja">'+yomi+'<span>'+escJa(w[1])+'</span></div></div>'+easyLine+'</div>';
   }
   document.getElementById('wlList').innerHTML = html;
   document.querySelectorAll('#wlGrades .gbtn').forEach(b=> b.classList.toggle('sel', b.dataset.g===wlGrade));
