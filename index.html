@@ -244,6 +244,7 @@
 </section>
 
 <script src="words.js"></script>
+<script src="easy.js"></script>
 <script>
 /* ---------- word bank (WORDBANK comes from words.js) ---------- */
 const QPER = 5;
@@ -659,20 +660,12 @@ function choiceHtml(w){
   return yomi+base;
 }
 
-/* やさしいいみ：くわしいデータが あれば つかい、なければ ひらがなで かんたんに */
-const EASY = {
-  "retire":"しごとを やめること","breathe":"いきを すること","foolish":"おばかな こと",
-  "abhor":"とっても きらいなこと","environment":"まわりの しぜん","recommend":"いいよと すすめること",
-  "improve":"もっと よくすること","reduce":"へらすこと","instead":"そのかわりに",
-  "vehicle":"くるまなどの のりもの","symmetry":"ひだりと みぎが おなじかたち",
-  "specific":"とくべつな ひとつ","beneficial":"やくに たつこと","decision":"きめること",
-  "increase":"ふやすこと","decrease":"へらすこと","describe":"ことばで せつめいすること",
-  "imagine":"あたまの なかで おもいうかべること","achieve":"がんばって できること",
-  "available":"つかえる じょうたい","prepare":"したくを すること","protect":"まもること",
-  "manufacture":"こうじょうで つくること","negotiate":"はなしあって きめること"
-};
+/* やさしいいみ：EASY(easy.js)に あれば つかい、なければ ひらがなで かんたんに */
 function firstSenseKana(w){ const s=(w[2]||w[1]||''); return s.split(/[，,、]/)[0].trim(); }
-function easyText(w){ return EASY[(w[0]||'').toLowerCase()] || firstSenseKana(w); }
+function easyText(w){
+  const e=(typeof EASY!=='undefined') ? EASY[(w[0]||'').toLowerCase()] : null;
+  return e || firstSenseKana(w);
+}
 function showEasy(w){
   const box=document.getElementById('easyHint');
   box.innerHTML='<div class="ehlabel">やさしいいみ</div><div class="ehmean">'+escJa(easyText(w))+'</div>';
