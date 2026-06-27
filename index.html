@@ -81,6 +81,10 @@
   .ch.ok{ background:#e1f5e7; border-color:#aee3bf; color:#1f7a44; }
   .ch.ng{ background:#fdeaea; border-color:#f3c4c4; color:#b23b3b; }
   .reward{ text-align:center; margin-top:20px; font-size:16px; font-weight:700; color:var(--green); min-height:22px; }
+  .atabs{ display:grid; grid-template-columns:repeat(3,1fr); gap:6px; margin:6px 0 14px; background:#e9efe3; padding:4px; border-radius:12px; }
+  .atab{ border:none; background:transparent; border-radius:9px; padding:9px 0; font-size:14px; font-weight:700; color:#7a8a76; cursor:pointer; }
+  .atab.sel{ background:var(--card); color:var(--green); box-shadow:0 1px 2px rgba(0,0,0,.06); }
+  .atab:active{ transform:scale(.97); }
   .ggrid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
   .gstage{ font-size:14px; font-weight:700; color:var(--green); margin:16px 0 8px; }
   .gcard{ background:var(--card); border:1px solid var(--line); border-radius:14px; padding:8px; text-align:center; }
@@ -180,24 +184,33 @@
     <div style="width:34px"></div>
   </div>
 
-  <h3 style="font-size:15px; margin:6px 0 10px;">キャラずかん</h3>
-  <div id="adminGallery"></div>
-
-  <h3 style="font-size:15px; margin:22px 0 4px;">しんかの けいふ</h3>
-  <p style="font-size:12px; color:#7a8a76; margin:0 0 12px;">
-    せわミス・しつけミスが <b>すくない</b>ほど「よいこ」、<b>おおい</b>ほど「わんぱく」に育ちます。
-  </p>
-  <div id="adminTree"></div>
-
-  <h3 style="font-size:15px; margin:24px 0 8px;">たんごリスト</h3>
-  <div class="wlgrades" id="wlGrades">
-    <button class="gbtn" data-g="g3">英検3級</button>
-    <button class="gbtn" data-g="jun2">英検準2級</button>
-    <button class="gbtn" data-g="g2">英検2級</button>
+  <div class="atabs" id="atabs">
+    <button class="atab sel" data-t="zukan">ずかん</button>
+    <button class="atab" data-t="keifu">けいふ</button>
+    <button class="atab" data-t="tango">たんご</button>
   </div>
-  <input id="wlSearch" type="search" placeholder="さがす（えいご・いみ）" style="width:100%; margin:10px 0 6px; padding:10px 12px; border:1px solid var(--line); border-radius:12px; font-size:15px;">
-  <div id="wlCount" style="font-size:12px; color:#7a8a76; margin-bottom:6px;"></div>
-  <div id="wlList"></div>
+
+  <div id="tab-zukan" class="atabpane">
+    <div id="adminGallery"></div>
+  </div>
+
+  <div id="tab-keifu" class="atabpane" style="display:none;">
+    <p style="font-size:12px; color:#7a8a76; margin:4px 0 12px;">
+      せわミス・しつけミスが <b>すくない</b>ほど「よいこ」、<b>おおい</b>ほど「わんぱく」に育ちます。
+    </p>
+    <div id="adminTree"></div>
+  </div>
+
+  <div id="tab-tango" class="atabpane" style="display:none;">
+    <div class="wlgrades" id="wlGrades">
+      <button class="gbtn" data-g="g3">英検3級</button>
+      <button class="gbtn" data-g="jun2">英検準2級</button>
+      <button class="gbtn" data-g="g2">英検2級</button>
+    </div>
+    <input id="wlSearch" type="search" placeholder="さがす（えいご・いみ）" style="width:100%; margin:10px 0 6px; padding:10px 12px; border:1px solid var(--line); border-radius:12px; font-size:15px;">
+    <div id="wlCount" style="font-size:12px; color:#7a8a76; margin-bottom:6px;"></div>
+    <div id="wlList"></div>
+  </div>
 </section>
 
 <script src="words.js"></script>
@@ -508,7 +521,14 @@ function renderWordList(){
 document.getElementById('wlGrades').onclick=(e)=>{ const b=e.target.closest('.gbtn'); if(!b) return; wlGrade=b.dataset.g; renderWordList(); };
 document.getElementById('wlSearch').oninput=()=> renderWordList();
 
-document.getElementById('openAdmin').onclick=()=>{ renderAdmin(); wlGrade=state.grade; renderWordList(); show('admin'); };
+function setAdminTab(t){
+  ['zukan','keifu','tango'].forEach(k=>{ document.getElementById('tab-'+k).style.display = (k===t)?'block':'none'; });
+  document.querySelectorAll('#atabs .atab').forEach(b=> b.classList.toggle('sel', b.dataset.t===t));
+  window.scrollTo(0,0);
+}
+document.getElementById('atabs').onclick=(e)=>{ const b=e.target.closest('.atab'); if(!b) return; setAdminTab(b.dataset.t); };
+
+document.getElementById('openAdmin').onclick=()=>{ renderAdmin(); wlGrade=state.grade; renderWordList(); setAdminTab('zukan'); show('admin'); };
 document.getElementById('backAdmin').onclick=()=>{ show('home'); render(); };
 
 /* ---------- study ---------- */
