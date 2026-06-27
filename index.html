@@ -89,6 +89,15 @@
   .gdesc{ font-size:11px; color:#7a8a76; line-height:1.4; margin-top:3px; }
   .eohead{ display:grid; grid-template-columns:1fr 1fr; gap:6px; margin:8px 0 4px; text-align:center; font-size:11px; font-weight:700; color:#7a8a76; }
   .tiertag{ font-size:12px; font-weight:700; color:var(--green); margin:10px 0 2px; text-align:center; }
+  .wlgrades{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+  #wlList{ max-height:60vh; overflow-y:auto; border:1px solid var(--line); border-radius:12px; }
+  .wlrow{ display:flex; align-items:center; justify-content:space-between; gap:10px; padding:9px 12px; border-bottom:1px solid var(--line); }
+  .wlrow:last-child{ border-bottom:none; }
+  .wlen{ font-size:16px; font-weight:700; }
+  .wlpos{ font-size:10px; font-weight:700; color:#7a8a76; background:#eef2e8; border-radius:6px; padding:1px 6px; margin-left:6px; }
+  .wlja{ text-align:right; }
+  .wlja .wlyomi{ display:block; font-size:11px; color:#8a9a86; line-height:1.1; }
+  .wlja > span:last-child{ font-size:15px; font-weight:700; }
   .tnode{ display:flex; flex-direction:column; align-items:center; gap:3px; }
   .tsprite{ width:64px; height:64px; border-radius:12px; background:#f1ead7; display:flex; align-items:center; justify-content:center; }
   .tnode.small .tsprite{ width:52px; height:52px; }
@@ -179,6 +188,16 @@
     せわミス・しつけミスが <b>すくない</b>ほど「よいこ」、<b>おおい</b>ほど「わんぱく」に育ちます。
   </p>
   <div id="adminTree"></div>
+
+  <h3 style="font-size:15px; margin:24px 0 8px;">たんごリスト</h3>
+  <div class="wlgrades" id="wlGrades">
+    <button class="gbtn" data-g="g3">英検3級</button>
+    <button class="gbtn" data-g="jun2">英検準2級</button>
+    <button class="gbtn" data-g="g2">英検2級</button>
+  </div>
+  <input id="wlSearch" type="search" placeholder="さがす（えいご・いみ）" style="width:100%; margin:10px 0 6px; padding:10px 12px; border:1px solid var(--line); border-radius:12px; font-size:15px;">
+  <div id="wlCount" style="font-size:12px; color:#7a8a76; margin-bottom:6px;"></div>
+  <div id="wlList"></div>
 </section>
 
 <script src="words.js"></script>
@@ -469,7 +488,27 @@ function renderAdmin(){
   });
   document.getElementById('adminTree').innerHTML = tree;
 }
-document.getElementById('openAdmin').onclick=()=>{ renderAdmin(); show('admin'); };
+/* たんごリスト */
+let wlGrade = 'g3';
+function renderWordList(){
+  const words = (WORDBANK[wlGrade]||WORDBANK.g3).words;
+  const q = (document.getElementById('wlSearch').value||'').trim().toLowerCase();
+  const list = q ? words.filter(w=> w[0].toLowerCase().indexOf(q)>=0 || (w[1]||'').indexOf(q)>=0 || (w[2]||'').indexOf(q)>=0 ) : words;
+  document.getElementById('wlCount').textContent = list.length+' ご';
+  let html='';
+  for(let i=0;i<list.length;i++){
+    const w=list[i], pos=POS_JA[w[3]]||w[3]||'';
+    const yomi = w[2] ? '<span class="wlyomi">'+escJa(w[2])+'</span>' : '';
+    html += '<div class="wlrow"><div class="wlen">'+escJa(w[0])+(pos?'<span class="wlpos">'+pos+'</span>':'')+'</div>'+
+            '<div class="wlja">'+yomi+'<span>'+escJa(w[1])+'</span></div></div>';
+  }
+  document.getElementById('wlList').innerHTML = html;
+  document.querySelectorAll('#wlGrades .gbtn').forEach(b=> b.classList.toggle('sel', b.dataset.g===wlGrade));
+}
+document.getElementById('wlGrades').onclick=(e)=>{ const b=e.target.closest('.gbtn'); if(!b) return; wlGrade=b.dataset.g; renderWordList(); };
+document.getElementById('wlSearch').oninput=()=> renderWordList();
+
+document.getElementById('openAdmin').onclick=()=>{ renderAdmin(); wlGrade=state.grade; renderWordList(); show('admin'); };
 document.getElementById('backAdmin').onclick=()=>{ show('home'); render(); };
 
 /* ---------- study ---------- */
