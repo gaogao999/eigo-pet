@@ -217,6 +217,7 @@
   </div>
 
   <div id="nudge"></div>
+  <div id="growthLine" style="text-align:center; margin-top:12px; font-size:13px; font-weight:700; color:var(--green);"></div>
   <div style="text-align:center; margin-top:14px; font-size:13px; color:#7a8a76; font-weight:700;">
     たいじゅう <span id="weight">5</span>g ／ 🔥 <span id="streak">1</span>にち つづけてるよ
   </div>
@@ -583,7 +584,7 @@ function load(){
               dailyGoal:20, todayDate:today(), todayWords:[], lastGoalDate:null, metDates:[],
               wrongWords:[], petColor:'brown', bg:'meadow',
               freezeTickets:0, lastTicketDate:null, rewardHour:null, lastBoxWeek:null,
-              titles:[], sound:true, mastery:{} };
+              titles:[], sound:true, mastery:{}, maxStreak:0 };
   s=Object.assign({}, def, s||{});  /* 既存データは保持し、新項目だけ デフォルト追加 */
   if(!WORDBANK[s.grade]) s.grade="jun2";
   if(s.grade==='g3') s.grade='jun2';   /* 3級は いまは ひょうじしない */
@@ -651,19 +652,27 @@ function applyDaily(){
 
 /* ---------- level ---------- */
 function need(){ return state.lv*40; }
+/* 連続するほど 成長が はやい（最大 ×1.8） */
+function growthMult(){ return 1 + Math.min(displayStreak(), 10)*0.08; }
+/* 勉強で せいちょうポイントを かせぐ（倍率こみ） */
+function gainGP(base){ addXp(Math.round(base * growthMult())); }
 function addXp(n){
   state.xp+=n;
   while(state.xp>=need() && state.lv<5){
     state.xp-=need(); state.lv++;
     const parity = (state.learned % 2 === 0) ? 'e' : 'o';
-    const miss = state.careMiss + state.disciplineMiss;
+    const miss = state.careMiss + state.disciplineMiss;          /* お世話の わるさ */
+    const ms = state.maxStreak||0, met = (state.metDates||[]).length;  /* 勉強の しゅうかん */
     if(state.lv===2 && !state.babyType){ state.babyType = parity; }
-    else if(state.lv===3 && !state.childType){ state.childType = (state.babyType||'e')+'_'+(miss<=2?'g':'b'); }
+    else if(state.lv===3 && !state.childType){ state.childType = (state.babyType||'e')+'_'+(met>=2?'g':'b'); }
     else if(state.lv===4 && !state.adultType){
-      if(miss>=8){ state.adultType='devil'; }
-      else { const tier = miss===0 ? 'star' : miss<=2 ? 'good' : miss<=5 ? 'normal' : 'wild'; state.adultType = tier+'_'+parity; }
+      if(miss>=8){ state.adultType='devil'; }                    /* サボりすぎ → レア */
+      else {
+        const tier = (ms>=7 && met>=10) ? 'star' : (ms>=3 || met>=5) ? 'good' : (met>=2) ? 'normal' : 'wild';
+        state.adultType = tier+'_'+parity;
+      }
     }
-    bubble(stageName()+"になった！");
+    bubble(stageName()+"になった！"); sfx('fanfare');
   }
   if(state.lv>=5) state.xp=Math.min(state.xp, need());
 }
@@ -689,6 +698,10 @@ function render(){
   document.getElementById('scoldCnt').textContent=state.wagamama?'いまだ！':'わがまま時';
   document.getElementById('learned').textContent=state.learned;
   document.getElementById('weight').textContent=Math.round(state.weight);
+  const gl=document.getElementById('growthLine');
+  if(gl){ const m=growthMult().toFixed(1);
+    gl.textContent = state.lv>=5 ? ('🌟 さいだいまで そだったよ！ ／ せいちょう ×'+m)
+      : ('🌱 つぎのしんかまで あと '+Math.max(0,need()-state.xp)+' ／ せいちょう ×'+m+(displayStreak()>=3?'（れんぞくボーナス中！）':'')); }
   document.getElementById('poop').style.display=state.dirty?'block':'none';
   document.getElementById('wagamark').style.display=(state.wagamama && state.lv>=2)?'block':'none';
   document.querySelectorAll('.gbtn').forEach(b=> b.classList.toggle('sel', b.dataset.g===state.grade));
@@ -1154,12 +1167,15 @@ function streakOnGoal(){
     else state.streak=1;
   } else state.streak=1;
   state.lastGoalDate=today();
+  if(state.streak>(state.maxStreak||0)) state.maxStreak=state.streak;
   if(state.metDates.indexOf(today())<0) state.metDates.push(today());
   if(state.metDates.length>60) state.metDates=state.metDates.slice(-60);
 }
 function onGoalReached(){
   streakOnGoal();
-  state.food+=5; state.happy=100; addXp(20); checkTitles();
+  state.food+=5; state.happy=100;
+  gainGP(20); gainGP(Math.min(state.streak,15));  /* 目標達成＋連続ボーナス（倍率こみ） */
+  checkTitles();
   setTimeout(showGoalCelebration, 850);
 }
 function checkUnlock(prevLearned){
@@ -1175,7 +1191,8 @@ function answer(btn, ok, en){
     const mult = session.combo>=6?3 : session.combo>=3?2 : 1;
     const rt = isRewardTime()?2:1;
     const gain = mult*rt;
-    session.correct++; state.food+=gain; state.learned++; addXp(8*gain);
+    session.correct++; state.food+=gain; state.learned++;
+    gainGP((reviewMode?10:8) * gain);   /* 復習は にがて克服で 成長おおめ */
     state.mastery[en]=(state.mastery[en]||0)+1;
     recordLearned(en); clearWrong(en); checkUnlock(prev); checkTickets(); checkTitles();
     sfx(session.combo>=3?'combo':'correct');
