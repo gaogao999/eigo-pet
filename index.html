@@ -35,18 +35,19 @@
   @keyframes hop{ 0%{transform:translateX(-50%) translateY(0)} 30%{transform:translateX(-50%) translateY(-22px)} 60%{transform:translateX(-50%) translateY(0)} 80%{transform:translateX(-50%) translateY(-8px)} 100%{transform:translateX(-50%) translateY(0)} }
   #petWrap{ position:absolute; bottom:40px; left:50%; transform:translateX(-50%); animation:bob 1.6s steps(2) infinite; }
   #petWrap.happy{ animation:hop .6s 2; }
-  #poop{ position:absolute; bottom:40px; left:30px; display:none; transform-origin:center bottom; }
-  #poop.flushing{ animation:flushdown .8s ease-in forwards; }
-  @keyframes flushdown{
-    0%{ transform:rotate(0) scale(1); opacity:1; }
-    35%{ transform:rotate(180deg) scale(.85); }
-    70%{ transform:rotate(540deg) scale(.4) translateY(8px); opacity:1; }
-    100%{ transform:rotate(900deg) scale(.05) translateY(16px); opacity:0; }
+  #poop{ position:absolute; bottom:40px; left:30px; display:none; }
+  #poop.flushing{ animation:washaway 1s ease-in forwards; }
+  @keyframes washaway{
+    0%{ transform:translateX(0) rotate(0); opacity:1; }
+    25%{ transform:translateX(0) rotate(-10deg); opacity:1; }
+    100%{ transform:translateX(140px) rotate(50deg); opacity:0; }
   }
-  #flush{ position:absolute; bottom:34px; left:18px; width:62px; height:36px; display:none; pointer-events:none;
-    border-radius:50%; background:radial-gradient(circle, rgba(90,170,230,.55), rgba(90,170,230,0) 70%); }
-  #flush.on{ display:block; animation:ripple .8s ease-out forwards; }
-  @keyframes ripple{ 0%{ transform:scale(.4); opacity:.7; } 100%{ transform:scale(1.5); opacity:0; } }
+  /* 左から くる なみ */
+  #flush{ position:absolute; bottom:30px; left:-100px; width:90px; height:50px; display:none; pointer-events:none;
+    background:radial-gradient(ellipse at 70% 50%, rgba(96,176,232,.85), rgba(96,176,232,.2) 65%, transparent 75%);
+    border-radius:0 70% 70% 0 / 0 50% 50% 0; }
+  #flush.on{ display:block; animation:wave 1s ease-in forwards; }
+  @keyframes wave{ 0%{ left:-100px; opacity:.3; } 20%{ opacity:.9; } 100%{ left:100%; opacity:0; } }
   #bubble{ position:absolute; top:14px; left:50%; transform:translateX(-50%);
            background:#fff; border:1px solid var(--line); border-radius:999px;
            padding:5px 14px; font-size:14px; font-weight:700; color:var(--green); opacity:0; transition:opacity .2s; }
@@ -64,7 +65,8 @@
   .cbtn:active{ transform:scale(.96); }
   .cbtn .cnt{ font-size:11px; color:#7a8a76; font-weight:700; }
 
-  .grades{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:16px; }
+  .grades{ display:grid; grid-template-columns:repeat(2,1fr); gap:8px; margin-top:16px; }
+  .gbtn[data-g="g3"]{ display:none; }
   .gbtn{ border:1px solid var(--line); background:var(--card); border-radius:14px; padding:11px 0;
          font-size:14px; font-weight:700; color:#7a8a76; cursor:pointer; }
   .gbtn.sel{ background:var(--green); color:#fff; border-color:var(--green); }
@@ -108,7 +110,7 @@
   .gdesc{ font-size:11px; color:#7a8a76; line-height:1.4; margin-top:3px; }
   .eohead{ display:grid; grid-template-columns:1fr 1fr; gap:6px; margin:8px 0 4px; text-align:center; font-size:11px; font-weight:700; color:#7a8a76; }
   .tiertag{ font-size:12px; font-weight:700; color:var(--green); margin:10px 0 2px; text-align:center; }
-  .wlgrades{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+  .wlgrades{ display:grid; grid-template-columns:repeat(2,1fr); gap:8px; }
   #wlList{ max-height:60vh; overflow-y:auto; border:1px solid var(--line); border-radius:12px; }
   .wlrow{ display:flex; flex-direction:column; gap:5px; padding:9px 12px; border-bottom:1px solid var(--line); }
   .wlrow:last-child{ border-bottom:none; }
@@ -159,6 +161,8 @@
   .trow2{ padding:9px 10px; border-bottom:1px solid var(--line); font-size:14px; font-weight:700; color:#9aa896; }
   .trow2.got{ color:var(--ink); }
   .wlmast{ font-size:11px; color:#e0a92a; margin-left:6px; letter-spacing:1px; }
+  .wlwrong{ font-size:10px; font-weight:700; color:#b23b3b; background:#fdeaea; border-radius:6px; padding:1px 6px; margin-left:6px; }
+  .wlrow.iswrong{ background:#fff6f3; }
 </style>
 </head>
 <body>
@@ -251,11 +255,7 @@
     <button class="goalbtn" data-goal="20">20</button>
     <button class="goalbtn" data-goal="30">30</button>
   </div>
-  <div class="setrow" id="rtset">ごほうびタイム：
-    <button class="optbtn" data-h="">なし</button>
-    <button class="optbtn" data-h="7">あさ7</button>
-    <button class="optbtn" data-h="17">ゆう5</button>
-  </div>
+  <div class="setrow">⏰ ごほうびタイム：<b style="color:var(--green)">15〜17時</b>（えさ・けいけんち 2ばい）</div>
   <div class="setrow" id="sndset">こうかおん：
     <button class="optbtn" data-v="1">ON</button>
     <button class="optbtn" data-v="0">OFF</button>
@@ -341,7 +341,10 @@
       <button class="gbtn" data-g="g2">英検2級</button>
     </div>
     <input id="wlSearch" type="search" placeholder="さがす（えいご・いみ）" style="width:100%; margin:10px 0 6px; padding:10px 12px; border:1px solid var(--line); border-radius:12px; font-size:15px;">
-    <div id="wlCount" style="font-size:12px; color:#7a8a76; margin-bottom:6px;"></div>
+    <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+      <button id="wlWrongBtn" class="optbtn" style="margin-left:0;">❌ にがてだけ</button>
+      <div id="wlCount" style="font-size:12px; color:#7a8a76;"></div>
+    </div>
     <div id="wlList"></div>
   </div>
 </section>
@@ -574,7 +577,8 @@ function load(){
               freezeTickets:0, lastTicketDate:null, rewardHour:null, lastBoxWeek:null,
               titles:[], sound:true, mastery:{} };
   s=Object.assign({}, def, s||{});  /* 既存データは保持し、新項目だけ デフォルト追加 */
-  if(!WORDBANK[s.grade]) s.grade="g3";
+  if(!WORDBANK[s.grade]) s.grade="jun2";
+  if(s.grade==='g3') s.grade='jun2';   /* 3級は いまは ひょうじしない */
   return s;
 }
 function save(){ try{ const s=JSON.stringify(state); localStorage.setItem(KEY, s); localStorage.setItem(BAKKEY, s); }catch(e){} }
@@ -586,7 +590,7 @@ function displayStreak(){ return (state.lastGoalDate===today() || state.lastGoal
 function todayCount(){ return (state.todayDate===today()) ? state.todayWords.length : 0; }
 
 /* ごほうびタイム（きめた じかんたいは ごほうび2ばい） */
-function isRewardTime(){ if(state.rewardHour==null) return false; const h=new Date().getHours(); return h>=state.rewardHour && h<state.rewardHour+2; }
+function isRewardTime(){ const h=new Date().getHours(); return h>=15 && h<17; }  /* 15〜17時 こてい */
 /* 今週（月はじまり）の キー と 達成日数 */
 function weekId(ds){ const d=new Date(ds); const day=(d.getDay()+6)%7; d.setDate(d.getDate()-day); return dayStr(d); }
 function thisWeekMet(){ const wk=weekId(today()); return state.metDates.filter(m=>weekId(m)===wk).length + ((state.metDates.indexOf(today())<0 && todayDone())?1:0); }
@@ -707,7 +711,6 @@ function renderGoal(){
   const tt=document.getElementById('titleN'); if(tt) tt.textContent=(state.titles.length)+'/'+TITLES.length;
   const bb=document.getElementById('boxBtn'); if(bb) bb.style.display=boxAvailable()?'block':'none';
   const rb=document.getElementById('rewardBanner'); if(rb) rb.style.display=isRewardTime()?'block':'none';
-  document.querySelectorAll('#rtset .optbtn').forEach(b=> b.classList.toggle('sel', (b.dataset.h===''?null:+b.dataset.h)===state.rewardHour));
   document.querySelectorAll('#sndset .optbtn').forEach(b=> b.classList.toggle('sel', (b.dataset.v==='1')===!!state.sound));
   // ホームの うながし
   const nd=document.getElementById('nudge');
@@ -764,12 +767,12 @@ document.getElementById('bClean').onclick=()=>{
     flushing=true;
     const p=document.getElementById('poop'), fl=document.getElementById('flush');
     p.classList.add('flushing'); fl.classList.add('on');
-    bubble("ジャーッ！"); sfx('flush');
+    bubble("ザブーン！"); sfx('flush');
     setTimeout(()=>{
       p.classList.remove('flushing'); fl.classList.remove('on'); flushing=false;
       state.dirty=false; state.happy=Math.min(100,state.happy+10);
       bubble("ぴかぴか"); save(); render();
-    }, 800);
+    }, 1000);
   } else bubble("きれいだよ");
 };
 document.getElementById('petName').onclick=()=>{
@@ -822,12 +825,13 @@ function renderAdmin(){
   document.getElementById('adminTree').innerHTML = tree;
 }
 /* たんごリスト */
-let wlGrade = 'g3';
+let wlGrade = 'jun2', wlWrongOnly=false;
 function renderWordList(){
-  const words = (WORDBANK[wlGrade]||WORDBANK.g3).words;
+  const words = (WORDBANK[wlGrade]||WORDBANK.jun2).words;
+  const wrongSet = new Set(state.wrongWords.map(x=>x[0].toLowerCase()));
   const q = (document.getElementById('wlSearch').value||'').trim().toLowerCase();
-  const list = q ? words.filter(w=> w[0].toLowerCase().indexOf(q)>=0 || (w[1]||'').indexOf(q)>=0 || (w[2]||'').indexOf(q)>=0 ) : words;
-  document.getElementById('wlCount').textContent = list.length+' ご';
+  let list = q ? words.filter(w=> w[0].toLowerCase().indexOf(q)>=0 || (w[1]||'').indexOf(q)>=0 || (w[2]||'').indexOf(q)>=0 ) : words;
+  if(wlWrongOnly) list = list.filter(w=> wrongSet.has(w[0].toLowerCase()));
   const EZ = (typeof EASY!=='undefined') ? EASY : {};
   let html='';
   for(let i=0;i<list.length;i++){
@@ -837,15 +841,18 @@ function renderWordList(){
     const easyLine = ez ? '<div class="wleasy">やさしく：'+escJa(ez)+'</div>' : '';
     const m=Math.min(3, state.mastery[w[0]]||state.mastery[w[0].toLowerCase()]||0);
     const stars='<span class="wlmast">'+'★'.repeat(m)+'☆'.repeat(3-m)+'</span>';
-    html += '<div class="wlrow"><div class="wltop"><div class="wlen">'+escJa(w[0])+(pos?'<span class="wlpos">'+pos+'</span>':'')+stars+'</div>'+
+    const wrong = wrongSet.has(w[0].toLowerCase()) ? '<span class="wlwrong">❌にがて</span>' : '';
+    html += '<div class="wlrow'+(wrong?' iswrong':'')+'"><div class="wltop"><div class="wlen">'+escJa(w[0])+(pos?'<span class="wlpos">'+pos+'</span>':'')+wrong+stars+'</div>'+
             '<div class="wlja">'+yomi+'<span>'+escJa(w[1])+'</span></div></div>'+easyLine+'</div>';
   }
-  document.getElementById('wlCount').textContent = list.length+' ご ／ マスター '+masteredCount()+'こ';
+  document.getElementById('wlCount').textContent = list.length+' ご ／ マスター '+masteredCount()+'こ ／ にがて '+state.wrongWords.length+'こ';
   document.getElementById('wlList').innerHTML = html;
   document.querySelectorAll('#wlGrades .gbtn').forEach(b=> b.classList.toggle('sel', b.dataset.g===wlGrade));
+  document.getElementById('wlWrongBtn').classList.toggle('sel', wlWrongOnly);
 }
 document.getElementById('wlGrades').onclick=(e)=>{ const b=e.target.closest('.gbtn'); if(!b) return; wlGrade=b.dataset.g; renderWordList(); };
 document.getElementById('wlSearch').oninput=()=> renderWordList();
+document.getElementById('wlWrongBtn').onclick=()=>{ wlWrongOnly=!wlWrongOnly; renderWordList(); };
 
 let curAdminTab='zukan';
 function setAdminTab(t){
@@ -1034,7 +1041,6 @@ document.body.addEventListener('touchend', e=>{ if(!swOn) return; swOn=false;
   if(Math.abs(dx)>60 && Math.abs(dx)>Math.abs(dy)*1.5){ swipeTab(dx<0 ? 1 : -1); }
 }, {passive:true});
 document.getElementById('goalset').onclick=(e)=>{ const b=e.target.closest('.goalbtn'); if(!b) return; state.dailyGoal=+b.dataset.goal; save(); renderGoal(); };
-document.getElementById('rtset').onclick=(e)=>{ const b=e.target.closest('.optbtn'); if(!b) return; state.rewardHour = b.dataset.h===''?null:+b.dataset.h; save(); renderGoal(); };
 document.getElementById('sndset').onclick=(e)=>{ const b=e.target.closest('.optbtn'); if(!b) return; state.sound = b.dataset.v==='1'; save(); renderGoal(); if(state.sound) sfx('correct'); };
 document.getElementById('boxBtn').onclick=()=>{
   if(!boxAvailable()) return;
