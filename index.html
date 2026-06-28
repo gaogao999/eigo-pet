@@ -1,318 +1,300 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html>
 <head>
 <meta charset="utf-8">
-<title>えいごペット</title>
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="えいごペット">
-<meta name="theme-color" content="#eef4ea">
-<link rel="apple-touch-icon" href="icons/icon-180.png">
-<link rel="manifest" href="manifest.webmanifest">
-<style>
-  :root{ --green:#3b6d3b; --green2:#5a8f4f; --bg:#eef4ea; --card:#ffffff; --line:#dfe8da;
-         --food:#ef9f27; --happy:#3fb98a; --xp:#3b8ad4; --ink:#27402a; }
-  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-  html,body{ margin:0; height:100%; }
-  body{ font-family:-apple-system,"Hiragino Maru Gothic ProN","Hiragino Sans",sans-serif;
-        background:var(--bg); color:var(--ink); overscroll-behavior:none;
-        padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
-        user-select:none; -webkit-user-select:none; -webkit-touch-callout:none; }
-  .ch, #qword, .wlrow, .gcard, .coscard, .chip, .cbtn{ -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; }
-  .screen{ max-width:440px; margin:0 auto; padding:14px 16px 24px; display:none; }
-  .screen.on{ display:block; }
-  .topbar{ display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
-  .name{ font-size:20px; font-weight:700; color:var(--green); }
-  .pill{ font-size:13px; background:#e3efdd; color:var(--green); padding:4px 12px; border-radius:999px; font-weight:700; }
-  .stage{ display:flex; gap:8px; align-items:center; }
-  .badge{ font-size:12px; background:#dfeefb; color:#1f5f9c; padding:3px 10px; border-radius:999px; font-weight:700; }
-
-  .yard{ position:relative; height:230px; border-radius:24px; background:#f1ead7;
-         overflow:hidden; border:1px solid #e2d8bd; }
-  .yard .dots{ position:absolute; inset:0; background-image:radial-gradient(rgba(74,53,38,.10) 2px, transparent 2px);
-               background-size:18px 18px; }
-  .ground{ position:absolute; left:0; right:0; bottom:0; height:46px; background:#e7dcbf; }
-  #scene{ position:absolute; inset:0; opacity:.5; pointer-events:none; }
-  #scene svg{ display:block; }
-  @keyframes bob{ 0%,100%{transform:translateX(-50%) translateY(0)} 50%{transform:translateX(-50%) translateY(-8px)} }
-  @keyframes hop{ 0%{transform:translateX(-50%) translateY(0)} 30%{transform:translateX(-50%) translateY(-22px)} 60%{transform:translateX(-50%) translateY(0)} 80%{transform:translateX(-50%) translateY(-8px)} 100%{transform:translateX(-50%) translateY(0)} }
-  #petWrap{ position:absolute; bottom:40px; left:50%; transform:translateX(-50%); animation:bob 1.6s steps(2) infinite; }
-  #petWrap.happy{ animation:hop .6s 2; }
-  #poop{ position:absolute; bottom:40px; left:30px; display:none; image-rendering:pixelated; }
-  #poop.flushing{ animation:washaway 1s steps(8) forwards; }
-  @keyframes washaway{
-    0%{ transform:translateX(0); opacity:1; }
-    30%{ transform:translateX(0); opacity:1; }
-    100%{ transform:translateX(150px); opacity:0; }
-  }
-  /* ピクセルの なみ（左→右） */
-  #flush{ position:absolute; bottom:30px; left:-72px; display:none; pointer-events:none; image-rendering:pixelated; }
-  #flush.on{ display:block; animation:wave 1s steps(12) forwards; }
-  @keyframes wave{ 0%{ left:-72px; } 100%{ left:100%; } }
-  #bubble{ position:absolute; top:14px; left:50%; transform:translateX(-50%);
-           background:#fff; border:1px solid var(--line); border-radius:999px;
-           padding:5px 14px; font-size:14px; font-weight:700; color:var(--green); opacity:0; transition:opacity .2s; }
-
-  .stats{ margin:14px 0 6px; display:flex; flex-direction:column; gap:9px; }
-  .stat{ display:flex; align-items:center; gap:10px; }
-  .stat .ic{ width:24px; text-align:center; font-size:18px; }
-  .bar{ flex:1; height:11px; border-radius:8px; background:#e0e8db; overflow:hidden; }
-  .bar > i{ display:block; height:100%; width:0; transition:width .35s; }
-
-  .care{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-top:14px; }
-  .cbtn{ border:1px solid var(--line); background:var(--card); border-radius:16px; padding:12px 0;
-         display:flex; flex-direction:column; align-items:center; gap:5px; font-size:13px; font-weight:700; color:var(--ink); cursor:pointer; }
-  .cbtn i{ font-size:26px; color:var(--green); }
-  .cbtn:active{ transform:scale(.96); }
-  .cbtn .cnt{ font-size:11px; color:#7a8a76; font-weight:700; }
-
-  .grades{ display:grid; grid-template-columns:repeat(2,1fr); gap:8px; margin-top:16px; }
-  .gbtn[data-g="g3"]{ display:none; }
-  .gbtn{ border:1px solid var(--line); background:var(--card); border-radius:14px; padding:11px 0;
-         font-size:14px; font-weight:700; color:#7a8a76; cursor:pointer; }
-  .gbtn.sel{ background:var(--green); color:#fff; border-color:var(--green); }
-  .gbtn:active{ transform:scale(.97); }
-  .study-btn{ margin-top:12px; width:100%; border:none; border-radius:18px; padding:18px; font-size:19px; font-weight:800;
-              background:var(--green); color:#fff; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; }
-  .study-btn:active{ transform:scale(.98); }
-
-  /* study screen */
-  .qhead{ display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; }
-  .back{ background:none; border:none; font-size:26px; color:var(--green); cursor:pointer; padding:4px; }
-  .qprog{ font-size:14px; font-weight:700; color:#7a8a76; }
-  .qcard{ background:var(--card); border:1px solid var(--line); border-radius:24px; padding:26px 20px; text-align:center; }
-  .qhint{ font-size:14px; color:#7a8a76; font-weight:700; margin-bottom:10px; }
-  .qicon{ font-size:64px; color:var(--green); }
-  .qword{ font-size:38px; font-weight:800; letter-spacing:.5px; margin:6px 0 2px; color:var(--ink); word-break:break-word; line-height:1.15; }
-  .qword.long{ font-size:26px; }
-  .speak{ background:#e3efdd; border:none; color:var(--green); border-radius:999px; padding:8px 18px; font-size:15px; font-weight:700; margin-top:8px; cursor:pointer; }
-  .choices{ display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:20px; }
-  .ch{ border:1px solid var(--line); background:var(--card); border-radius:18px; padding:12px 10px; color:var(--ink); cursor:pointer; min-height:64px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; text-align:center; word-break:break-word; }
-  .ch:active{ transform:scale(.97); }
-  .ch .yomi{ font-size:12px; font-weight:400; color:#8a9a86; line-height:1.2; }
-  .ch .base{ font-size:18px; font-weight:700; line-height:1.25; }
-  .ch.ok .yomi, .ch.ng .yomi{ color:inherit; opacity:.65; }
-  .ch.ok{ background:#e1f5e7; border-color:#aee3bf; color:#1f7a44; }
-  .ch.ng{ background:#fdeaea; border-color:#f3c4c4; color:#b23b3b; }
-  .reward{ text-align:center; margin-top:20px; font-size:16px; font-weight:700; color:var(--green); min-height:22px; }
-  #easyHint{ display:none; margin-top:14px; background:#fff7e8; border:1px solid #f0e3c4; border-radius:16px; padding:16px; text-align:center; }
-  #easyHint .ehlabel{ font-size:12px; font-weight:700; color:#b88a2a; }
-  #easyHint .ehword{ font-size:18px; font-weight:800; color:#4a3526; margin-top:2px; }
-  #easyHint .ehmean{ font-size:22px; font-weight:800; color:#1f7a44; margin-top:6px; line-height:1.4; }
-  .atabs{ display:grid; grid-template-columns:repeat(5,1fr); gap:3px; margin:6px 0 14px; background:#e9efe3; padding:4px; border-radius:12px; }
-  .atab{ border:none; background:transparent; border-radius:9px; padding:9px 0; font-size:12px; font-weight:700; color:#7a8a76; cursor:pointer; white-space:nowrap; }
-  .atab.sel{ background:var(--card); color:var(--green); box-shadow:0 1px 2px rgba(0,0,0,.06); }
-  .atab:active{ transform:scale(.97); }
-  .ggrid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
-  .gstage{ font-size:14px; font-weight:700; color:var(--green); margin:16px 0 8px; }
-  .gcard{ background:var(--card); border:1px solid var(--line); border-radius:14px; padding:8px; text-align:center; }
-  .gsprite{ height:84px; border-radius:10px; background:#f1ead7; display:flex; align-items:center; justify-content:center; }
-  .gname{ font-size:13px; font-weight:700; margin-top:6px; }
-  .gdesc{ font-size:11px; color:#7a8a76; line-height:1.4; margin-top:3px; }
-  .eohead{ display:grid; grid-template-columns:1fr 1fr; gap:6px; margin:8px 0 4px; text-align:center; font-size:11px; font-weight:700; color:#7a8a76; }
-  .tiertag{ font-size:12px; font-weight:700; color:var(--green); margin:10px 0 2px; text-align:center; }
-  .wlgrades{ display:grid; grid-template-columns:repeat(2,1fr); gap:8px; }
-  #wlList{ max-height:60vh; overflow-y:auto; border:1px solid var(--line); border-radius:12px; }
-  .wlrow{ display:flex; flex-direction:column; gap:5px; padding:9px 12px; border-bottom:1px solid var(--line); }
-  .wlrow:last-child{ border-bottom:none; }
-  .wltop{ display:flex; align-items:center; justify-content:space-between; gap:10px; }
-  .wleasy{ font-size:13px; color:#1f7a44; background:#f3f9ec; border-radius:8px; padding:5px 9px; }
-  .wlen{ font-size:16px; font-weight:700; }
-  .wlpos{ font-size:10px; font-weight:700; color:#7a8a76; background:#eef2e8; border-radius:6px; padding:1px 6px; margin-left:6px; }
-  .wlja{ text-align:right; }
-  .wlja .wlyomi{ display:block; font-size:11px; color:#8a9a86; line-height:1.1; }
-  .wlja > span:last-child{ font-size:15px; font-weight:700; }
-  .tnode{ display:flex; flex-direction:column; align-items:center; gap:3px; }
-  .tsprite{ width:64px; height:64px; border-radius:12px; background:#f1ead7; display:flex; align-items:center; justify-content:center; }
-  .tnode.small .tsprite{ width:52px; height:52px; }
-  .tlabel{ font-size:12px; font-weight:700; }
-  .tarrow{ text-align:center; color:#b7c3b2; font-size:20px; line-height:1; margin:6px 0; }
-  .trow{ display:flex; justify-content:space-around; gap:6px; }
-  #tabbar{ position:fixed; left:0; right:0; bottom:0; z-index:50; display:none;
-           grid-template-columns:repeat(3,1fr); background:var(--card);
-           border-top:1px solid var(--line); padding:6px 0 calc(6px + env(safe-area-inset-bottom)); }
-  #tabbar.on{ display:grid; }
-  .tab{ border:none; background:transparent; display:flex; flex-direction:column; align-items:center; gap:2px;
-        font-size:11px; font-weight:700; color:#9aa896; cursor:pointer; padding:4px 0; }
-  .tab .ti{ font-size:22px; line-height:1; filter:grayscale(1) opacity(.6); }
-  .tab.sel{ color:var(--green); }
-  .tab.sel .ti{ filter:none; }
-  .tab:active{ transform:scale(.95); }
-  body.hastab .screen.on{ padding-bottom:78px; }
-  .goalcard{ display:flex; align-items:center; gap:14px; background:var(--card); border:1px solid var(--line); border-radius:16px; padding:14px; margin-bottom:14px; }
-  #ringFg{ transition:stroke-dashoffset .5s; }
-  .goalinfo{ flex:1; }
-  .weekdots{ display:flex; gap:5px; }
-  .wdot{ flex:1; text-align:center; font-size:10px; font-weight:700; color:#aab4a4; background:#eef2e8; border-radius:6px; padding:3px 0; }
-  .wdot.met{ background:#3fb98a; color:#fff; }
-  .goalset{ text-align:center; margin-top:16px; font-size:13px; color:#7a8a76; font-weight:700; }
-  .goalbtn{ border:1px solid var(--line); background:var(--card); border-radius:10px; padding:5px 12px; margin-left:6px; font-size:14px; font-weight:700; color:#7a8a76; cursor:pointer; }
-  .goalbtn.sel{ background:var(--green); color:#fff; border-color:var(--green); }
-  #nudge{ display:none; text-align:center; background:#fff7e8; border:1px solid #f0e3c4; border-radius:14px; padding:10px 12px; margin-top:12px; font-size:13px; font-weight:700; color:#b88a2a; cursor:pointer; }
-  .cosgrid{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
-  .coscard{ border:1px solid var(--line); background:var(--card); border-radius:14px; padding:10px 6px; display:flex; flex-direction:column; align-items:center; gap:6px; font-size:12px; font-weight:700; color:var(--ink); cursor:pointer; }
-  .coscard.sel{ border:2px solid var(--green); }
-  .coscard.locked{ opacity:.55; color:#9aa896; cursor:default; }
-  .cosswatch{ width:46px; height:46px; border-radius:10px; overflow:hidden; display:flex; flex-direction:column; justify-content:flex-end; }
-  .statchips{ display:flex; gap:8px; margin-bottom:10px; }
-  .chip{ flex:1; border:1px solid var(--line); background:var(--card); border-radius:12px; padding:8px 4px; font-size:12px; font-weight:700; color:var(--ink); cursor:pointer; }
-  .setrow{ text-align:center; margin-top:10px; font-size:13px; color:#7a8a76; font-weight:700; }
-  .optbtn{ border:1px solid var(--line); background:var(--card); border-radius:10px; padding:5px 10px; margin-left:6px; font-size:13px; font-weight:700; color:#7a8a76; cursor:pointer; }
-  .optbtn.sel{ background:var(--green); color:#fff; border-color:var(--green); }
-  .trow2{ padding:9px 10px; border-bottom:1px solid var(--line); font-size:14px; font-weight:700; color:#9aa896; }
-  .trow2.got{ color:var(--ink); }
-  .wlmast{ font-size:11px; color:#e0a92a; margin-left:6px; letter-spacing:1px; }
-  .wlwrong{ font-size:10px; font-weight:700; color:#b23b3b; background:#fdeaea; border-radius:6px; padding:1px 6px; margin-left:6px; }
-  .wlrow.iswrong{ background:#fff6f3; }
-</style>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
 </head>
 <body>
+<x-dc>
+<helmet>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#f0faf4">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="apple-touch-icon" href="./icons/icon-180.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="crossorigin">
+  <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700;800;900&family=DotGothic16&display=swap" rel="stylesheet">
+  <style>
+    :root{--g:#29a65e;--gd:#1e8049;--gl:#dcf5e8;--bg:#f0faf4;--card:#fff;--bdr:#c5e8d3;--ink:#1a3a22;--mut:#6b9275;--green:var(--g);}
+    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+    html,body{margin:0;height:100%;}
+    body{font-family:'M PLUS Rounded 1c',-apple-system,'Hiragino Maru Gothic ProN',sans-serif;background:var(--bg);color:var(--ink);overscroll-behavior:none;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom);user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;}
+    .screen{max-width:440px;margin:0 auto;padding:16px 16px 28px;display:none;}
+    .screen.on{display:block;}
+    body.hastab .screen.on{padding-bottom:96px;}
+    #tabbar{position:fixed;left:0;right:0;bottom:0;z-index:50;display:none;background:rgba(255,255,255,.97);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-top:2px solid var(--bdr);padding:8px 16px calc(8px + env(safe-area-inset-bottom));}
+    #tabbar.on{display:flex;justify-content:center;}
+    .tabrow{display:flex;gap:6px;width:100%;max-width:360px;}
+    .tab{flex:1;border:none;background:transparent;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11px;font-weight:800;color:var(--mut);cursor:pointer;padding:8px 0;border-radius:10px;font-family:inherit;transition:background .15s,color .15s;}
+    .tab .ti{display:flex;align-items:center;justify-content:center;width:24px;height:24px;}
+    .tab.sel{color:var(--g);background:var(--gl);}
+    .tab:active{transform:scale(.91);}
+    .bar{flex:1;height:12px;border-radius:4px;background:#ddf0e5;overflow:hidden;}
+    .bar>i{display:block;height:100%;width:0;transition:width .4s;border-radius:4px;}
+    .yard{position:relative;border-radius:16px;overflow:hidden;border:2px solid var(--bdr);}
+    .yard .dots{position:absolute;inset:0;pointer-events:none;background-image:radial-gradient(rgba(74,53,38,.08) 2px,transparent 2px);background-size:18px 18px;}
+    .ground{position:absolute;left:0;right:0;bottom:0;height:46px;background:#e7dcbf;}
+    #scene{position:absolute;inset:0;opacity:.55;pointer-events:none;}
+    #scene svg{display:block;}
+    #petWrap{position:absolute;bottom:40px;left:50%;transform:translateX(-50%);animation:bob 1.6s steps(2) infinite;}
+    #petWrap.happy{animation:hop .6s 2;}
+    #bubble{position:absolute;top:14px;left:50%;transform:translateX(-50%);background:#fff;border:2px solid var(--bdr);border-radius:8px;padding:5px 18px;font-size:14px;font-weight:800;color:var(--g);opacity:0;transition:opacity .2s;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,.08);}
+    #poop{position:absolute;bottom:40px;left:30px;display:none;image-rendering:pixelated;}
+    #poop.flushing{animation:washaway 1s steps(8) forwards;}
+    #flush{position:absolute;bottom:30px;left:-72px;display:none;pointer-events:none;image-rendering:pixelated;}
+    #flush.on{display:block;animation:wave 1s steps(12) forwards;}
+    @keyframes bob{0%,100%{transform:translateX(-50%) translateY(0)} 50%{transform:translateX(-50%) translateY(-8px)}}
+    @keyframes hop{0%{transform:translateX(-50%) translateY(0)} 30%{transform:translateX(-50%) translateY(-22px)} 60%{transform:translateX(-50%) translateY(0)} 80%{transform:translateX(-50%) translateY(-8px)} 100%{transform:translateX(-50%) translateY(0)}}
+    @keyframes washaway{0%,30%{transform:translateX(0);opacity:1} 100%{transform:translateX(150px);opacity:0}}
+    @keyframes wave{0%{left:-72px} 100%{left:100%}}
+    @keyframes pulse{0%,100%{transform:scale(1)} 50%{transform:scale(1.08)}}
+    @keyframes popIn{0%{transform:scale(.8);opacity:0} 100%{transform:scale(1);opacity:1}}
+    .ch{border:2px solid var(--bdr);background:var(--card);border-radius:12px;padding:16px 10px;color:var(--ink);cursor:pointer;min-height:72px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;text-align:center;word-break:break-word;font-family:inherit;transition:transform .12s;}
+    .ch:active{transform:scale(.93);}
+    .ch .yomi{font-size:11px;color:var(--mut);line-height:1.2;}
+    .ch .base{font-size:17px;font-weight:800;line-height:1.3;}
+    .ch.ok{background:#e3f9ec;border-color:#7dd9a6;color:#1a6b3a;}
+    .ch.ok .yomi{color:#4a9e6e;}
+    .ch.ng{background:#fde8e8;border-color:#f5a3a3;color:#9b2222;}
+    .ch.ng .yomi{color:#c05050;}
+    #qword{font-size:42px;font-weight:900;letter-spacing:.5px;color:var(--ink);word-break:break-word;line-height:1.15;margin:6px 0 2px;}
+    #qword.long{font-size:26px;}
+    .ehlabel{font-size:12px;font-weight:800;color:#92400e;}
+    .ehmean{font-size:20px;font-weight:900;color:#15803d;margin-top:4px;line-height:1.4;}
+    .gbtn{border:2px solid var(--bdr);background:var(--card);border-radius:8px;padding:13px 0;font-size:14px;font-weight:800;color:var(--mut);cursor:pointer;font-family:inherit;transition:.15s;}
+    .gbtn[data-g="g3"]{display:none;}
+    .gbtn.sel{background:var(--g);color:#fff;border-color:var(--g);box-shadow:0 2px 8px rgba(41,166,94,.3);}
+    .gbtn:active{transform:scale(.96);}
+    .atabs{display:grid;grid-template-columns:repeat(5,1fr);gap:3px;margin:8px 0 14px;background:var(--gl);padding:4px;border-radius:10px;}
+    .atab{border:none;background:transparent;border-radius:7px;padding:8px 0;font-size:11px;font-weight:800;color:var(--mut);cursor:pointer;font-family:inherit;white-space:nowrap;}
+    .atab.sel{background:var(--card);color:var(--g);box-shadow:0 1px 4px rgba(0,0,0,.08);}
+    .atab:active{transform:scale(.95);}
+    #wlList{max-height:60vh;overflow-y:auto;border:2px solid var(--bdr);border-radius:10px;}
+    .wlrow{display:flex;flex-direction:column;gap:4px;padding:10px 14px;border-bottom:1px solid var(--bdr);}
+    .wlrow:last-child{border-bottom:none;}
+    .wlrow.iswrong{background:#fff6f3;}
+    .wltop{display:flex;align-items:center;justify-content:space-between;gap:10px;}
+    .wleasy{font-size:12px;color:#1a6b3a;background:#e3f9ec;border-radius:4px;padding:4px 10px;}
+    .wlen{font-size:16px;font-weight:800;}
+    .wlpos{font-size:10px;font-weight:700;color:var(--mut);background:var(--gl);border-radius:4px;padding:1px 7px;margin-left:6px;}
+    .wlja{text-align:right;}
+    .wlja .wlyomi{display:block;font-size:11px;color:var(--mut);line-height:1.1;}
+    .wlja>span:last-child{font-size:15px;font-weight:700;}
+    .wlmast{font-size:11px;color:#d97706;margin-left:6px;}
+    .wlwrong{font-size:10px;font-weight:700;color:#9b2222;background:#fde8e8;border-radius:4px;padding:1px 7px;margin-left:6px;}
+    .trow2{padding:10px 14px;border-bottom:1px solid var(--bdr);font-size:14px;font-weight:700;color:var(--mut);}
+    .trow2.got{color:var(--ink);}
+    .coscard{border:2px solid var(--bdr);background:var(--card);border-radius:10px;padding:12px 8px;display:flex;flex-direction:column;align-items:center;gap:6px;font-size:12px;font-weight:800;color:var(--ink);cursor:pointer;font-family:inherit;transition:.15s;}
+    .coscard.sel{border:2.5px solid var(--g);box-shadow:0 0 0 2px rgba(41,166,94,.18);}
+    .coscard.locked{opacity:.5;cursor:default;}
+    .coscard:active:not(.locked){transform:scale(.94);}
+    .cosswatch{width:50px;height:50px;border-radius:6px;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end;}
+    .wdot{flex:1;text-align:center;font-size:10px;font-weight:700;color:var(--mut);background:var(--gl);border-radius:4px;padding:4px 0;}
+    .wdot.met{background:var(--g);color:#fff;}
+    .goalbtn{border:2px solid var(--bdr);background:var(--card);border-radius:6px;padding:6px 16px;margin-left:6px;font-size:14px;font-weight:800;color:var(--mut);cursor:pointer;font-family:inherit;}
+    .goalbtn.sel{background:var(--g);color:#fff;border-color:var(--g);}
+    .optbtn{border:2px solid var(--bdr);background:var(--card);border-radius:6px;padding:6px 14px;margin-left:6px;font-size:13px;font-weight:700;color:var(--mut);cursor:pointer;font-family:inherit;}
+    .optbtn.sel{background:var(--g);color:#fff;border-color:var(--g);}
+    .chip{flex:1;border:2px solid var(--bdr);background:var(--card);border-radius:8px;padding:10px 4px;font-size:12px;font-weight:800;color:var(--ink);cursor:pointer;font-family:inherit;text-align:center;}
+    .chip:active{transform:scale(.94);}
+    #ringFg{transition:stroke-dashoffset .5s;}
+    .tnode{display:flex;flex-direction:column;align-items:center;gap:3px;}
+    .tsprite{width:64px;height:64px;border-radius:8px;background:#f1ead7;display:flex;align-items:center;justify-content:center;}
+    .tnode.small .tsprite{width:52px;height:52px;}
+    .tlabel{font-size:12px;font-weight:700;}
+    .tarrow{text-align:center;color:var(--mut);font-size:18px;margin:6px 0;}
+    .trow{display:flex;justify-content:space-around;gap:6px;}
+    .tiertag{font-size:12px;font-weight:800;color:var(--g);margin:10px 0 2px;text-align:center;}
+    .ggrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+    .gstage{font-size:14px;font-weight:900;color:var(--g);margin:16px 0 8px;}
+    .gcard{background:var(--card);border:2px solid var(--bdr);border-radius:10px;padding:12px;text-align:center;}
+    .gsprite{height:84px;border-radius:6px;background:#f1ead7;display:flex;align-items:center;justify-content:center;}
+    .gname{font-size:13px;font-weight:800;margin-top:8px;}
+    .gdesc{font-size:11px;color:var(--mut);line-height:1.4;margin-top:3px;}
+    .eohead{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:8px 0 4px;text-align:center;font-size:11px;font-weight:700;color:var(--mut);}
+    .wlgrades{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:10px;}
+    .cosgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+    #studyProg{height:6px;background:var(--bdr);border-radius:4px;overflow:hidden;margin-bottom:16px;}
+    #studyProgFill{height:100%;background:linear-gradient(90deg,var(--g),#5cde94);border-radius:4px;transition:width .35s;}
+    #bFeed:active,#bSnack:active,#bPlay:active,#bScold:active,#bClean:active,#bMed:active{transform:scale(.93);}
+  </style>
+  <script src="./words.js"></script>
+  <script src="./easy.js"></script>
+  <script src="./app.js"></script>
+</helmet>
 
 <!-- HOME -->
 <section id="home" class="screen on">
-  <div class="topbar">
-    <div class="name" id="petName"><span id="petNameText">ぴよ</span> <span style="font-size:14px; color:#b7c3b2;">✎</span></div>
-    <div class="stage">
-      <span class="badge" id="stageBadge">あかちゃん</span>
-      <span class="pill">Lv.<span id="lv">1</span></span>
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+    <div id="petName" style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+      <span id="petNameText" style="font-size:22px;font-weight:900;color:var(--g);">ぴよ</span>
+      <svg width="12" height="12" viewBox="0 0 12 12" shape-rendering="crispEdges" style="opacity:.5;"><rect x="0" y="8" width="12" height="2" fill="var(--g)"/><rect x="8" y="0" width="4" height="4" fill="var(--g)"/><rect x="6" y="2" width="4" height="4" fill="var(--g)"/><rect x="2" y="4" width="8" height="4" fill="var(--g)"/></svg>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <span id="stageBadge" style="font-size:12px;background:var(--gl);color:var(--g);padding:5px 14px;border-radius:6px;font-weight:800;border:2px solid var(--bdr);">あかちゃん</span>
+      <span style="font-size:13px;background:var(--g);color:#fff;padding:5px 14px;border-radius:6px;font-weight:900;box-shadow:0 2px 6px rgba(41,166,94,.3);">Lv.<span id="lv">1</span></span>
     </div>
   </div>
 
-  <div class="yard">
+  <div class="yard" style="height:244px;">
     <div class="dots"></div>
     <div class="ground"></div>
     <div id="scene"></div>
     <div id="bubble"></div>
-    <div id="wagamark" style="position:absolute; top:24px; left:50%; transform:translateX(46px); font-size:30px; font-weight:800; color:#e0792f; display:none;">！</div>
-    <div id="sickmark" style="position:absolute; top:22px; left:50%; transform:translateX(-66px); font-size:26px; display:none;">🤒</div>
-    <div id="petWrap"><svg id="pet" width="126" height="108" shape-rendering="crispEdges"></svg><img id="petImg" alt="" style="display:none; width:120px; height:120px; image-rendering:pixelated; object-fit:contain;"></div>
-    <div id="flush"><svg width="68" height="44" shape-rendering="crispEdges">
-      <rect x="0" y="26" width="68" height="18" fill="#4f9bd6"/>
-      <rect x="0" y="18" width="60" height="8" fill="#5fb0e8"/>
-      <rect x="36" y="10" width="24" height="8" fill="#5fb0e8"/>
-      <rect x="44" y="4" width="14" height="6" fill="#7cc4ee"/>
-      <rect x="44" y="0" width="5" height="4" fill="#fbf3df"/>
-      <rect x="52" y="0" width="5" height="4" fill="#fbf3df"/>
-      <rect x="36" y="10" width="5" height="3" fill="#fbf3df"/>
-      <rect x="6" y="18" width="7" height="3" fill="#cfe9fb"/>
-      <rect x="22" y="18" width="7" height="3" fill="#cfe9fb"/>
-      <rect x="2" y="28" width="9" height="3" fill="#cfe9fb"/></svg></div>
-    <div id="poop"><svg width="48" height="42" shape-rendering="crispEdges">
-      <rect x="5" y="29" width="38" height="11" fill="#5f3f1f"/>
-      <rect x="10" y="19" width="28" height="11" fill="#7a5a2a"/>
-      <rect x="15" y="10" width="18" height="10" fill="#8a6234"/>
-      <rect x="19" y="3" width="9" height="8" fill="#9c7438"/>
-      <rect x="13" y="21" width="6" height="3" fill="#a5783f"/>
-      <rect x="24" y="31" width="7" height="3" fill="#a5783f"/></svg></div>
+    <div id="wagamark" style="position:absolute;top:22px;left:50%;transform:translateX(50px);font-size:32px;font-weight:900;color:#ef4444;display:none;animation:pulse 0.8s infinite;">！</div>
+    <div id="sickmark" style="position:absolute;top:20px;left:50%;transform:translateX(-70px);display:none;">
+      <svg width="20" height="20" viewBox="0 0 20 20" shape-rendering="crispEdges"><rect x="2" y="0" width="4" height="4" fill="#ef4444"/><rect x="14" y="0" width="4" height="4" fill="#ef4444"/><rect x="6" y="4" width="4" height="4" fill="#ef4444"/><rect x="10" y="4" width="4" height="4" fill="#ef4444"/><rect x="2" y="8" width="4" height="4" fill="#ef4444"/><rect x="14" y="8" width="4" height="4" fill="#ef4444"/></svg>
+    </div>
+    <div id="petWrap">
+      <svg id="pet" width="126" height="108" shape-rendering="crispEdges"></svg>
+      <img id="petImg" alt="" style="display:none;width:120px;height:120px;image-rendering:pixelated;object-fit:contain;">
+    </div>
+    <div id="flush"><svg width="68" height="44" shape-rendering="crispEdges"><rect x="0" y="26" width="68" height="18" fill="#4f9bd6"/><rect x="0" y="18" width="60" height="8" fill="#5fb0e8"/><rect x="36" y="10" width="24" height="8" fill="#5fb0e8"/><rect x="44" y="4" width="14" height="6" fill="#7cc4ee"/><rect x="44" y="0" width="5" height="4" fill="#fbf3df"/><rect x="52" y="0" width="5" height="4" fill="#fbf3df"/><rect x="36" y="10" width="5" height="3" fill="#fbf3df"/><rect x="6" y="18" width="7" height="3" fill="#cfe9fb"/><rect x="22" y="18" width="7" height="3" fill="#cfe9fb"/><rect x="2" y="28" width="9" height="3" fill="#cfe9fb"/></svg></div>
+    <div id="poop"><svg width="48" height="42" shape-rendering="crispEdges"><rect x="5" y="29" width="38" height="11" fill="#5f3f1f"/><rect x="10" y="19" width="28" height="11" fill="#7a5a2a"/><rect x="15" y="10" width="18" height="10" fill="#8a6234"/><rect x="19" y="3" width="9" height="8" fill="#9c7438"/><rect x="13" y="21" width="6" height="3" fill="#a5783f"/><rect x="24" y="31" width="7" height="3" fill="#a5783f"/></svg></div>
   </div>
 
-  <div class="stats">
-    <div class="stat"><span class="ic">🍚</span><div class="bar"><i id="hungerBar" style="background:var(--food)"></i></div></div>
-    <div class="stat"><span class="ic" style="color:var(--happy)">😊</span><div class="bar"><i id="happyBar" style="background:var(--happy)"></i></div></div>
-    <div class="stat"><span class="ic">📏</span><div class="bar"><i id="discBar" style="background:#9b7bd4"></i></div></div>
-    <div class="stat"><span class="ic" style="color:var(--xp)">⭐</span><div class="bar"><i id="xpBar" style="background:var(--xp)"></i></div></div>
+  <!-- Status bars -->
+  <div style="display:flex;flex-direction:column;gap:7px;margin:12px 0 6px;">
+    <div style="display:flex;align-items:center;gap:8px;">
+      <span style="font-size:11px;font-weight:900;color:#f97316;width:32px;text-align:right;flex-shrink:0;">HP</span>
+      <div class="bar"><i id="hungerBar" style="background:linear-gradient(90deg,#fb923c,#f97316);"></i></div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <span style="font-size:11px;font-weight:900;color:#ec4899;width:32px;text-align:right;flex-shrink:0;">FP</span>
+      <div class="bar"><i id="happyBar" style="background:linear-gradient(90deg,#f472b6,#ec4899);"></i></div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <span style="font-size:11px;font-weight:900;color:#8b5cf6;width:32px;text-align:right;flex-shrink:0;">DP</span>
+      <div class="bar"><i id="discBar" style="background:linear-gradient(90deg,#a78bfa,#8b5cf6);"></i></div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <span style="font-size:11px;font-weight:900;color:#3b82f6;width:32px;text-align:right;flex-shrink:0;">EXP</span>
+      <div class="bar"><i id="xpBar" style="background:linear-gradient(90deg,#60a5fa,#3b82f6);"></i></div>
+    </div>
   </div>
 
-  <div class="care">
-    <button class="cbtn" id="bFeed">🍚 ごはん<span class="cnt" id="foodCnt">えさ 0</span></button>
-    <button class="cbtn" id="bSnack">🍬 おかし<span class="cnt">たいじゅう+</span></button>
-    <button class="cbtn" id="bPlay">🎮 あそぶ<span class="cnt">えさ1で ゲーム</span></button>
-    <button class="cbtn" id="bScold">📏 しつけ<span class="cnt" id="scoldCnt">わがまま時</span></button>
-    <button class="cbtn" id="bClean">🧹 そうじ<span class="cnt" id="cleanCnt">きれい</span></button>
-    <button class="cbtn" id="bMed">💊 おくすり<span class="cnt" id="medCnt">えさ20</span></button>
+  <!-- Care buttons -->
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:6px;">
+    <button id="bFeed" style="background:#fff7ed;border:2px solid #fed7aa;border-radius:12px;padding:14px 4px;display:flex;flex-direction:column;align-items:center;gap:6px;font-size:12px;font-weight:800;color:#c2410c;cursor:pointer;font-family:inherit;">
+      <svg width="18" height="18" viewBox="0 0 18 18" shape-rendering="crispEdges"><rect x="0" y="0" width="4" height="3" fill="currentColor"/><rect x="14" y="0" width="4" height="3" fill="currentColor"/><rect x="2" y="3" width="14" height="3" fill="currentColor"/><rect x="7" y="6" width="4" height="6" fill="currentColor"/><rect x="2" y="12" width="14" height="3" fill="currentColor"/><rect x="0" y="15" width="4" height="3" fill="currentColor"/><rect x="14" y="15" width="4" height="3" fill="currentColor"/></svg>
+      ごはん
+      <span id="foodCnt" style="font-size:10px;color:#ea580c;font-weight:700;font-family:'DotGothic16',sans-serif;">えさ 0</span>
+    </button>
+    <button id="bSnack" style="background:#fefce8;border:2px solid #fde68a;border-radius:12px;padding:14px 4px;display:flex;flex-direction:column;align-items:center;gap:6px;font-size:12px;font-weight:800;color:#92400e;cursor:pointer;font-family:inherit;">
+      <svg width="18" height="14" viewBox="0 0 18 14" shape-rendering="crispEdges"><rect x="0" y="0" width="18" height="4" fill="currentColor"/><rect x="0" y="5" width="18" height="4" fill="currentColor"/><rect x="0" y="10" width="18" height="4" fill="currentColor"/><rect x="0" y="0" width="4" height="14" fill="currentColor"/><rect x="14" y="0" width="4" height="14" fill="currentColor"/></svg>
+      おかし
+      <span style="font-size:10px;color:#b45309;font-weight:700;">たいじゅう+</span>
+    </button>
+    <button id="bPlay" style="background:#eff6ff;border:2px solid #bfdbfe;border-radius:12px;padding:14px 4px;display:flex;flex-direction:column;align-items:center;gap:6px;font-size:12px;font-weight:800;color:#1d4ed8;cursor:pointer;font-family:inherit;">
+      <svg width="16" height="20" viewBox="0 0 16 20" shape-rendering="crispEdges"><rect x="0" y="0" width="4" height="20" fill="currentColor"/><rect x="4" y="4" width="4" height="12" fill="currentColor"/><rect x="8" y="8" width="4" height="4" fill="currentColor"/></svg>
+      あそぶ
+      <span style="font-size:10px;color:#2563eb;font-weight:700;">えさ1で</span>
+    </button>
+    <button id="bScold" style="background:#f5f3ff;border:2px solid #ddd6fe;border-radius:12px;padding:14px 4px;display:flex;flex-direction:column;align-items:center;gap:6px;font-size:12px;font-weight:800;color:#5b21b6;cursor:pointer;font-family:inherit;">
+      <svg width="14" height="22" viewBox="0 0 14 22" shape-rendering="crispEdges"><rect x="4" y="0" width="6" height="12" fill="currentColor"/><rect x="4" y="16" width="6" height="6" fill="currentColor"/></svg>
+      しつけ
+      <span id="scoldCnt" style="font-size:10px;color:#6d28d9;font-weight:700;">わがまま時</span>
+    </button>
+    <button id="bClean" style="background:#f0fdf4;border:2px solid #bbf7d0;border-radius:12px;padding:14px 4px;display:flex;flex-direction:column;align-items:center;gap:6px;font-size:12px;font-weight:800;color:#15803d;cursor:pointer;font-family:inherit;">
+      <svg width="18" height="18" viewBox="0 0 18 18" shape-rendering="crispEdges"><rect x="4" y="0" width="3" height="3" fill="currentColor"/><rect x="11" y="0" width="3" height="3" fill="currentColor"/><rect x="0" y="3" width="18" height="3" fill="currentColor"/><rect x="0" y="6" width="3" height="8" fill="currentColor"/><rect x="15" y="6" width="3" height="8" fill="currentColor"/><rect x="3" y="14" width="12" height="4" fill="currentColor"/></svg>
+      そうじ
+      <span id="cleanCnt" style="font-size:10px;color:#16a34a;font-weight:700;">きれい</span>
+    </button>
+    <button id="bMed" style="background:#fff1f2;border:2px solid #fecdd3;border-radius:12px;padding:14px 4px;display:flex;flex-direction:column;align-items:center;gap:6px;font-size:12px;font-weight:800;color:#be123c;cursor:pointer;font-family:inherit;">
+      <svg width="18" height="18" viewBox="0 0 18 18" shape-rendering="crispEdges"><rect x="6" y="0" width="6" height="18" fill="currentColor"/><rect x="0" y="6" width="18" height="6" fill="currentColor"/></svg>
+      おくすり
+      <span id="medCnt" style="font-size:10px;color:#dc2626;font-weight:700;">えさ20</span>
+    </button>
   </div>
 
-  <div id="nudge"></div>
-  <div id="growthLine" style="text-align:center; margin-top:12px; font-size:13px; font-weight:700; color:var(--green);"></div>
-  <div style="text-align:center; margin-top:14px; font-size:13px; color:#7a8a76; font-weight:700;">
-    たいじゅう <span id="weight">5</span>g ／ 🔥 <span id="streak">1</span>にち つづけてるよ
-  </div>
-  <div id="rev" style="text-align:center; margin-top:8px; font-size:11px; color:#b7c3b2;"></div>
+  <div id="nudge" style="display:none;text-align:center;background:#fefce8;border:2px solid #fde68a;border-radius:8px;padding:12px 14px;margin-top:14px;font-size:13px;font-weight:800;color:#92400e;cursor:pointer;"></div>
+  <div id="growthLine" style="text-align:center;margin-top:14px;font-size:13px;font-weight:700;color:var(--g);"></div>
+  <div style="text-align:center;margin-top:8px;font-size:12px;color:var(--mut);font-weight:700;">たいじゅう <span id="weight">5</span>g ／ <span id="streak">1</span>にち つづけてるよ</div>
+  <div id="rev" style="text-align:center;margin-top:6px;font-size:11px;color:var(--mut);font-family:'DotGothic16',sans-serif;"></div>
 </section>
 
 <!-- LEARN -->
 <section id="learn" class="screen">
-  <h2 style="font-size:20px; margin:6px 0 10px;">がくしゅう</h2>
+  <h2 style="font-size:22px;font-weight:900;color:var(--ink);margin:4px 0 14px;">がくしゅう</h2>
 
-  <div class="goalcard">
-    <svg viewBox="0 0 80 80" width="84" height="84" class="ring">
-      <circle cx="40" cy="40" r="32" fill="none" stroke="#e3efdd" stroke-width="8"/>
-      <circle id="ringFg" cx="40" cy="40" r="32" fill="none" stroke="#3fb98a" stroke-width="8" stroke-linecap="round"
-              stroke-dasharray="201" stroke-dashoffset="201" transform="rotate(-90 40 40)"/>
-      <text id="ringText" x="40" y="46" text-anchor="middle" font-size="17" font-weight="800" fill="#3b6d3b">0/20</text>
+  <div style="background:var(--card);border:2px solid var(--bdr);border-radius:14px;padding:16px;margin-bottom:14px;display:flex;gap:14px;align-items:center;box-shadow:0 2px 10px rgba(41,166,94,.08);">
+    <svg viewBox="0 0 80 80" width="82" height="82" style="flex-shrink:0;">
+      <circle cx="40" cy="40" r="32" fill="none" stroke="#dff0e8" stroke-width="9"></circle>
+      <circle id="ringFg" cx="40" cy="40" r="32" fill="none" stroke="#29a65e" stroke-width="9" stroke-linecap="round" stroke-dasharray="201" stroke-dashoffset="201" transform="rotate(-90 40 40)"></circle>
+      <text id="ringText" x="40" y="46" text-anchor="middle" font-size="15" font-weight="900" fill="#1a3a22" font-family="sans-serif">0/20</text>
     </svg>
-    <div class="goalinfo">
-      <div style="font-size:13px; color:#7a8a76; font-weight:700;">きょうの もくひょう</div>
-      <div id="goalMsg" style="font-size:16px; font-weight:800; color:var(--green); margin:2px 0 8px;">あと 20こ！</div>
-      <div class="weekdots" id="weekdots"></div>
-      <div style="font-size:13px; color:#7a8a76; font-weight:700; margin-top:6px;">🔥 <span id="streakL">0</span>にち れんぞく ／ おぼえた <span id="learned">0</span>こ</div>
+    <div style="flex:1;min-width:0;">
+      <div style="font-size:12px;color:var(--mut);font-weight:700;">きょうの もくひょう</div>
+      <div id="goalMsg" style="font-size:18px;font-weight:900;color:var(--g);margin:2px 0 10px;">あと 20こ！</div>
+      <div style="display:flex;gap:5px;" id="weekdots"></div>
+      <div style="font-size:12px;color:var(--mut);font-weight:700;margin-top:8px;"><span id="streakL">0</span>にち れんぞく ／ おぼえた <span id="learned">0</span>こ</div>
     </div>
   </div>
 
-  <div id="forecast" class="goalcard" style="background:#f3f2fb; border-color:#e0ddf3;">
-    <div class="tsprite" id="fcSprite" style="background:#fff;"></div>
-    <div style="flex:1;">
-      <div id="fcTitle" style="font-size:13px; color:#7a6fa8; font-weight:700;">しんか よこく</div>
-      <div id="fcName" style="font-size:16px; font-weight:800; color:#6a4aa0; margin:2px 0 4px;"></div>
-      <div id="fcMsg" style="font-size:12px; color:#7a8a76; line-height:1.5;"></div>
+  <div id="forecast" style="background:#f5f3ff;border:2px solid #ddd6fe;border-radius:14px;padding:14px 16px;margin-bottom:14px;display:flex;align-items:center;gap:14px;">
+    <div class="tsprite" id="fcSprite" style="background:#fff;flex-shrink:0;border-radius:8px;"></div>
+    <div style="flex:1;min-width:0;">
+      <div id="fcTitle" style="font-size:12px;color:#6d28d9;font-weight:800;">しんか よこく</div>
+      <div id="fcName" style="font-size:17px;font-weight:900;color:#4c1d95;margin:2px 0 4px;"></div>
+      <div id="fcMsg" style="font-size:12px;color:#7c6bad;line-height:1.5;font-weight:700;"></div>
     </div>
   </div>
 
-  <div id="rewardBanner" style="display:none; text-align:center; background:#fff2cf; border:1px solid #f0d98a; border-radius:12px; padding:8px; margin-bottom:10px; font-size:13px; font-weight:800; color:#9a6b12;">⏰ いまは ごほうびタイム！ えさ・けいけんち 2ばい</div>
+  <div id="rewardBanner" style="display:none;text-align:center;background:#fefce8;border:2px solid #fde68a;border-radius:8px;padding:10px;margin-bottom:12px;font-size:13px;font-weight:800;color:#92400e;">ごほうびタイム！ えさ・けいけんち 2ばい</div>
 
-  <div class="statchips">
-    <button class="chip" id="ticketChip">🎫 おやすみ券 <span id="ticketN">0</span></button>
-    <button class="chip" id="boxChip">🎁 こんしゅう <span id="weekMet">0</span>/5</button>
-    <button class="chip" id="trophyChip">🏆 しょうごう <span id="titleN">0</span></button>
+  <div style="display:flex;gap:8px;margin-bottom:12px;">
+    <button class="chip" id="ticketChip">おやすみ券 <span id="ticketN">0</span></button>
+    <button class="chip" id="boxChip">こんしゅう <span id="weekMet">0</span>/5</button>
+    <button class="chip" id="trophyChip">しょうごう <span id="titleN">0</span></button>
   </div>
-  <button id="boxBtn" class="study-btn" style="display:none; background:#fff2cf; color:#9a6b12; border:1px solid #f0d98a;">🎁 たからばこを あける！</button>
 
-  <div class="grades" id="grades">
+  <button id="boxBtn" style="display:none;width:100%;border:2px solid #fde68a;border-radius:10px;padding:16px;font-size:16px;font-weight:900;background:#fefce8;color:#92400e;cursor:pointer;margin-bottom:14px;font-family:inherit;">たからばこを あける！</button>
+
+  <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:12px;" id="grades">
     <button class="gbtn" data-g="g3">英検3級</button>
     <button class="gbtn" data-g="jun2">英検準2級</button>
     <button class="gbtn" data-g="g2">英検2級</button>
   </div>
-  <button class="study-btn" id="goStudy">📚 えいごの べんきょう</button>
-  <button class="study-btn" id="goReview" style="background:#eef4ea; color:var(--green); border:1px solid var(--line); margin-top:10px;">🔁 ふくしゅう（まちがえた <span id="wrongCount">0</span>こ）</button>
-  <div class="goalset" id="goalset">1にちの もくひょう：
-    <button class="goalbtn" data-goal="10">10</button>
-    <button class="goalbtn" data-goal="20">20</button>
-    <button class="goalbtn" data-goal="30">30</button>
-  </div>
-  <div class="setrow">⏰ ごほうびタイム：<b style="color:var(--green)">15〜17時</b>（えさ・けいけんち 2ばい）</div>
-  <div class="setrow" id="sndset">こうかおん：
-    <button class="optbtn" data-v="1">ON</button>
-    <button class="optbtn" data-v="0">OFF</button>
-  </div>
+
+  <button id="goStudy" style="width:100%;border:none;border-radius:10px;padding:18px;font-size:18px;font-weight:900;background:linear-gradient(135deg,#29a65e,#5cde94);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;font-family:inherit;box-shadow:0 3px 12px rgba(41,166,94,.35);">えいごの べんきょう</button>
+
+  <button id="goReview" style="width:100%;border:2px solid var(--bdr);border-radius:10px;padding:14px;font-size:15px;font-weight:800;background:var(--card);color:var(--g);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;font-family:inherit;margin-top:10px;">ふくしゅう（まちがえた <span id="wrongCount">0</span>こ）</button>
+
+  <div style="text-align:center;margin-top:16px;font-size:13px;color:var(--mut);font-weight:700;" id="goalset">1にちの もくひょう：<button class="goalbtn" data-goal="10">10</button><button class="goalbtn" data-goal="20">20</button><button class="goalbtn" data-goal="30">30</button></div>
+  <div style="text-align:center;margin-top:10px;font-size:12px;color:var(--mut);font-weight:700;">ごほうびタイム：<strong style="color:var(--g);">15〜17時</strong>（えさ・けいけんち 2ばい）</div>
+  <div style="text-align:center;margin-top:10px;font-size:13px;color:var(--mut);font-weight:700;" id="sndset">こうかおん：<button class="optbtn" data-v="1">ON</button><button class="optbtn" data-v="0">OFF</button></div>
 </section>
 
 <!-- STUDY -->
 <section id="study" class="screen">
-  <div class="qhead">
-    <button class="back" id="back">‹</button>
-    <div class="qprog"><span id="qNo">1</span> / <span id="qTotal">5</span> もん</div>
-    <div style="width:34px"></div>
+  <div id="studyProg"><div id="studyProgFill" style="width:0%;"></div></div>
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
+    <button id="back" style="background:var(--gl);border:2px solid var(--bdr);border-radius:8px;padding:8px 16px;font-size:20px;color:var(--g);cursor:pointer;font-weight:800;font-family:inherit;line-height:1;">‹</button>
+    <div style="font-size:14px;font-weight:800;color:var(--mut);"><span id="qNo">1</span> / <span id="qTotal">5</span> もん</div>
+    <div style="width:48px;"></div>
   </div>
-  <div class="qcard">
-    <div class="qhint">この えいごの いみは？</div>
-    <div class="qword" id="qword">apple</div>
-    <button class="speak" id="speak">🔊 きく</button>
-    <div style="font-size:11px; color:#aab4a4; margin-top:6px;">こたえを ながおしすると やさしいいみ</div>
+  <div style="background:var(--card);border:2px solid var(--bdr);border-radius:16px;padding:28px 20px;text-align:center;box-shadow:0 2px 12px rgba(41,166,94,.08);">
+    <div style="font-size:13px;color:var(--mut);font-weight:800;margin-bottom:12px;">この えいごの いみは？</div>
+    <div id="qword">apple</div>
+    <button id="speak" style="background:var(--gl);border:2px solid var(--bdr);border-radius:8px;padding:8px 20px;font-size:14px;font-weight:800;color:var(--g);cursor:pointer;margin-top:12px;font-family:inherit;display:inline-flex;align-items:center;gap:8px;">
+      <svg width="16" height="14" viewBox="0 0 16 14" shape-rendering="crispEdges"><rect x="0" y="4" width="4" height="6" fill="currentColor"/><rect x="4" y="2" width="2" height="10" fill="currentColor"/><rect x="6" y="0" width="2" height="14" fill="currentColor"/><rect x="10" y="4" width="2" height="6" fill="currentColor"/><rect x="14" y="2" width="2" height="10" fill="currentColor"/></svg>
+      きく
+    </button>
+    <div style="font-size:11px;color:var(--mut);margin-top:10px;font-weight:700;">ながおしすると やさしいいみ</div>
   </div>
-  <div class="choices" id="choices"></div>
-  <div class="reward" id="reward"></div>
-  <div id="easyHint"></div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:18px;" id="choices"></div>
+  <div id="reward" style="text-align:center;margin-top:16px;font-size:17px;font-weight:900;color:var(--g);min-height:26px;"></div>
+  <div id="easyHint" style="display:none;margin-top:14px;background:#fefce8;border:2px solid #fde68a;border-radius:10px;padding:16px;text-align:center;"></div>
 </section>
 
-<!-- ADMIN (かんりしゃ) -->
+<!-- ADMIN -->
 <section id="admin" class="screen">
-  <div class="qhead">
-    <button class="back" id="backAdmin">‹</button>
-    <div class="qprog">かんりしゃページ</div>
-    <div style="width:34px"></div>
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:4px;">
+    <button id="backAdmin" style="background:var(--gl);border:2px solid var(--bdr);border-radius:8px;padding:8px 16px;font-size:20px;color:var(--g);cursor:pointer;font-weight:800;font-family:inherit;line-height:1;">‹</button>
+    <div style="font-size:18px;font-weight:900;color:var(--ink);">せってい</div>
   </div>
-
   <div class="atabs" id="atabs">
     <button class="atab sel" data-t="zukan">ずかん</button>
     <button class="atab" data-t="kisekae">きせかえ</button>
@@ -320,1085 +302,130 @@
     <button class="atab" data-t="tango">たんご</button>
     <button class="atab" data-t="data">データ</button>
   </div>
-
-  <div id="tab-data" class="atabpane" style="display:none;">
-    <p style="font-size:13px; color:#7a8a76; line-height:1.7; margin:4px 0 12px;">
-      しんちょくは この たんまつに ほぞんされ、アプリの こうしんでは <b>きえません</b>。<br>
-      きしゅへんこうなどに そなえて、ときどき バックアップを とっておくと あんしんです。
-    </p>
-    <div id="dataStat" style="font-size:13px; color:var(--ink); font-weight:700; background:#f3f9ec; border-radius:12px; padding:10px 12px; margin-bottom:14px;"></div>
-
-    <h3 style="font-size:15px; margin:6px 0 6px;">バックアップ（書き出し）</h3>
-    <button id="btnExport" class="study-btn" style="background:#eef4ea; color:var(--green); border:1px solid var(--line);">バックアップコードを つくる</button>
-    <textarea id="exportBox" readonly placeholder="ここに コードが でます" style="width:100%; height:80px; margin-top:8px; padding:10px; border:1px solid var(--line); border-radius:12px; font-size:11px; font-family:monospace; display:none;"></textarea>
-    <button id="btnCopy" style="display:none; width:100%; margin-top:8px; padding:10px; border:1px solid var(--line); background:var(--card); border-radius:12px; font-size:14px; font-weight:700; color:var(--green); cursor:pointer;">コピーする</button>
-
-    <h3 style="font-size:15px; margin:22px 0 6px;">ふっかつ（読み込み）</h3>
-    <p style="font-size:12px; color:#b23b3b; margin:0 0 6px;">⚠ いまの データに 上書きされます</p>
-    <textarea id="importBox" placeholder="バックアップコードを はりつけてね" style="width:100%; height:80px; padding:10px; border:1px solid var(--line); border-radius:12px; font-size:11px; font-family:monospace;"></textarea>
-    <button id="btnImport" class="study-btn" style="margin-top:8px;">この データで ふっかつする</button>
-    <div id="dataMsg" style="text-align:center; font-size:13px; font-weight:700; margin-top:10px; min-height:18px;"></div>
-  </div>
-
+  <div id="tab-zukan" class="atabpane"><div id="adminGallery"></div></div>
   <div id="tab-kisekae" class="atabpane" style="display:none;">
-    <p style="font-size:12px; color:#7a8a76; margin:4px 0 10px;">たくさん おぼえると、いろや はいけいが ふえるよ！</p>
-    <h3 style="font-size:15px; margin:6px 0 8px;">キャラの いろ</h3>
+    <p style="font-size:12px;color:var(--mut);margin:4px 0 12px;font-weight:700;">たくさん おぼえると、いろや はいけいが ふえるよ！</p>
+    <h3 style="font-size:15px;font-weight:900;margin:4px 0 10px;color:var(--ink);">キャラの いろ</h3>
     <div id="colorList" class="cosgrid"></div>
-    <h3 style="font-size:15px; margin:18px 0 8px;">はいけい</h3>
+    <h3 style="font-size:15px;font-weight:900;margin:18px 0 10px;color:var(--ink);">はいけい</h3>
     <div id="bgList" class="cosgrid"></div>
   </div>
-
-  <div id="tab-zukan" class="atabpane">
-    <div id="adminGallery"></div>
-  </div>
-
   <div id="tab-keifu" class="atabpane" style="display:none;">
-    <p style="font-size:12px; color:#7a8a76; margin:4px 0 12px;">
-      せわミス・しつけミスが <b>すくない</b>ほど「よいこ」、<b>おおい</b>ほど「わんぱく」に育ちます。
-    </p>
+    <p style="font-size:12px;color:var(--mut);margin:4px 0 14px;font-weight:700;line-height:1.7;">せわミス・しつけミスが <strong style="color:var(--ink);">すくない</strong>ほど「よいこ」、<strong style="color:var(--ink);">おおい</strong>ほど「わんぱく」に育ちます。</p>
     <div id="adminTree"></div>
   </div>
-
   <div id="tab-tango" class="atabpane" style="display:none;">
     <div class="wlgrades" id="wlGrades">
       <button class="gbtn" data-g="g3">英検3級</button>
       <button class="gbtn" data-g="jun2">英検準2級</button>
       <button class="gbtn" data-g="g2">英検2級</button>
     </div>
-    <input id="wlSearch" type="search" placeholder="さがす（えいご・いみ）" style="width:100%; margin:10px 0 6px; padding:10px 12px; border:1px solid var(--line); border-radius:12px; font-size:15px;">
-    <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
-      <button id="wlWrongBtn" class="optbtn" style="margin-left:0;">❌ にがてだけ</button>
-      <div id="wlCount" style="font-size:12px; color:#7a8a76;"></div>
+    <input id="wlSearch" type="search" placeholder="さがす（えいご・いみ）" style="width:100%;margin:10px 0 8px;padding:11px 14px;border:2px solid var(--bdr);border-radius:8px;font-size:15px;font-family:inherit;background:var(--card);color:var(--ink);outline:none;">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+      <button id="wlWrongBtn" class="optbtn" style="margin-left:0;">にがてだけ</button>
+      <div id="wlCount" style="font-size:12px;color:var(--mut);font-weight:700;"></div>
     </div>
     <div id="wlList"></div>
   </div>
+  <div id="tab-data" class="atabpane" style="display:none;">
+    <p style="font-size:13px;color:var(--mut);line-height:1.7;margin:4px 0 12px;font-weight:700;">しんちょくは この たんまつに ほぞんされています。ときどき バックアップを とっておくと あんしんです。</p>
+    <div id="dataStat" style="font-size:13px;color:var(--ink);font-weight:800;background:var(--gl);border:2px solid var(--bdr);border-radius:8px;padding:12px 14px;margin-bottom:16px;"></div>
+    <h3 style="font-size:15px;font-weight:900;margin:4px 0 8px;color:var(--ink);">バックアップ（書き出し）</h3>
+    <button id="btnExport" style="width:100%;border:2px solid var(--bdr);border-radius:10px;padding:14px;font-size:15px;font-weight:800;background:var(--card);color:var(--g);cursor:pointer;font-family:inherit;">バックアップコードを つくる</button>
+    <textarea id="exportBox" readonly placeholder="ここに コードが でます" style="display:none;width:100%;height:80px;margin-top:8px;padding:12px;border:2px solid var(--bdr);border-radius:8px;font-size:11px;font-family:monospace;background:var(--card);color:var(--ink);resize:none;"></textarea>
+    <button id="btnCopy" style="display:none;width:100%;margin-top:8px;padding:12px;border:2px solid var(--g);background:var(--gl);border-radius:8px;font-size:14px;font-weight:800;color:var(--g);cursor:pointer;font-family:inherit;">コピーする</button>
+    <h3 style="font-size:15px;font-weight:900;margin:22px 0 8px;color:var(--ink);">ふっかつ（読み込み）</h3>
+    <p style="font-size:12px;color:#be123c;margin:0 0 8px;font-weight:700;">※ いまの データに 上書きされます</p>
+    <textarea id="importBox" placeholder="バックアップコードを はりつけてね" style="width:100%;height:80px;padding:12px;border:2px solid var(--bdr);border-radius:8px;font-size:11px;font-family:monospace;background:var(--card);color:var(--ink);resize:none;"></textarea>
+    <button id="btnImport" style="width:100%;border:none;border-radius:10px;padding:16px;font-size:16px;font-weight:900;background:linear-gradient(135deg,#29a65e,#5cde94);color:#fff;cursor:pointer;font-family:inherit;margin-top:8px;box-shadow:0 3px 10px rgba(41,166,94,.3);">この データで ふっかつする</button>
+    <div id="dataMsg" style="text-align:center;font-size:13px;font-weight:800;margin-top:10px;min-height:18px;"></div>
+  </div>
 </section>
 
-<!-- GAME (ジャンプ) -->
 <!-- GAME SELECT -->
 <section id="gameSelect" class="screen">
-  <div class="qhead">
-    <button class="back" id="backSelect">‹</button>
-    <div class="qprog">ミニゲーム</div>
-    <div style="width:34px"></div>
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
+    <button id="backSelect" style="background:var(--gl);border:2px solid var(--bdr);border-radius:8px;padding:8px 16px;font-size:20px;color:var(--g);cursor:pointer;font-family:inherit;line-height:1;">‹</button>
+    <div style="font-size:18px;font-weight:900;color:var(--ink);">ミニゲーム</div>
   </div>
-  <p style="text-align:center; font-size:13px; color:#7a8a76; margin:0 0 16px;">あそぶ ゲームを えらんでね（えさ1）</p>
-  <button class="study-btn" id="selJump">🦘 ジャンプ</button>
-  <button class="study-btn" id="selSea" style="margin-top:12px; background:#3f8fd0;">🐟 うみ</button>
+  <p style="text-align:center;font-size:13px;color:var(--mut);font-weight:700;margin:0 0 24px;">あそぶ ゲームを えらんでね（えさ1）</p>
+  <button id="selJump" style="width:100%;border:none;border-radius:12px;padding:22px;font-size:19px;font-weight:900;background:linear-gradient(135deg,#29a65e,#5cde94);color:#fff;cursor:pointer;font-family:inherit;box-shadow:0 3px 14px rgba(41,166,94,.35);margin-bottom:14px;">ジャンプ</button>
+  <button id="selSea" style="width:100%;border:none;border-radius:12px;padding:22px;font-size:19px;font-weight:900;background:linear-gradient(135deg,#3b82f6,#60a5fa);color:#fff;cursor:pointer;font-family:inherit;box-shadow:0 3px 14px rgba(59,130,246,.35);">うみ</button>
 </section>
 
+<!-- GAME -->
 <section id="game" class="screen">
-  <div class="qhead">
-    <button class="back" id="backGame">‹</button>
-    <div class="qprog" id="gTitle">ジャンプゲーム</div>
-    <div style="width:34px"></div>
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+    <button id="backGame" style="background:var(--gl);border:2px solid var(--bdr);border-radius:8px;padding:8px 16px;font-size:20px;color:var(--g);cursor:pointer;font-family:inherit;line-height:1;">‹</button>
+    <div id="gTitle" style="font-size:16px;font-weight:900;color:var(--ink);">ジャンプゲーム</div>
   </div>
-  <div id="gInstr" style="text-align:center; font-size:13px; color:#7a8a76; margin-bottom:8px;">タップで ジャンプ！ しょうがいぶつを よけよう</div>
+  <div id="gInstr" style="text-align:center;font-size:13px;color:var(--mut);font-weight:700;margin-bottom:10px;">タップで ジャンプ！</div>
   <div style="position:relative;">
-    <canvas id="gcanvas" width="340" height="200" style="width:100%; background:#f1ead7; border:1px solid #e2d8bd; border-radius:14px; display:block; touch-action:manipulation;"></canvas>
-    <div id="gscore" style="position:absolute; top:10px; right:16px; font-size:15px; font-weight:700; color:#4a3526;">0</div>
-    <div id="gover" style="position:absolute; inset:0; display:none; flex-direction:column; align-items:center; justify-content:center; gap:10px; background:rgba(241,234,215,.93); border-radius:14px;">
-      <div style="font-size:18px; font-weight:700;">ゲームオーバー</div>
-      <div id="goverScore" style="font-size:15px;"></div>
-      <div id="goverReward" style="font-size:14px; color:var(--green); font-weight:700;"></div>
-      <div style="display:flex; gap:10px;">
-        <button class="cbtn" id="gRetry" style="padding:10px 18px;">もういちど</button>
-        <button class="cbtn" id="gHome" style="padding:10px 18px;">もどる</button>
+    <canvas id="gcanvas" width="340" height="200" style="width:100%;background:#f1ead7;border:2px solid var(--bdr);border-radius:12px;display:block;touch-action:manipulation;"></canvas>
+    <div id="gscore" style="position:absolute;top:10px;right:16px;font-size:15px;font-weight:900;color:#4a3526;font-family:'DotGothic16',sans-serif;">0</div>
+    <div id="gover" style="position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:rgba(240,250,244,.94);border-radius:12px;">
+      <div style="font-size:20px;font-weight:900;color:var(--ink);">ゲームオーバー</div>
+      <div id="goverScore" style="font-size:14px;font-weight:700;color:var(--mut);"></div>
+      <div id="goverReward" style="font-size:14px;font-weight:800;color:var(--g);"></div>
+      <div style="display:flex;gap:10px;">
+        <button id="gRetry" style="background:var(--g);border:none;border-radius:8px;padding:12px 20px;font-size:14px;font-weight:800;color:#fff;cursor:pointer;font-family:inherit;">もういちど</button>
+        <button id="gHome" style="background:var(--gl);border:2px solid var(--bdr);border-radius:8px;padding:12px 20px;font-size:14px;font-weight:800;color:var(--g);cursor:pointer;font-family:inherit;">もどる</button>
       </div>
     </div>
   </div>
-  <button id="gJump" style="width:100%; margin-top:12px; padding:16px; font-size:18px; font-weight:800; background:var(--green); color:#fff; border:none; border-radius:16px; cursor:pointer;">ジャンプ</button>
+  <button id="gJump" style="width:100%;margin-top:12px;padding:16px;font-size:18px;font-weight:900;background:linear-gradient(135deg,#29a65e,#5cde94);color:#fff;border:none;border-radius:10px;cursor:pointer;font-family:inherit;box-shadow:0 3px 10px rgba(41,166,94,.3);">ジャンプ</button>
 </section>
 
-<div id="goalCele" style="display:none; position:fixed; inset:0; z-index:100; background:rgba(40,40,30,.55); align-items:center; justify-content:center; padding:24px;">
-  <div style="background:var(--card); border-radius:20px; padding:26px 22px; text-align:center; max-width:300px; width:100%;">
-    <div style="font-size:44px;">🎉</div>
-    <div style="font-size:19px; font-weight:800; color:var(--green); margin:8px 0 4px;">きょうの もくひょう たっせい！</div>
-    <div id="celeMsg" style="font-size:14px; color:var(--ink); line-height:1.6;"></div>
-    <div id="celeReward" style="font-size:14px; color:var(--green); font-weight:700; margin-top:10px;"></div>
-    <button id="celeClose" style="margin-top:16px; width:100%; padding:14px; border:none; border-radius:14px; background:var(--green); color:#fff; font-size:17px; font-weight:800; cursor:pointer;">やったー！</button>
+<!-- Goal celebration -->
+<div id="goalCele" style="display:none;position:fixed;inset:0;z-index:100;background:rgba(10,30,15,.6);align-items:center;justify-content:center;padding:24px;backdrop-filter:blur(6px);">
+  <div style="background:var(--card);border-radius:16px;border:3px solid var(--bdr);padding:28px 24px;text-align:center;max-width:300px;width:100%;box-shadow:0 8px 40px rgba(0,0,0,.2);animation:popIn .3s;">
+    <svg width="40" height="36" viewBox="0 0 40 36" shape-rendering="crispEdges" style="margin-bottom:12px;"><rect x="14" y="0" width="12" height="6" fill="#29a65e"/><rect x="0" y="6" width="40" height="12" fill="#29a65e"/><rect x="4" y="18" width="32" height="8" fill="#29a65e"/><rect x="8" y="26" width="24" height="4" fill="#29a65e"/><rect x="6" y="30" width="28" height="6" fill="#29a65e"/></svg>
+    <div style="font-size:20px;font-weight:900;color:var(--g);margin:0 0 6px;">もくひょう たっせい！</div>
+    <div id="celeMsg" style="font-size:14px;color:var(--ink);font-weight:700;line-height:1.7;"></div>
+    <div id="celeReward" style="font-size:14px;color:var(--g);font-weight:800;margin-top:10px;"></div>
+    <button id="celeClose" style="margin-top:18px;width:100%;padding:16px;border:none;border-radius:10px;background:linear-gradient(135deg,#29a65e,#5cde94);color:#fff;font-size:17px;font-weight:900;cursor:pointer;font-family:inherit;box-shadow:0 3px 10px rgba(41,166,94,.3);">やったー！</button>
   </div>
 </div>
 
-<div id="trophyModal" style="display:none; position:fixed; inset:0; z-index:100; background:rgba(40,40,30,.55); align-items:center; justify-content:center; padding:20px;">
-  <div style="background:var(--card); border-radius:20px; padding:20px; max-width:320px; width:100%; max-height:80vh; overflow-y:auto;">
-    <div style="font-size:18px; font-weight:800; color:var(--green); text-align:center; margin-bottom:12px;">🏆 しょうごう</div>
+<!-- Trophy -->
+<div id="trophyModal" style="display:none;position:fixed;inset:0;z-index:100;background:rgba(10,30,15,.6);align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(6px);">
+  <div style="background:var(--card);border-radius:14px;border:3px solid var(--bdr);padding:22px;max-width:320px;width:100%;max-height:80vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,.2);">
+    <div style="font-size:18px;font-weight:900;color:var(--g);text-align:center;margin-bottom:14px;">しょうごう</div>
     <div id="trophyList"></div>
-    <button id="trophyClose" style="margin-top:14px; width:100%; padding:12px; border:none; border-radius:12px; background:var(--green); color:#fff; font-size:16px; font-weight:800; cursor:pointer;">とじる</button>
+    <button id="trophyClose" style="margin-top:16px;width:100%;padding:14px;border:none;border-radius:10px;background:linear-gradient(135deg,#29a65e,#5cde94);color:#fff;font-size:16px;font-weight:900;cursor:pointer;font-family:inherit;">とじる</button>
   </div>
 </div>
 
+<!-- TAB BAR -->
 <nav id="tabbar">
-  <button class="tab sel" data-s="home"><span class="ti">🐣</span>そだてる</button>
-  <button class="tab" data-s="learn"><span class="ti">📚</span>がくしゅう</button>
-  <button class="tab" data-s="admin"><span class="ti">⚙️</span>せってい</button>
+  <div class="tabrow">
+    <button class="tab sel" data-s="home">
+      <span class="ti">
+        <svg width="20" height="18" viewBox="0 0 20 18" shape-rendering="crispEdges"><rect x="3" y="0" width="6" height="3" fill="currentColor"/><rect x="11" y="0" width="6" height="3" fill="currentColor"/><rect x="0" y="3" width="20" height="6" fill="currentColor"/><rect x="2" y="9" width="16" height="4" fill="currentColor"/><rect x="5" y="13" width="10" height="3" fill="currentColor"/><rect x="8" y="16" width="4" height="2" fill="currentColor"/></svg>
+      </span>
+      そだてる
+    </button>
+    <button class="tab" data-s="learn">
+      <span class="ti">
+        <svg width="20" height="18" viewBox="0 0 20 18" shape-rendering="crispEdges"><rect x="7" y="0" width="6" height="3" fill="currentColor"/><rect x="4" y="3" width="12" height="3" fill="currentColor"/><rect x="0" y="6" width="6" height="3" fill="currentColor"/><rect x="14" y="6" width="6" height="3" fill="currentColor"/><rect x="0" y="9" width="20" height="3" fill="currentColor"/><rect x="0" y="12" width="6" height="6" fill="currentColor"/><rect x="14" y="12" width="6" height="6" fill="currentColor"/></svg>
+      </span>
+      がくしゅう
+    </button>
+    <button class="tab" data-s="admin">
+      <span class="ti">
+        <svg width="20" height="20" viewBox="0 0 20 20" shape-rendering="crispEdges"><rect x="8" y="0" width="4" height="4" fill="currentColor"/><rect x="8" y="16" width="4" height="4" fill="currentColor"/><rect x="0" y="8" width="4" height="4" fill="currentColor"/><rect x="16" y="8" width="4" height="4" fill="currentColor"/><rect x="4" y="4" width="12" height="12" fill="currentColor"/><rect x="2" y="6" width="16" height="8" fill="currentColor"/><rect x="6" y="2" width="8" height="16" fill="currentColor"/></svg>
+      </span>
+      せってい
+    </button>
+  </div>
 </nav>
-
-<script src="words.js"></script>
-<script src="easy.js"></script>
-<script>
-/* ---------- word bank (WORDBANK comes from words.js) ---------- */
-const QPER = 5;
-function currentWords(){ return (WORDBANK[state.grade] || WORDBANK.g3).words; }
-
-/* ---------- pixel pet ---------- */
-/* オリジナルの白黒ドット絵（アイロンビーズ風）。o=黒ふち, w=白, g=グレー陰 */
-const PAL={o:"#4a3526", w:"#faf6ec", g:"#d8cdb2"};
-/* きせかえ：キャラの色（おぼえた数で アンロック） */
-const COLORS=[
-  {id:'brown', name:'ちゃいろ', need:0,   o:'#4a3526'},
-  {id:'green', name:'みどり',   need:30,  o:'#3b6d3b'},
-  {id:'blue',  name:'あお',     need:80,  o:'#2a5a8a'},
-  {id:'pink',  name:'ピンク',   need:150, o:'#b04a72'},
-  {id:'purple',name:'むらさき', need:250, o:'#6a4aa0'},
-  {id:'red',   name:'あか',     need:400, o:'#a83232'}
-];
-/* きせかえ：はいけい */
-/* --- ドット絵シーン背景（viewBox 120x70・rectで描く） --- */
-function R(x,y,w,h,c){ return '<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" fill="'+c+'"/>'; }
-function tri(cx,by,hw,h,c){ let s='',st=5,n=Math.ceil(h/st); for(let i=0;i<n;i++){ const yy=by-(i+1)*st, ww=Math.max(2,Math.round(hw*2*(1-i/n))); s+=R(Math.round(cx-ww/2),yy,ww,st+0.6,c); } return s; }
-function treeSc(x){ return R(x,49,5,12,'#7a5a2a')+tri(x+2.5,52,9,20,'#5fa83f'); }
-function bld(x,w,h,c){ let s=R(x,60-h,w,h,c); for(let yy=64-h; yy<58; yy+=7) for(let xx=x+3; xx<x+w-3; xx+=6) s+=R(xx,yy,3,4,'#dbe6f0'); return s; }
-const SCENES={
-  yama:()=> R(98,8,9,9,'#f6d65e')+tri(42,60,26,42,'#7fa86a')+tri(80,60,18,28,'#93bb7d')+R(0,60,120,10,'#d8c79a'),
-  mori:()=> R(0,60,120,10,'#bcd6a6')+treeSc(12)+treeSc(36)+treeSc(60)+treeSc(84)+treeSc(104),
-  umi:()=> R(98,8,9,9,'#f6d65e')+R(0,40,120,30,'#5fb0e8')+R(6,46,18,3,'#bfe3f7')+R(42,52,20,3,'#bfe3f7')+R(80,46,18,3,'#bfe3f7'),
-  beach:()=> R(98,8,9,9,'#f6d65e')+R(0,40,120,13,'#5fb0e8')+R(0,53,120,17,'#f0dca8')+R(20,30,4,24,'#8a6234')+R(11,28,22,4,'#5fa83f')+R(15,24,14,4,'#5fa83f'),
-  sabaku:()=> R(98,8,9,9,'#f6d65e')+tri(62,64,62,22,'#ead095')+tri(20,64,28,12,'#dcc086')+R(86,44,6,18,'#5fa84f')+R(81,50,5,5,'#5fa84f')+R(92,46,5,5,'#5fa84f'),
-  tokai:()=> R(0,60,120,10,'#8893a0')+bld(8,18,30,'#79838f')+bld(30,16,42,'#8b95a2')+bld(50,20,24,'#79838f')+bld(74,18,36,'#8b95a2')+bld(96,16,28,'#79838f'),
-  gakko:()=> R(0,60,120,10,'#bcd6a6')+R(34,30,52,30,'#e7d6b0')+tri(60,30,30,11,'#b85c4a')+R(57,22,3,3,'#fff')+R(56,46,8,14,'#8a6234')+R(40,36,8,8,'#bfe3f7')+R(72,36,8,8,'#bfe3f7')
-};
-function sceneWrap(c){ return '<svg viewBox="0 0 120 70" preserveAspectRatio="xMidYMid slice" width="100%" height="100%" shape-rendering="crispEdges">'+c+'</svg>'; }
-const BGS=[
-  {id:'meadow', name:'はらっぱ', need:0,   bg:'#f1ead7', ground:'#e7dcbf', dot:'rgba(74,53,38,.10)'},
-  {id:'sky',    name:'そら',     need:30,  bg:'#e3f0f7', ground:'#cfe4ef', dot:'rgba(40,80,110,.10)'},
-  {id:'yama',   name:'やま',     need:60,  bg:'#dce9f2', scene:'yama'},
-  {id:'mori',   name:'もり',     need:100, bg:'#e7f1e0', scene:'mori'},
-  {id:'umi',    name:'うみ',     need:140, bg:'#d8eef6', scene:'umi'},
-  {id:'beach',  name:'ビーチ',   need:180, bg:'#dff1f7', scene:'beach'},
-  {id:'sabaku', name:'さばく',   need:220, bg:'#fbeede', scene:'sabaku'},
-  {id:'tokai',  name:'とかい',   need:260, bg:'#e9eef3', scene:'tokai'},
-  {id:'gakko',  name:'がっこう', need:300, bg:'#eaf0f5', scene:'gakko'},
-  {id:'night',  name:'よる',     need:360, bg:'#2a2f45', ground:'#1f2336', dot:'rgba(255,255,255,.12)'}
-];
-function curColor(){ return COLORS.find(c=>c.id===state.petColor) || COLORS[0]; }
-function curBg(){ return BGS.find(b=>b.id===state.bg) || BGS[0]; }
-function currentPAL(){ return {o:curColor().o, w:PAL.w, g:PAL.g}; }
-function applyBg(){
-  const b=curBg();
-  const y=document.querySelector('.yard'); if(y) y.style.background=b.bg;
-  const g=document.querySelector('.ground'); if(g) g.style.background=b.ground||'transparent';
-  const d=document.querySelector('.yard .dots'); if(d) d.style.backgroundImage = b.scene?'none':('radial-gradient('+(b.dot||'rgba(74,53,38,.08)')+' 2px, transparent 2px)');
-  const sc=document.getElementById('scene'); if(sc) sc.innerHTML = b.scene ? sceneWrap(SCENES[b.scene]()) : '';
-}
-const EGG=[
-".....oooo.....","...oowwwwoo...","..owwwwwwwwo..",".owwwwwwwwwwo.",
-".owwwgwwgwwwo.",".owwwwwwwwwwo.",".owwoowwoowwwo",".owwwoowwwwwo.",
-".owwwwwwwwwwo.","..owwwwwwwwo..","...owwwwwwo...","....oooooo...."];
-const BABY=[
-"......oo......",".....o..o.....","....oooooo....","...owwwwwwo...",
-"..owwwwwwwwo..",".owwoowwwoowwo","owwwwwwwwwwwwo",".owwwggwwwwwo.",
-".owwwoooowwwwo","..owwwwwwwwo..","...owwwwwwo...","....oooooo....","....o.oo.o...."];
-const KID=[
-"..o........o..","..oo......oo..",".ooowwwwwwooo.",".owwwwwwwwwwwo",
-"owwwoowwwoowwo","owwwwwwwwwwwwo","owwwwoooooowwo","owwwwwwwwwwwwo",
-".owwwwwwwwwwo.","o.owwwwwwwwo.o","...owwwwwwo...","....oooooo....","...oo.oo.oo..."];
-/* おとな（進化分岐3種） */
-const ADULT=[ /* ふつう型 */
-"....o..o......","....o..o......","..oowwwwwwoo..",".owwwwwwwwwwo.",
-"owwwwwwwwwwwwo","owwoowwwwoowwo","owwwwwwwwwwwwo","owwggwwwwggwwo",
-"owwwwoooowwwwo","owwwwwwwwwwwwo",".owwwwwwwwwwo.","..owwwwwwwwo..","...oo.oo.oo..."];
-const ADULT_GOOD=[ /* よいこ型（ボール付きアンテナ＋にっこり） */
-"...oo..oo.....","....o..o......","..oowwwwwwoo..",".owwwwwwwwwwo.",
-"owwwwwwwwwwwwo","owwowwwwwwowwo","owwwwwwwwwwwwo","owwgwwwwwwgwwo",
-"owwwowwwwowwwo","owwwwooooowwwo",".owwwwwwwwwwo.","..owwwwwwwwo..","...oo.oo.oo..."];
-const ADULT_WILD=[ /* わんぱく型（とげとげ＋にやり） */
-"o.o.o..o.o.o..",".o.o.o.o.o.o..","..oowwwwwwoo..",".owwwwwwwwwwo.",
-"owwwwwwwwwwwwo","owowwwwwwwwowo","owwwwwwwwwwwwo","owoooooooowwwo",
-"owwwwwwwwwwwwo","oowwwwwwwwwwoo",".owwwwwwwwwwo.","..owwwwwwwwo..","..o.oo..oo.o.."];
-/* ODD側（きすう）の3体 */
-const ADULT_GOOD2=[ /* よいこ・ODD（おはな） */
-"....o.o.o.....",".....ooo......","..oowwwwwwoo..",".owwwwwwwwwwo.",
-"owwwwwwwwwwwwo","owwowwwwwwowwo","owwwwwwwwwwwwo","owwwgwwwwgwwwo",
-"owwwwoooowwwwo","owwwwwwwwwwwwo",".owwwwwwwwwwo.","..owwwwwwwwo..","...oo.oo.oo..."];
-const ADULT_NORMAL2=[ /* ふつう・ODD（1本アンテナ・おっとり） */
-".......o......",".......o......","..oowwwwwwoo..",".owwwwwwwwwwo.",
-"owwwwwwwwwwwwo","owwoowwwwoowwo","owwwwwwwwwwwwo","owwwwwwwwwwwwo",
-"owwwoowwwoowwo","owwwwwwwwwwwwo",".owwwwwwwwwwo.","..owwwwwwwwo..","...o.o..o.o..."];
-const ADULT_WILD2=[ /* わんぱく・ODD（つの） */
-".oo......oo...","..oo....oo....","..oowwwwwwoo..",".owwwwwwwwwwo.",
-"owwwwwwwwwwwwo","owooowwwwooowo","owwwwwwwwwwwwo","owoooooooowwwo",
-"owwwwwwwwwwwwo",".owwwwwwwwwwo.","..owwwwwwwwo..","..oo.oo..oo...",".............."];
-
-/* あかちゃん・ODD（ねぼすけ） */
-const BABY2=[
-".......o......","......ooo.....","....oooooo....","...owwwwwwo...",
-"..owwwwwwwwo..",".owooowwooowwo",".owwwwwwwwwwwo",".owwwwoowwwwwo",
-"..owwwwwwwwo..","...owwwwwwo...","....oooooo....","....o.oo.o...."];
-/* こども（3体追加） */
-const KID2=[ /* たれ耳 */
-"..oo......oo..","..ow......wo..","..oowwwwwwoo..",".owwwwwwwwwwo.",
-"owwoowwwwoowwo","owwwwwwwwwwwwo","owwwwoooooowwo","owwwwwwwwwwwwo",
-".owwwwwwwwwwo.","..owwwwwwwwo..","...oo.oo.oo..."];
-const KID3=[ /* くるりん毛・大きな目 */
-"......oo......",".....o........","....oooooo....","...owwwwwwo...",
-"..owwwwwwwwo..",".owooowwooowwo",".owooowwooowwo",".owwwwwwwwwwwo",
-".owwwooooowwwo","..owwwwwwwwo..","...owwwwwwo...","....oooooo...."];
-const KID4=[ /* まるまる・ほっぺ */
-"....oooooo....","...owwwwwwo...","..owwwwwwwwo..",".owwwwwwwwwwo.",
-"owwwwwwwwwwwwo","owwoowwwwoowwo","owwwwwwwwwwwwo","owwgwwwwwwgwwo",
-"owwwwoooowwwwo","owwwwwwwwwwwwo",".owwgwwwwgwwo.","..owwwwwwwwo..","...oo.oo.oo..."];
-/* おとな・STARティア（さいこう）2体 */
-const ADULT_STAR=[ /* かんむり */
-"...o.o.o.o....","...oooooooo...","..oowwwwwwoo..",".owwwwwwwwwwo.",
-"owwwwwwwwwwwwo","owwoowwwwoowwo","owwwwwwwwwwwwo","owwgwowwowgwwo",
-"owwwwooooowwwo","owwwwwwwwwwwwo",".owwwwwwwwwwo.","..owwwwwwwwo..","...oo.oo.oo..."];
-const ADULT_STAR2=[ /* わっか */
-"...oooooo.....","...o....o.....","..oowwwwwwoo..",".owwwwwwwwwwo.",
-"owwwwwwwwwwwwo","owwowwwwwwowwo","owwwwwwwwwwwwo","owwwgwwwwgwwwo",
-"owwwowwwwowwwo","owwwwooooowwwo",".owwwwwwwwwwo.","..owwwwwwwwo..","...oo.oo.oo..."];
-
-const BABIES={
-  e:{map:BABY,  name:'ぴよ',  desc:'うまれたて。げんきに めをさます あかちゃん。'},
-  o:{map:BABY2, name:'すぴか',desc:'うまれたて。よく ねる ねぼすけ あかちゃん。'}
-};
-const CHILDREN={
-  e_g:{map:KID,  name:'ぴょん', desc:'すなおで げんきな こども。'},
-  e_b:{map:KID2, name:'みみ',   desc:'たれ耳の あまえんぼう こども。'},
-  o_g:{map:KID3, name:'くるり', desc:'おめめ ぱっちりの げんき こども。'},
-  o_b:{map:KID4, name:'ぷく',   desc:'まるまる たべるの だいすき こども。'}
-};
-/* レア：クロネコ（カラー・専用パレット） */
-const DEVIL_PAL={o:'#15131a', k:'#2c2733', Y:'#f6d65e', e:'#15131a', p:'#f3a3bf'};
-const DEVIL=[
-"..o.........o..",".ooo.......ooo.",".okko.....okko.","..ookkkkkkkoo..",
-".okkkkkkkkkkko.","okkYYkkkkkYYkko","okkYekkkkkeYkko","okkkkkpkpkkkkko",
-"okkkkkkkkkkkkko",".okkkkkkkkkkko.","..okkkkkkkko.oo","...oo...oo...ok",
-".............oo"];
-const ADULTS={
-  star_e:  {map:ADULT_STAR,   name:'カンムリ',desc:'せわ かんぺき！ どうどうとした おとな。'},
-  star_o:  {map:ADULT_STAR2,  name:'テンシ',  desc:'せわ かんぺき！ やさしさ あふれる おとな。'},
-  good_e:  {map:ADULT_GOOD,   name:'ニコリ',  desc:'れいぎ ただしい よいこ。みんなに やさしい。'},
-  good_o:  {map:ADULT_GOOD2,  name:'ハナミ',  desc:'おはなが だいすき。のんびりやさん。'},
-  normal_e:{map:ADULT,        name:'マルオ',  desc:'げんきで すなおな ふつうの子。'},
-  normal_o:{map:ADULT_NORMAL2,name:'ポヨン',  desc:'おっとり マイペース。たべるの だいすき。'},
-  wild_e:  {map:ADULT_WILD,   name:'トゲオ',  desc:'やんちゃで げんきいっぱい。いたずらっ子。'},
-  wild_o:  {map:ADULT_WILD2,  name:'ツノマル',desc:'まけずぎらいの あばれんぼう。'},
-  devil:   {map:DEVIL, pal:DEVIL_PAL, rare:true, name:'クロネコ', desc:'レア！ せわを サボりすぎると あらわれる。ねこみみ・きいろい目・しっぽの くろねこ。'}
-};
-function babyInfo(){ return BABIES[state.babyType] || BABIES.e; }
-function childInfo(){ return CHILDREN[state.childType] || CHILDREN.e_g; }
-function adultInfo(){
-  let k=state.adultType;
-  if(ADULTS[k]) return ADULTS[k];
-  if(k && ADULTS[k+'_e']) return ADULTS[k+'_e']; /* 旧データ移行 */
-  return ADULTS.normal_e;
-}
-function adultMap(){ return adultInfo().map; }
-/* いまの 勉強の しゅうかんだと どんな おとなに なるか */
-function predictedAdultKey(){
-  const ms=state.maxStreak||0, met=(state.metDates||[]).length, miss=state.careMiss+state.disciplineMiss;
-  const parity=(state.learned%2===0)?'e':'o';
-  if(miss>=8) return 'devil';
-  const tier=(ms>=7&&met>=10)?'star':(ms>=3||met>=5)?'good':(met>=2)?'normal':'wild';
-  return tier+'_'+parity;
-}
-function petMap(){
-  if(state.lv>=4) return adultMap();
-  if(state.lv>=3) return childInfo().map;
-  if(state.lv>=2) return babyInfo().map;
-  return EGG;
-}
-function drawPet(){
-  const petSvg=document.getElementById('pet');
-  const map=petMap(), ps=8, BOX=120;
-  const cols=Math.max.apply(null, map.map(r=>r.length)), rows=map.length;
-  const ox=Math.round((BOX-cols*ps)/2), oy=Math.round((BOX-rows*ps)/2);
-  let P=currentPAL();
-  if(state.lv>=4 && adultInfo().pal) P=adultInfo().pal;  /* レアは専用カラー */
-  let s='';
-  for(let y=0;y<map.length;y++)for(let x=0;x<map[y].length;x++){
-    const c=map[y][x]; if(P[c]) s+='<rect x="'+(ox+x*ps)+'" y="'+(oy+y*ps)+'" width="'+ps+'" height="'+ps+'" fill="'+P[c]+'"/>';
-  }
-  petSvg.setAttribute('width',BOX); petSvg.setAttribute('height',BOX); petSvg.setAttribute('viewBox','0 0 '+BOX+' '+BOX);
-  petSvg.innerHTML=s;
-  applyBg();
-}
-
-/* ---------- state ---------- */
-const KEY='eigopet_v1';
-const BAKKEY=KEY+'_bak';
-const today=()=> new Date().toISOString().slice(0,10);
-let state = load();
-
-function load(){
-  let s=null;
-  for(const k of [KEY, BAKKEY]){ try{ const raw=localStorage.getItem(k); if(raw){ s=JSON.parse(raw); break; } }catch(e){} }
-  const def={ name:"ぴよ", lv:1, xp:0, hunger:80, happy:80, food:0, dirty:false,
-              streak:1, learned:0, last:today(), grade:"g3",
-              discipline:50, weight:5, careMiss:0, disciplineMiss:0, wagamama:false,
-              babyType:null, childType:null, adultType:null, customImg:{}, gameHi:0,
-              dailyGoal:20, todayDate:today(), todayWords:[], lastGoalDate:null, metDates:[],
-              wrongWords:[], petColor:'brown', bg:'meadow',
-              freezeTickets:0, lastTicketDate:null, rewardHour:null, lastBoxWeek:null,
-              titles:[], sound:true, mastery:{}, maxStreak:0, sick:false };
-  s=Object.assign({}, def, s||{});  /* 既存データは保持し、新項目だけ デフォルト追加 */
-  if(!WORDBANK[s.grade]) s.grade="jun2";
-  if(s.grade==='g3') s.grade='jun2';   /* 3級は いまは ひょうじしない */
-  return s;
-}
-function save(){ try{ const s=JSON.stringify(state); localStorage.setItem(KEY, s); localStorage.setItem(BAKKEY, s); }catch(e){} }
-
-const dayStr=(d)=> d.toISOString().slice(0,10);
-function yesterday(){ const d=new Date(today()); d.setDate(d.getDate()-1); return dayStr(d); }
-function todayDone(){ return (state.todayDate===today()) && (state.todayWords.length>=state.dailyGoal); }
-function displayStreak(){ return (state.lastGoalDate===today() || state.lastGoalDate===yesterday()) ? state.streak : 0; }
-function todayCount(){ return (state.todayDate===today()) ? state.todayWords.length : 0; }
-
-/* ごほうびタイム（きめた じかんたいは ごほうび2ばい） */
-function isRewardTime(){ const h=new Date().getHours(); return h>=15 && h<17; }  /* 15〜17時 こてい */
-/* 今週（月はじまり）の キー と 達成日数 */
-function weekId(ds){ const d=new Date(ds); const day=(d.getDay()+6)%7; d.setDate(d.getDate()-day); return dayStr(d); }
-function thisWeekMet(){ const wk=weekId(today()); return state.metDates.filter(m=>weekId(m)===wk).length + ((state.metDates.indexOf(today())<0 && todayDone())?1:0); }
-function boxAvailable(){ return thisWeekMet()>=5 && state.lastBoxWeek!==weekId(today()); }
-
-/* 効果音（Web Audio・アセット不要） */
-let _ac=null;
-function tone(freq, t0, dur, type){ try{ if(!_ac) _ac=new (window.AudioContext||window.webkitAudioContext)(); const o=_ac.createOscillator(), g=_ac.createGain(); o.type=type||'sine'; o.frequency.value=freq; o.connect(g); g.connect(_ac.destination); const t=_ac.currentTime+t0; g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(0.18,t+0.01); g.gain.exponentialRampToValueAtTime(0.0001,t+dur); o.start(t); o.stop(t+dur+0.02); }catch(e){} }
-function sfx(kind){ if(!state.sound) return;
-  if(kind==='correct'){ tone(660,0,0.12); tone(880,0.09,0.14); }
-  else if(kind==='combo'){ tone(784,0,0.1); tone(988,0.08,0.1); tone(1175,0.16,0.14); }
-  else if(kind==='wrong'){ tone(200,0,0.18,'square'); }
-  else if(kind==='fanfare'){ [523,659,784,1047].forEach((f,i)=>tone(f,i*0.12,0.18)); }
-  else if(kind==='unlock'){ tone(880,0,0.1); tone(1320,0.1,0.18); }
-  else if(kind==='flush'){ tone(520,0,0.12,'sawtooth'); tone(380,0.12,0.14,'sawtooth'); tone(260,0.26,0.22,'sawtooth'); }
-}
-
-/* 称号 */
-const TITLES=[
-  {id:'w50',name:'たんごの たまご',cond:s=>s.learned>=50},
-  {id:'w100',name:'100ご マスター',cond:s=>s.learned>=100},
-  {id:'w300',name:'300ご マスター',cond:s=>s.learned>=300},
-  {id:'w500',name:'500ご マスター',cond:s=>s.learned>=500},
-  {id:'w1000',name:'1000ご マスター',cond:s=>s.learned>=1000},
-  {id:'s3',name:'3にち つづけたね',cond:s=>s.streak>=3},
-  {id:'s7',name:'1しゅうかん たっせい',cond:s=>s.streak>=7},
-  {id:'s14',name:'2しゅうかん たっせい',cond:s=>s.streak>=14},
-  {id:'s30',name:'1かげつ つづけた えらい！',cond:s=>s.streak>=30},
-  {id:'mst50',name:'50ご かんぺき',cond:s=>masteredCount()>=50},
-  {id:'adult',name:'おとなに そだてた',cond:s=>s.lv>=4}
-];
-function masteredCount(){ let n=0; for(const k in state.mastery){ if(state.mastery[k]>=3) n++; } return n; }
-function checkTitles(){ let got=null; TITLES.forEach(t=>{ if(state.titles.indexOf(t.id)<0 && t.cond(state)){ state.titles.push(t.id); got=t.name; } }); if(got){ bubble('🏆 しょうごう ゲット！'); sfx('fanfare'); } }
-/* おやすみ券：もくひょうの 2ばい やったら 1まい（1にち1まい・さいだい5） */
-function checkTickets(){ if(state.lastTicketDate!==today() && todayCount()>=state.dailyGoal*2){ state.freezeTickets=Math.min(5,state.freezeTickets+1); state.lastTicketDate=today(); bubble('🎫 おやすみ券 ゲット！'); } }
-
-function applyDaily(){
-  if(state.todayDate!==today()){ state.todayDate=today(); state.todayWords=[]; }
-  if(state.last===today()) return;
-  const prev=new Date(state.last), now=new Date(today());
-  const diff=Math.round((now-prev)/86400000);
-  state.hunger=Math.max(0, state.hunger - 30*Math.min(diff,3));
-  state.happy =Math.max(0, state.happy  - 20*Math.min(diff,3));
-  state.discipline=Math.max(0, state.discipline - 5*Math.min(diff,3));
-  if(state.hunger===0) state.careMiss++;
-  if(state.happy===0) state.careMiss++;
-  // びょうき：一定かくりつで かかる（おなか・ごきげんが ひくいと あがる）
-  if(state.lv>=2 && !state.sick){
-    let p=0.12 + (state.hunger<30?0.12:0) + (state.happy<30?0.12:0);
-    if(Math.random() < p*Math.min(diff,3)) state.sick=true;
-  }
-  if(state.sick) state.happy=Math.max(0, state.happy-10);  // びょうき中は ごきげんが さがる
-  state.last=today();
-  save();
-}
-
-/* ---------- level ---------- */
-function need(){ return state.lv*40; }
-/* 連続するほど 成長が はやい（最大 ×1.8） */
-function growthMult(){ return 1 + Math.min(displayStreak(), 10)*0.08; }
-/* 勉強で せいちょうポイントを かせぐ（倍率こみ） */
-function gainGP(base){ addXp(Math.max(1, Math.round(base * growthMult() * (state.sick?0.5:1)))); }
-function addXp(n){
-  state.xp+=n;
-  while(state.xp>=need() && state.lv<5){
-    state.xp-=need(); state.lv++;
-    const parity = (state.learned % 2 === 0) ? 'e' : 'o';
-    const miss = state.careMiss + state.disciplineMiss;          /* お世話の わるさ */
-    const ms = state.maxStreak||0, met = (state.metDates||[]).length;  /* 勉強の しゅうかん */
-    if(state.lv===2 && !state.babyType){ state.babyType = parity; }
-    else if(state.lv===3 && !state.childType){ state.childType = (state.babyType||'e')+'_'+(met>=2?'g':'b'); }
-    else if(state.lv===4 && !state.adultType){
-      if(miss>=8){ state.adultType='devil'; }                    /* サボりすぎ → レア */
-      else {
-        const tier = (ms>=7 && met>=10) ? 'star' : (ms>=3 || met>=5) ? 'good' : (met>=2) ? 'normal' : 'wild';
-        state.adultType = tier+'_'+parity;
-      }
-    }
-    bubble(stageName()+"になった！"); sfx('fanfare');
-  }
-  if(state.lv>=5) state.xp=Math.min(state.xp, need());
-}
-function stageName(){
-  if(state.lv>=4) return "おとな（"+adultInfo().name+"）";
-  if(state.lv>=3) return "こども（"+childInfo().name+"）";
-  if(state.lv>=2) return "あかちゃん（"+babyInfo().name+"）";
-  return "タマゴ";
-}
-
-/* ---------- render ---------- */
-function pct(v){ return Math.max(0,Math.min(100,Math.round(v)))+'%'; }
-function render(){
-  document.getElementById('petNameText').textContent=state.name;
-  document.getElementById('lv').textContent=state.lv;
-  document.getElementById('stageBadge').textContent=stageName();
-  document.getElementById('hungerBar').style.width=pct(state.hunger);
-  document.getElementById('happyBar').style.width=pct(state.happy);
-  document.getElementById('discBar').style.width=pct(state.discipline);
-  document.getElementById('xpBar').style.width=pct(state.xp/need()*100);
-  document.getElementById('foodCnt').textContent='えさ '+state.food;
-  document.getElementById('cleanCnt').textContent=state.dirty?'よごれてる':'きれい';
-  document.getElementById('scoldCnt').textContent=state.wagamama?'いまだ！':'わがまま時';
-  document.getElementById('learned').textContent=state.learned;
-  document.getElementById('weight').textContent=Math.round(state.weight);
-  const gl=document.getElementById('growthLine');
-  if(gl){ const m=growthMult().toFixed(1);
-    gl.textContent = state.lv>=5 ? ('🌟 さいだいまで そだったよ！ ／ せいちょう ×'+m)
-      : ('🌱 つぎのしんかまで あと '+Math.max(0,need()-state.xp)+' ／ せいちょう ×'+m+(displayStreak()>=3?'（れんぞくボーナス中！）':'')); }
-  document.getElementById('poop').style.display=state.dirty?'block':'none';
-  document.getElementById('wagamark').style.display=(state.wagamama && state.lv>=2)?'block':'none';
-  document.getElementById('sickmark').style.display=state.sick?'block':'none';
-  document.getElementById('medCnt').textContent=state.sick?'えさ20で なおす':'げんき';
-  document.querySelectorAll('.gbtn').forEach(b=> b.classList.toggle('sel', b.dataset.g===state.grade));
-  drawPet();
-  renderGoal();
-}
-function renderGoal(){
-  const goal=state.dailyGoal, done=todayCount(), circ=201, pct=Math.min(1, done/goal);
-  const fg=document.getElementById('ringFg'); if(fg) fg.setAttribute('stroke-dashoffset', Math.round(circ*(1-pct)));
-  const rt=document.getElementById('ringText'); if(rt) rt.textContent=done+'/'+goal;
-  const msg=document.getElementById('goalMsg');
-  if(msg){ if(done>=goal){ msg.textContent='🎉 たっせい！'; msg.style.color='#1f7a44'; }
-           else { msg.textContent='あと '+(goal-done)+'こ！'; msg.style.color='var(--green)'; } }
-  const ds=displayStreak();
-  const sl=document.getElementById('streakL'); if(sl) sl.textContent=ds;
-  const sh=document.getElementById('streak'); if(sh) sh.textContent=ds;
-  const wd=document.getElementById('weekdots');
-  if(wd){ let h=''; const W='日月火水木金土';
-    for(let i=6;i>=0;i--){ const d=new Date(today()); d.setDate(d.getDate()-i); const dd=dayStr(d);
-      const met = state.metDates.indexOf(dd)>=0 || (dd===today() && done>=goal);
-      h+='<div class="wdot'+(met?' met':'')+'">'+W[d.getDay()]+'</div>'; }
-    wd.innerHTML=h; }
-  document.querySelectorAll('.goalbtn').forEach(b=> b.classList.toggle('sel', (+b.dataset.goal)===state.dailyGoal));
-  const wc=document.getElementById('wrongCount'); if(wc) wc.textContent=state.wrongWords.length;
-  // 券・宝箱・称号・ごほうびタイム
-  const tn=document.getElementById('ticketN'); if(tn) tn.textContent=state.freezeTickets;
-  const wm=document.getElementById('weekMet'); if(wm) wm.textContent=Math.min(5,thisWeekMet());
-  const tt=document.getElementById('titleN'); if(tt) tt.textContent=(state.titles.length)+'/'+TITLES.length;
-  const bb=document.getElementById('boxBtn'); if(bb) bb.style.display=boxAvailable()?'block':'none';
-  const rb=document.getElementById('rewardBanner'); if(rb) rb.style.display=isRewardTime()?'block':'none';
-  document.querySelectorAll('#sndset .optbtn').forEach(b=> b.classList.toggle('sel', (b.dataset.v==='1')===!!state.sound));
-  // しんか よこく
-  const fc=document.getElementById('fcSprite');
-  if(fc){
-    if(state.lv>=4){
-      const ai=adultInfo();
-      fc.innerHTML=spriteSVG(ai.map,3,ai.pal);
-      document.getElementById('fcTitle').textContent='そだった おとな';
-      document.getElementById('fcName').textContent=ai.name;
-      document.getElementById('fcMsg').textContent='りっぱに そだったね！';
-    } else {
-      const key=predictedAdultKey(), pa=ADULTS[key];
-      fc.innerHTML=spriteSVG(pa.map,3,pa.pal);
-      document.getElementById('fcTitle').textContent='いまの ペースだと…';
-      document.getElementById('fcName').textContent=pa.name;
-      const ms=state.maxStreak||0, met=(state.metDates||[]).length;
-      const ns=Math.max(0,7-ms), nm=Math.max(0,10-met);
-      document.getElementById('fcMsg').textContent =
-        (key.indexOf('star')===0) ? 'さいこうの おとな コース！ この ちょうしで！'
-        : (key==='devil') ? 'サボりすぎ… べんきょう・おせわを しよう'
-        : ('さいこうを めざすなら：れんぞく あと'+ns+'日 ／ たっせい あと'+nm+'日！');
-    }
-  }
-  // ホームの うながし
-  const nd=document.getElementById('nudge');
-  if(nd){ if(done>=goal){ nd.style.display='none'; }
-    else { nd.style.display='block';
-      nd.textContent = done>0 ? ('きょうは あと '+(goal-done)+'こ！ がくしゅうしよう →') : ('きょうの べんきょうを はじめよう！ →'); } }
-}
-function showGoalCelebration(){
-  document.getElementById('celeMsg').innerHTML='きょう '+state.dailyGoal+'こ おぼえたよ！<br>🔥 '+displayStreak()+'にち れんぞく';
-  document.getElementById('celeReward').textContent='ごほうび：えさ +5 ／ ごきげん まんたん';
-  document.getElementById('goalCele').style.display='flex';
-  cheer();
-}
-let bubT;
-function bubble(t){
-  const b=document.getElementById('bubble'); b.textContent=t; b.style.opacity=1;
-  clearTimeout(bubT); bubT=setTimeout(()=>b.style.opacity=0,1100);
-}
-function cheer(){
-  const w=document.getElementById('petWrap'); w.classList.add('happy');
-  setTimeout(()=>w.classList.remove('happy'),1200);
-}
-
-/* ---------- care ---------- */
-document.getElementById('bFeed').onclick=()=>{
-  if(state.food<=0){ bubble("べんきょうして えさをあつめよう"); return; }
-  state.food--; state.hunger=Math.min(100,state.hunger+25); state.happy=Math.min(100,state.happy+5);
-  state.weight+=1; addXp(5); if(Math.random()<0.45) state.dirty=true;
-  bubble("もぐもぐ"); cheer(); save(); render();
-};
-document.getElementById('bSnack').onclick=()=>{
-  state.happy=Math.min(100,state.happy+14); state.weight+=3;
-  if(Math.random()<0.5) state.dirty=true;
-  bubble("おいしい！ でも たいじゅう+"); cheer(); save(); render();
-};
-document.getElementById('bPlay').onclick=()=>{
-  if(state.food<=0){ bubble("べんきょうして えさを あつめよう"); return; }
-  show('gameSelect');
-};
-function consumePlay(){ state.food--; state.weight=Math.max(5,state.weight-1); save(); }
-document.getElementById('backSelect').onclick=()=>{ show('home'); render(); };
-document.getElementById('selJump').onclick=()=>{ if(state.food<=0){ bubble('えさが たりない'); return; } consumePlay(); startGame(); };
-document.getElementById('selSea').onclick=()=>{ if(state.food<=0){ bubble('えさが たりない'); return; } consumePlay(); startSeaGame(); };
-document.getElementById('bScold').onclick=()=>{
-  if(state.wagamama){
-    state.wagamama=false; state.discipline=Math.min(100,state.discipline+12);
-    clearTimeout(wagaTimer); bubble("いいこ だね！"); cheer();
-  } else {
-    state.discipline=Math.max(0,state.discipline-6); bubble("いまは しからないで…");
-  }
-  save(); render();
-};
-let flushing=false;
-document.getElementById('bClean').onclick=()=>{
-  if(flushing) return;
-  if(state.dirty){
-    flushing=true;
-    const p=document.getElementById('poop'), fl=document.getElementById('flush');
-    p.classList.add('flushing'); fl.classList.add('on');
-    bubble("ザブーン！"); sfx('flush');
-    setTimeout(()=>{
-      p.classList.remove('flushing'); fl.classList.remove('on'); flushing=false;
-      state.dirty=false; state.happy=Math.min(100,state.happy+10);
-      bubble("ぴかぴか"); save(); render();
-    }, 1000);
-  } else bubble("きれいだよ");
-};
-const MED_COST=20;
-document.getElementById('bMed').onclick=()=>{
-  if(!state.sick){ bubble("げんきだよ！"); return; }
-  if(state.food<MED_COST){ bubble("おくすりは えさ"+MED_COST+"こ ひつよう…"); return; }
-  state.food-=MED_COST; state.sick=false; state.happy=Math.min(100,state.happy+20);
-  bubble("おくすりで げんきに なった！"); sfx('unlock'); cheer(); save(); render();
-};
-document.getElementById('petName').onclick=()=>{
-  const n=prompt("ペットの なまえは？", state.name);
-  if(n && n.trim()){ state.name=n.trim().slice(0,8); save(); render(); }
-};
-document.getElementById('grades').onclick=(e)=>{
-  const b=e.target.closest('.gbtn'); if(!b) return;
-  state.grade=b.dataset.g; save(); render();
-  bubble(WORDBANK[state.grade].label);
-};
-
-/* ---------- かんりしゃページ（キャラずかん・進化の系譜） ---------- */
-function spriteSVG(map, cell, pal){
-  const P=pal||PAL;
-  const cols=Math.max.apply(null, map.map(r=>r.length)), rows=map.length;
-  let s='';
-  for(let y=0;y<map.length;y++)for(let x=0;x<map[y].length;x++){
-    const c=map[y][x]; if(P[c]) s+='<rect x="'+(x*cell)+'" y="'+(y*cell)+'" width="'+cell+'" height="'+cell+'" fill="'+P[c]+'"/>';
-  }
-  return '<svg width="'+(cols*cell)+'" height="'+(rows*cell)+'" viewBox="0 0 '+(cols*cell)+' '+(rows*cell)+'" shape-rendering="crispEdges">'+s+'</svg>';
-}
-function tnode(map, label, small, pal){
-  return '<div class="tnode'+(small?' small':'')+'"><div class="tsprite">'+spriteSVG(map,small?3:4,pal)+'</div><div class="tlabel">'+label+'</div></div>';
-}
-function gcardHTML(m,n,d,pal){
-  return '<div class="gcard"><div class="gsprite">'+spriteSVG(m,5,pal)+'</div><div class="gname">'+n+'</div><div class="gdesc">'+d+'</div></div>';
-}
-function gridHTML(list){ return '<div class="ggrid">'+list.map(c=>gcardHTML(c.map,c.name,c.desc,c.pal)).join('')+'</div>'; }
-function renderAdmin(){
-  document.getElementById('adminGallery').innerHTML =
-    '<div class="gstage">タマゴ</div>'+gridHTML([{map:EGG,name:'タマゴ',desc:'もうすぐ うまれるよ。たいせつに あたためてね。'}])+
-    '<div class="gstage">あかちゃん（2しゅるい）</div>'+gridHTML(Object.values(BABIES))+
-    '<div class="gstage">こども（4しゅるい）</div>'+gridHTML(Object.values(CHILDREN))+
-    '<div class="gstage">おとな（'+Object.keys(ADULTS).length+'しゅるい）</div>'+gridHTML(Object.values(ADULTS));
-
-  let tree = tnode(EGG,'タマゴ')+'<div class="tarrow">↓ うまれる（おぼえた数の ぐうすう/きすう）</div>';
-  tree += '<div class="eohead"><span>EVEN（ぐうすう）</span><span>ODD（きすう）</span></div>';
-  tree += '<div class="trow">'+tnode(BABIES.e.map,BABIES.e.name,true)+tnode(BABIES.o.map,BABIES.o.name,true)+'</div>';
-  tree += '<div class="tarrow">↓ せわが よい / わるい で わかれる</div>';
-  tree += '<div class="trow">'+tnode(CHILDREN.e_g.map,CHILDREN.e_g.name,true)+tnode(CHILDREN.o_g.map,CHILDREN.o_g.name,true)+'</div>';
-  tree += '<div class="trow">'+tnode(CHILDREN.e_b.map,CHILDREN.e_b.name,true)+tnode(CHILDREN.o_b.map,CHILDREN.o_b.name,true)+'</div>';
-  tree += '<div class="tarrow">↓ せわ・しつけの しつで 4だんかい</div>';
-  [['star','さいこう ◎◎'],['good','よい ◎'],['normal','ふつう ○'],['wild','わんぱく △']].forEach(([t,tl])=>{
-    tree += '<div class="tiertag">'+tl+'</div><div class="trow">'+
-      tnode(ADULTS[t+'_e'].map,ADULTS[t+'_e'].name,true)+tnode(ADULTS[t+'_o'].map,ADULTS[t+'_o'].name,true)+'</div>';
-  });
-  tree += '<div class="tiertag">★ レア（せわを サボりすぎると…）</div><div class="trow">'+
-    tnode(ADULTS.devil.map,ADULTS.devil.name,true,ADULTS.devil.pal)+'</div>';
-  document.getElementById('adminTree').innerHTML = tree;
-}
-/* たんごリスト */
-let wlGrade = 'jun2', wlWrongOnly=false;
-function renderWordList(){
-  const words = (WORDBANK[wlGrade]||WORDBANK.jun2).words;
-  const wrongSet = new Set(state.wrongWords.map(x=>x[0].toLowerCase()));
-  const q = (document.getElementById('wlSearch').value||'').trim().toLowerCase();
-  let list = q ? words.filter(w=> w[0].toLowerCase().indexOf(q)>=0 || (w[1]||'').indexOf(q)>=0 || (w[2]||'').indexOf(q)>=0 ) : words;
-  if(wlWrongOnly) list = list.filter(w=> wrongSet.has(w[0].toLowerCase()));
-  const EZ = (typeof EASY!=='undefined') ? EASY : {};
-  let html='';
-  for(let i=0;i<list.length;i++){
-    const w=list[i], pos=POS_JA[w[3]]||w[3]||'';
-    const yomi = w[2] ? '<span class="wlyomi">'+escJa(w[2])+'</span>' : '';
-    const ez = EZ[w[0]] || EZ[w[0].toLowerCase()];
-    const easyLine = ez ? '<div class="wleasy">やさしく：'+escJa(ez)+'</div>' : '';
-    const m=Math.min(3, state.mastery[w[0]]||state.mastery[w[0].toLowerCase()]||0);
-    const stars='<span class="wlmast">'+'★'.repeat(m)+'☆'.repeat(3-m)+'</span>';
-    const wrong = wrongSet.has(w[0].toLowerCase()) ? '<span class="wlwrong">❌にがて</span>' : '';
-    html += '<div class="wlrow'+(wrong?' iswrong':'')+'"><div class="wltop"><div class="wlen">'+escJa(w[0])+(pos?'<span class="wlpos">'+pos+'</span>':'')+wrong+stars+'</div>'+
-            '<div class="wlja">'+yomi+'<span>'+escJa(w[1])+'</span></div></div>'+easyLine+'</div>';
-  }
-  document.getElementById('wlCount').textContent = list.length+' ご ／ マスター '+masteredCount()+'こ ／ にがて '+state.wrongWords.length+'こ';
-  document.getElementById('wlList').innerHTML = html;
-  document.querySelectorAll('#wlGrades .gbtn').forEach(b=> b.classList.toggle('sel', b.dataset.g===wlGrade));
-  document.getElementById('wlWrongBtn').classList.toggle('sel', wlWrongOnly);
-}
-document.getElementById('wlGrades').onclick=(e)=>{ const b=e.target.closest('.gbtn'); if(!b) return; wlGrade=b.dataset.g; renderWordList(); };
-document.getElementById('wlSearch').oninput=()=> renderWordList();
-document.getElementById('wlWrongBtn').onclick=()=>{ wlWrongOnly=!wlWrongOnly; renderWordList(); };
-
-let curAdminTab='zukan';
-function setAdminTab(t){
-  curAdminTab=t;
-  ['zukan','kisekae','keifu','tango','data'].forEach(k=>{ document.getElementById('tab-'+k).style.display = (k===t)?'block':'none'; });
-  document.querySelectorAll('#atabs .atab').forEach(b=> b.classList.toggle('sel', b.dataset.t===t));
-  if(t==='kisekae') renderCosmetics();
-  if(t==='data') renderData();
-  window.scrollTo(0,0);
-}
-
-/* ---------- データ バックアップ／ふっかつ ---------- */
-function renderData(){
-  document.getElementById('dataStat').textContent =
-    'なまえ：'+state.name+' ／ レベル '+state.lv+' ／ おぼえた '+state.learned+'こ ／ 🔥'+displayStreak()+'にち';
-  document.getElementById('exportBox').style.display='none';
-  document.getElementById('btnCopy').style.display='none';
-  document.getElementById('importBox').value='';
-  document.getElementById('dataMsg').textContent='';
-}
-function encodeState(){ return btoa(unescape(encodeURIComponent(JSON.stringify(state)))); }
-document.getElementById('btnExport').onclick=()=>{
-  const box=document.getElementById('exportBox');
-  box.value=encodeState(); box.style.display='block';
-  document.getElementById('btnCopy').style.display='block';
-};
-document.getElementById('btnCopy').onclick=()=>{
-  const box=document.getElementById('exportBox'); box.select();
-  const ok=()=>{ document.getElementById('dataMsg').style.color='var(--green)'; document.getElementById('dataMsg').textContent='コピーしました！ メモなどに はっておいてね'; };
-  if(navigator.clipboard){ navigator.clipboard.writeText(box.value).then(ok, ()=>{ try{document.execCommand('copy');ok();}catch(e){} }); }
-  else { try{document.execCommand('copy');ok();}catch(e){} }
-};
-document.getElementById('btnImport').onclick=()=>{
-  const msg=document.getElementById('dataMsg');
-  const code=(document.getElementById('importBox').value||'').trim();
-  if(!code){ msg.style.color='#b23b3b'; msg.textContent='コードを はりつけてね'; return; }
-  let obj=null;
-  try{ obj=JSON.parse(decodeURIComponent(escape(atob(code)))); }catch(e){ try{ obj=JSON.parse(code); }catch(e2){} }
-  if(!obj || typeof obj!=='object' || (obj.lv===undefined && obj.learned===undefined)){
-    msg.style.color='#b23b3b'; msg.textContent='この コードは よみこめません'; return;
-  }
-  if(!confirm('いまの データを この バックアップで 上書きします。よろしいですか？')) return;
-  state=Object.assign({}, state, obj);
-  if(!WORDBANK[state.grade]) state.grade='g3';
-  save();
-  msg.style.color='var(--green)'; msg.textContent='ふっかつしました！';
-  renderData(); render();
-};
-document.getElementById('atabs').onclick=(e)=>{ const b=e.target.closest('.atab'); if(!b) return; setAdminTab(b.dataset.t); };
-
-/* ---------- きせかえ（いろ・はいけい） ---------- */
-function cosCard(kind, it, locked, sel){
-  let swatch;
-  if(kind==='color'){ swatch='<div class="cosswatch" style="background:'+it.w+'; border:3px solid '+it.o+';"></div>'; }
-  else { const inner = it.scene ? sceneWrap(SCENES[it.scene]()) : '<div style="height:30%; background:'+(it.ground||'#dfd3b0')+';"></div>';
-    swatch='<div class="cosswatch" style="background:'+it.bg+';">'+inner+'</div>'; }
-  const lbl = locked ? ('🔒 '+it.need+'ご') : it.name;
-  return '<button class="coscard'+(sel?' sel':'')+(locked?' locked':'')+'" data-kind="'+kind+'" data-id="'+it.id+'"'+(locked?' disabled':'')+'>'+swatch+'<span>'+lbl+'</span></button>';
-}
-function renderCosmetics(){
-  const cl=document.getElementById('colorList');
-  cl.innerHTML = COLORS.map(c=> cosCard('color', c, state.learned<c.need, state.petColor===c.id)).join('');
-  const bl=document.getElementById('bgList');
-  bl.innerHTML = BGS.map(b=> cosCard('bg', b, state.learned<b.need, state.bg===b.id)).join('');
-}
-function equipCos(kind, id){
-  if(kind==='color') state.petColor=id; else state.bg=id;
-  save(); render(); renderCosmetics();
-}
-document.getElementById('tab-kisekae').onclick=(e)=>{ const b=e.target.closest('.coscard'); if(!b||b.disabled) return; equipCos(b.dataset.kind, b.dataset.id); };
-
-document.getElementById('backAdmin').onclick=()=>{ gotoTab('home'); };
-
-/* ---------- ミニゲーム①：ジャンプ ---------- */
-let game=null;
-function drawPetCanvas(ctx,map,ox,oy,cell){
-  for(let y=0;y<map.length;y++)for(let x=0;x<map[y].length;x++){
-    const c=map[y][x]; if(PAL[c]){ ctx.fillStyle=PAL[c]; ctx.fillRect(ox+x*cell, oy+y*cell, cell, cell); }
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  componentDidMount() {
+    window._eigoPetInit && window._eigoPetInit();
   }
 }
-function gameSetup(title, instr, btn){
-  show('game'); document.getElementById('gover').style.display='none';
-  document.getElementById('gTitle').textContent=title;
-  document.getElementById('gInstr').textContent=instr;
-  document.getElementById('gJump').textContent=btn;
-  const cv=document.getElementById('gcanvas');
-  return { cv, ctx:cv.getContext('2d'), W:cv.width, H:cv.height,
-    map:petMap(), cell:3 };
-}
-function startGame(){
-  const s=gameSetup('ジャンプゲーム','タップで ジャンプ！ しょうがいぶつを よけよう','ジャンプ');
-  const groundY=s.H-26, petW=Math.max.apply(null,s.map.map(r=>r.length))*s.cell, petH=s.map.length*s.cell;
-  if(game) cancelAnimationFrame(game.raf);
-  game={ mode:'jump', ctx:s.ctx, W:s.W, H:s.H, groundY, map:s.map, cell:s.cell, petW, petH,
-    px:34, py:groundY-petH, vy:0, onGround:true, jumps:0,
-    obs:[], speed:2.4, t:0, score:0, over:false, raf:0 };
-  loopGame();
-}
-function jump(){ if(game && !game.over && game.jumps<2){ game.vy=-9.6; game.jumps++; game.onGround=false; } }
-/* ミニゲーム②：うみ（自動で沈む・ボタンで浮く・障害物に当たると終わり） */
-function startSeaGame(){
-  const s=gameSetup('うみゲーム','タップで うく！ いわの あいだを とおろう','うく');
-  const petW=Math.max.apply(null,s.map.map(r=>r.length))*s.cell, petH=s.map.length*s.cell;
-  if(game) cancelAnimationFrame(game.raf);
-  game={ mode:'sea', ctx:s.ctx, W:s.W, H:s.H, map:s.map, cell:s.cell, petW, petH,
-    px:40, py:Math.round(s.H/2-petH/2), vy:0,
-    obs:[], gap:Math.round(petH*2.6), speed:2.2, t:0, score:0, over:false, raf:0 };
-  loopSea();
-}
-function floatUp(){ if(game && !game.over && game.mode==='sea'){ game.vy=-5.6; } }
-function loopSea(){
-  const g=game; if(!g || g.over) return;
-  g.t++; g.speed += 0.0008;
-  if(g.obs.length===0 || (g.W - g.obs[g.obs.length-1].x) > (150+Math.random()*70)){
-    const w=16+Math.floor(Math.random()*6), gy=24+Math.floor(Math.random()*(g.H-g.gap-48));
-    g.obs.push({x:g.W, w, gy}); /* gy=すきまの上端 */
-  }
-  g.obs.forEach(o=>o.x-=g.speed);
-  g.obs=g.obs.filter(o=>o.x+o.w>-4);
-  g.score=Math.floor(g.t/6);
-  // 物理：じどうで しずむ
-  g.vy += 0.4; g.py += g.vy;
-  if(g.py<0 || g.py+g.petH>g.H){ endGame(); return; }  /* 上下に ぶつかると おわり */
-  const pl=g.px+5, pr=g.px+g.petW-5, pt=g.py+3, pb=g.py+g.petH-3;
-  for(const o of g.obs){
-    if(pl<o.x+o.w && pr>o.x){ if(pt<o.gy || pb>o.gy+g.gap){ endGame(); return; } }
-  }
-  const ctx=g.ctx;
-  ctx.fillStyle='#5fb0e8'; ctx.fillRect(0,0,g.W,g.H);                 /* うみ */
-  ctx.fillStyle='#bfe3f7'; ctx.fillRect(8,14,16,3); ctx.fillRect(g.W-60,28,16,3); ctx.fillRect(g.W-120,10,16,3);
-  g.obs.forEach(o=>{
-    ctx.fillStyle='#3b8a5a'; ctx.fillRect(o.x,0,o.w,o.gy); ctx.fillRect(o.x,o.gy+g.gap,o.w,g.H-(o.gy+g.gap));
-    ctx.fillStyle='#2e6e47'; ctx.fillRect(o.x,o.gy-3,o.w,3); ctx.fillRect(o.x,o.gy+g.gap,o.w,3);
-  });
-  drawPetCanvas(ctx,g.map,g.px,Math.round(g.py),g.cell);
-  document.getElementById('gscore').textContent=g.score;
-  g.raf=requestAnimationFrame(loopSea);
-}
-function gameInput(){ if(!game || game.over) return; if(game.mode==='sea') floatUp(); else jump(); }
-function loopGame(){
-  const g=game; if(!g || g.over) return;
-  g.t++; g.speed += 0.0009;
-  if(g.obs.length===0 || (g.W - g.obs[g.obs.length-1].x) > (150+Math.random()*130)){
-    g.obs.push({x:g.W, w:14+Math.floor(Math.random()*8), h:18+Math.floor(Math.random()*22)});
-  }
-  g.obs.forEach(o=>o.x-=g.speed);
-  g.obs=g.obs.filter(o=>o.x+o.w>-4);
-  g.score=Math.floor(g.t/6);
-  // 物理（重力）＋当たり判定（上面に着地はOK・横からの衝突のみアウト）
-  const prevFeet=g.py+g.petH;
-  g.vy += 0.55; g.py += g.vy; g.onGround=false;
-  if(g.py >= g.groundY-g.petH){ g.py=g.groundY-g.petH; g.vy=0; g.onGround=true; g.jumps=0; }
-  const pl=g.px+5, pr=g.px+g.petW-5;
-  for(const o of g.obs){
-    const ol=o.x, orr=o.x+o.w, top=g.groundY-o.h;
-    if(pl<orr && pr>ol){
-      if(g.vy>=0 && prevFeet<=top+6 && g.py+g.petH>=top){ g.py=top-g.petH; g.vy=0; g.onGround=true; g.jumps=0; }
-      else if(g.py+g.petH>top){ endGame(); return; }
-    }
-  }
-  const ctx=g.ctx;
-  ctx.clearRect(0,0,g.W,g.H);
-  ctx.fillStyle='#e0d3b0'; ctx.fillRect(0,g.groundY,g.W,g.H-g.groundY);
-  ctx.fillStyle='#4a3526'; ctx.fillRect(0,g.groundY,g.W,2);
-  g.obs.forEach(o=>{ ctx.fillStyle='#7a5a2a'; ctx.fillRect(o.x,g.groundY-o.h,o.w,o.h); ctx.fillStyle='#4a3526'; ctx.fillRect(o.x,g.groundY-o.h,o.w,2); });
-  drawPetCanvas(ctx,g.map,g.px,Math.round(g.py),g.cell);
-  document.getElementById('gscore').textContent=g.score;
-  g.raf=requestAnimationFrame(loopGame);
-}
-function endGame(){
-  const g=game; g.over=true; cancelAnimationFrame(g.raf);
-  const sc=g.score;
-  const happyGain=Math.min(30, 6+Math.floor(sc/4));
-  state.happy=Math.min(100, state.happy+happyGain);
-  let eBonus = sc>=40?2 : sc>=20?1 : 0;
-  state.food+=eBonus; addXp(5);
-  if(sc>(state.gameHi||0)) state.gameHi=sc;
-  save();
-  document.getElementById('goverScore').textContent='スコア '+sc+'（さいこう '+state.gameHi+'）';
-  document.getElementById('goverReward').textContent='ごきげん +'+happyGain+(eBonus?' ／ えさ +'+eBonus:'');
-  document.getElementById('gover').style.display='flex';
-}
-function leaveGame(){ if(game){ game.over=true; cancelAnimationFrame(game.raf); } show('home'); render(); }
-(function(){
-  const cv=document.getElementById('gcanvas');
-  cv.addEventListener('pointerdown', (e)=>{ e.preventDefault(); gameInput(); });
-  document.getElementById('gJump').onclick=gameInput;
-  document.getElementById('gRetry').onclick=()=>{ (game&&game.mode==='sea')?startSeaGame():startGame(); };
-  document.getElementById('gHome').onclick=leaveGame;
-  document.getElementById('backGame').onclick=leaveGame;
-})();
-
-/* ---------- study ---------- */
-let session, qIdx, qList;
-const MAIN_TABS=['home','learn','admin'];
-function show(id){
-  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));
-  document.getElementById(id).classList.add('on');
-  const tb=document.getElementById('tabbar');
-  if(MAIN_TABS.includes(id)){
-    tb.classList.add('on');
-    document.querySelectorAll('#tabbar .tab').forEach(b=> b.classList.toggle('sel', b.dataset.s===id));
-  } else { tb.classList.remove('on'); }
-  window.scrollTo(0,0);
-}
-function gotoTab(s){
-  if(s==='admin'){ renderAdmin(); wlGrade=state.grade; renderWordList(); setAdminTab('zukan'); }
-  show(s); render();
-}
-document.getElementById('tabbar').onclick=(e)=>{ const b=e.target.closest('.tab'); if(!b) return; gotoTab(b.dataset.s); };
-
-/* スワイプで タブを いどう（dir:+1=左スワイプ/次へ, -1=右スワイプ/前へ） */
-const ADMIN_TABS=['zukan','kisekae','keifu','tango','data'];
-function swipeTab(dir){
-  const cur=document.querySelector('.screen.on'); if(!cur) return;
-  if(document.getElementById('goalCele').style.display==='flex') return;
-  if(cur.id==='admin'){
-    const i=ADMIN_TABS.indexOf(curAdminTab), ni=i+dir;
-    if(ni>=0 && ni<ADMIN_TABS.length){ setAdminTab(ADMIN_TABS[ni]); return; }
-    if(dir<0 && i<=0){ gotoTab('learn'); }   /* 先頭から右スワイプ → がくしゅう */
-    return;
-  }
-  if(MAIN_TABS.includes(cur.id)){
-    const i=MAIN_TABS.indexOf(cur.id), ni=i+dir;
-    if(ni>=0 && ni<MAIN_TABS.length) gotoTab(MAIN_TABS[ni]);
-  }
-}
-let swX=0, swY=0, swOn=false;
-document.body.addEventListener('touchstart', e=>{ if(e.touches.length!==1){ swOn=false; return; } swX=e.touches[0].clientX; swY=e.touches[0].clientY; swOn=true; }, {passive:true});
-document.body.addEventListener('touchend', e=>{ if(!swOn) return; swOn=false;
-  const t=e.changedTouches[0], dx=t.clientX-swX, dy=t.clientY-swY;
-  if(Math.abs(dx)>60 && Math.abs(dx)>Math.abs(dy)*1.5){ swipeTab(dx<0 ? 1 : -1); }
-}, {passive:true});
-document.getElementById('goalset').onclick=(e)=>{ const b=e.target.closest('.goalbtn'); if(!b) return; state.dailyGoal=+b.dataset.goal; save(); renderGoal(); };
-document.getElementById('sndset').onclick=(e)=>{ const b=e.target.closest('.optbtn'); if(!b) return; state.sound = b.dataset.v==='1'; save(); renderGoal(); if(state.sound) sfx('correct'); };
-document.getElementById('boxBtn').onclick=()=>{
-  if(!boxAvailable()) return;
-  state.lastBoxWeek=weekId(today());
-  state.food+=10; state.freezeTickets=Math.min(5,state.freezeTickets+1); addXp(20);
-  bubble('🎁 たからばこ：えさ+10・おやすみ券+1！'); sfx('fanfare'); cheer(); save(); render();
-};
-function renderTrophies(){
-  document.getElementById('trophyList').innerHTML = TITLES.map(t=>{
-    const got=state.titles.indexOf(t.id)>=0;
-    return '<div class="trow2'+(got?' got':'')+'">'+(got?'🏆':'🔒')+' '+t.name+'</div>';
-  }).join('');
-}
-document.getElementById('trophyChip').onclick=()=>{ renderTrophies(); document.getElementById('trophyModal').style.display='flex'; };
-document.getElementById('trophyClose').onclick=()=>{ document.getElementById('trophyModal').style.display='none'; };
-document.getElementById('ticketChip').onclick=()=>{ bubble('おやすみ券：1日サボっても れんぞくキープ（もくひょうの2ばいで もらえる）'); };
-document.getElementById('boxChip').onclick=()=>{ bubble('1しゅうで 5日 たっせいで たからばこ！'); };
-document.getElementById('celeClose').onclick=()=>{ document.getElementById('goalCele').style.display='none'; render(); };
-document.getElementById('nudge').onclick=()=> gotoTab('learn');
-document.getElementById('goStudy').onclick=startStudy;
-document.getElementById('goReview').onclick=startReview;
-document.getElementById('back').onclick=()=>{ show('learn'); render(); };
-
-function shuffle(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){const j=(Math.random()*(i+1))|0;[a[i],a[j]]=[a[j],a[i]];} return a; }
-let curWord=null, reviewMode=false;
-function addWrong(w){ if(!w) return; if(!state.wrongWords.some(x=>x[0]===w[0])){ state.wrongWords.push([w[0],w[1],w[2]||'',w[3]||'']); if(state.wrongWords.length>200) state.wrongWords=state.wrongWords.slice(-200); } }
-function clearWrong(en){ state.wrongWords=state.wrongWords.filter(x=>x[0]!==en); }
-function startStudy(){
-  reviewMode=false;
-  qList=shuffle(currentWords()).slice(0,QPER); qIdx=0; session={correct:0,combo:0};
-  document.getElementById('qTotal').textContent=qList.length;
-  show('study'); nextQ();
-}
-function startReview(){
-  if(!state.wrongWords.length){ bubble('まちがえた ことばは ないよ！'); return; }
-  reviewMode=true;
-  qList=shuffle(state.wrongWords).slice(0,QPER); qIdx=0; session={correct:0,combo:0};
-  document.getElementById('qTotal').textContent=qList.length;
-  show('study'); nextQ();
-}
-function escJa(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;'); }
-function choiceHtml(w){
-  const base='<span class="base">'+escJa(w[1])+'</span>';
-  const yomi=w[2] ? '<span class="yomi">'+escJa(w[2])+'</span>' : '';
-  return yomi+base;
-}
-
-/* やさしいいみ：EASY(easy.js)に あれば つかい、なければ ひらがなで かんたんに */
-function firstSenseKana(w){ const s=(w[2]||w[1]||''); return s.split(/[，,、]/)[0].trim(); }
-function easyText(w){
-  const k=(w[0]||'');
-  const e=(typeof EASY!=='undefined') ? (EASY[k] || EASY[k.toLowerCase()]) : null;
-  return e || firstSenseKana(w);
-}
-function showEasy(w){
-  const box=document.getElementById('easyHint');
-  box.innerHTML='<div class="ehlabel">やさしいいみ</div><div class="ehmean">'+escJa(easyText(w))+'</div>';
-  box.style.display='block';
-}
-function attachLongPress(el, cb){
-  let t=null;
-  const start=()=>{ el._lp=false; t=setTimeout(()=>{ el._lp=true; cb(); }, 450); };
-  const cancel=()=>{ if(t){ clearTimeout(t); t=null; } };
-  el.addEventListener('touchstart', start, {passive:true});
-  el.addEventListener('touchend', cancel); el.addEventListener('touchmove', cancel);
-  el.addEventListener('mousedown', start); el.addEventListener('mouseup', cancel); el.addEventListener('mouseleave', cancel);
-}
-
-function nextQ(){
-  document.getElementById('easyHint').style.display='none';
-  if(qIdx>=qList.length){ finishStudy(); return; }
-  const correct=qList[qIdx]; curWord=correct;
-  const en=correct[0], ja=correct[1];
-  document.getElementById('qNo').textContent=qIdx+1;
-  const qw=document.getElementById('qword');
-  qw.textContent=en; qw.classList.toggle('long', en.length>12);
-  document.getElementById('reward').textContent='';
-  // wrong options (same grade, distinct meanings)
-  const pool=currentWords().filter(w=>w[0]!==en && w[1]!==ja);
-  const opts=shuffle([correct, ...shuffle(pool).slice(0,3)]);
-  const box=document.getElementById('choices'); box.innerHTML='';
-  opts.forEach(o=>{
-    const b=document.createElement('button'); b.className='ch'; b.innerHTML=choiceHtml(o);
-    b.onclick=()=>{ if(b._lp){ b._lp=false; return; } answer(b, o===correct, en); };
-    attachLongPress(b, ()=>showEasy(o));
-    box.appendChild(b);
-  });
-  speak(en);
-}
-function recordLearned(en){
-  if(state.todayDate!==today()){ state.todayDate=today(); state.todayWords=[]; }
-  const k=en.toLowerCase(), already=state.todayWords.indexOf(k)>=0;
-  if(!already) state.todayWords.push(k);
-  // 目標に たっした しゅんかん
-  if(!already && state.todayWords.length===state.dailyGoal){ onGoalReached(); }
-}
-function streakOnGoal(){
-  if(state.lastGoalDate===today()) return;
-  if(state.lastGoalDate===yesterday()){ state.streak++; }
-  else if(state.lastGoalDate){
-    const gap=Math.round((new Date(today())-new Date(state.lastGoalDate))/86400000)-1; /* あいだの サボリ日数 */
-    if(gap>0 && state.freezeTickets>=gap){ state.freezeTickets-=gap; state.streak++; bubble('🎫 おやすみ券で れんぞく キープ！'); }
-    else state.streak=1;
-  } else state.streak=1;
-  state.lastGoalDate=today();
-  if(state.streak>(state.maxStreak||0)) state.maxStreak=state.streak;
-  if(state.metDates.indexOf(today())<0) state.metDates.push(today());
-  if(state.metDates.length>60) state.metDates=state.metDates.slice(-60);
-}
-function onGoalReached(){
-  streakOnGoal();
-  state.food+=5; state.happy=100;
-  gainGP(20); gainGP(Math.min(state.streak,15));  /* 目標達成＋連続ボーナス（倍率こみ） */
-  checkTitles();
-  setTimeout(showGoalCelebration, 850);
-}
-function checkUnlock(prevLearned){
-  const items=[].concat(COLORS, BGS).filter(it=> it.need>prevLearned && it.need<=state.learned);
-  if(items.length){ bubble('あたらしい きせかえ アンロック！'); sfx('unlock'); }
-}
-function answer(btn, ok, en){
-  if(btn.classList.contains('ok')||btn.classList.contains('ng')) return;
-  if(ok){
-    btn.classList.add('ok');
-    const prev=state.learned;
-    session.combo=(session.combo||0)+1;
-    const mult = session.combo>=6?3 : session.combo>=3?2 : 1;
-    const rt = isRewardTime()?2:1;
-    const gain = mult*rt;
-    session.correct++; state.food+=gain; state.learned++;
-    gainGP((reviewMode?10:8) * gain);   /* 復習は にがて克服で 成長おおめ */
-    state.mastery[en]=(state.mastery[en]||0)+1;
-    recordLearned(en); clearWrong(en); checkUnlock(prev); checkTickets(); checkTitles();
-    sfx(session.combo>=3?'combo':'correct');
-    let msg='せいかい！';
-    if(mult>1) msg+=' コンボ×'+mult;
-    if(rt>1) msg+=' ⏰2ばい';
-    msg+= reviewMode ? ' おぼえたね' : (' えさ+'+gain);
-    document.getElementById('reward').textContent=msg;
-    save();
-    setTimeout(()=>{ qIdx++; nextQ(); }, 800);
-  } else {
-    btn.classList.add('ng');
-    session.combo=0; addWrong(curWord); sfx('wrong');
-    document.getElementById('reward').textContent='もういちど！';
-  }
-}
-function finishStudy(){
-  bubble(reviewMode ? 'ふくしゅう おつかれさま！' : ('えさ '+session.correct+'こ ゲット！'));
-  show('learn'); cheer(); render();
-}
-let enVoice=null;
-function pickVoice(){
-  const vs=(window.speechSynthesis?speechSynthesis.getVoices():[]).filter(v=>/^en[-_]?/i.test(v.lang));
-  if(!vs.length) return null;
-  // prefer known natural English voices, then any en-US
-  const pref=['Samantha','Karen','Daniel','Aaron','Moira','Tessa','Serena','Allison','Ava','Nicky','Google US English','Microsoft'];
-  for(const name of pref){ const v=vs.find(v=>v.name.includes(name)); if(v) return v; }
-  return vs.find(v=>/en[-_]US/i.test(v.lang)) || vs[0];
-}
-function ensureVoice(){ if(!enVoice) enVoice=pickVoice(); return enVoice; }
-if(window.speechSynthesis){ speechSynthesis.onvoiceschanged=()=>{ enVoice=pickVoice(); }; ensureVoice(); }
-function speak(en){
-  try{
-    if(!window.speechSynthesis) return;
-    const u=new SpeechSynthesisUtterance(en);
-    const v=ensureVoice();
-    if(v){ u.voice=v; u.lang=v.lang; } else { u.lang='en-US'; }
-    u.rate=0.8; u.pitch=1.0;
-    speechSynthesis.cancel(); speechSynthesis.speak(u);
-  }catch(e){}
-}
-document.getElementById('speak').onclick=()=> speak(document.getElementById('qword').textContent);
-
-/* ---------- わがままサイン（しつけ） ---------- */
-let wagaTimer=null;
-function homeVisible(){ return document.getElementById('home').classList.contains('on') && !document.hidden; }
-function triggerWagamama(){
-  if(state.wagamama || state.lv<2) return;
-  state.wagamama=true; render(); bubble("！ かまって！");
-  clearTimeout(wagaTimer);
-  wagaTimer=setTimeout(()=>{
-    if(state.wagamama){ state.wagamama=false; state.disciplineMiss++;
-      state.discipline=Math.max(0,state.discipline-4); save(); render(); }
-  }, 22000);
-}
-setInterval(()=>{ if(homeVisible() && !state.wagamama && Math.random()<0.5) triggerWagamama(); }, 30000);
-
-/* ---------- boot ---------- */
-applyDaily();
-document.body.classList.add('hastab');
-show('home');
-render();
-try{ document.getElementById('rev').textContent = 'バージョン '+(typeof APP_REV!=='undefined'?APP_REV:'?'); }catch(e){}
 </script>
 </body>
 </html>
