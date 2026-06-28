@@ -490,12 +490,13 @@ const CHILDREN={
   o_g:{map:KID3, name:'くるり', desc:'おめめ ぱっちりの げんき こども。'},
   o_b:{map:KID4, name:'ぷく',   desc:'まるまる たべるの だいすき こども。'}
 };
-/* レア：くろデビル（カラー・専用パレット） */
-const DEVIL_PAL={o:'#15131a', k:'#332c40', R:'#e24b4a', w:'#fbf3df'};
+/* レア：クロネコ（カラー・専用パレット） */
+const DEVIL_PAL={o:'#15131a', k:'#2c2733', Y:'#f6d65e', e:'#15131a', p:'#f3a3bf'};
 const DEVIL=[
-"..o......o..",".ooo....ooo.",".okko..okko.",".oookkkkooo.",
-"okkkkkkkkkko","okRkkkkkkRko","okkkkkkkkkko","okwoooooowko",
-"okkkkkkkkkko",".okkkkkkkko.","..okkkkkko..","...oo..oo..."];
+"..o.........o..",".ooo.......ooo.",".okko.....okko.","..ookkkkkkkoo..",
+".okkkkkkkkkkko.","okkYYkkkkkYYkko","okkYekkkkkeYkko","okkkkkpkpkkkkko",
+"okkkkkkkkkkkkko",".okkkkkkkkkkko.","..okkkkkkkko.oo","...oo...oo...ok",
+".............oo"];
 const ADULTS={
   star_e:  {map:ADULT_STAR,   name:'カンムリ',desc:'せわ かんぺき！ どうどうとした おとな。'},
   star_o:  {map:ADULT_STAR2,  name:'テンシ',  desc:'せわ かんぺき！ やさしさ あふれる おとな。'},
@@ -505,7 +506,7 @@ const ADULTS={
   normal_o:{map:ADULT_NORMAL2,name:'ポヨン',  desc:'おっとり マイペース。たべるの だいすき。'},
   wild_e:  {map:ADULT_WILD,   name:'トゲオ',  desc:'やんちゃで げんきいっぱい。いたずらっ子。'},
   wild_o:  {map:ADULT_WILD2,  name:'ツノマル',desc:'まけずぎらいの あばれんぼう。'},
-  devil:   {map:DEVIL, pal:DEVIL_PAL, rare:true, name:'クロデビル', desc:'レア！ せわを サボりすぎると あらわれる。つの・あかい目・キバの いたずらデビル。'}
+  devil:   {map:DEVIL, pal:DEVIL_PAL, rare:true, name:'クロネコ', desc:'レア！ せわを サボりすぎると あらわれる。ねこみみ・きいろい目・しっぽの くろねこ。'}
 };
 function babyInfo(){ return BABIES[state.babyType] || BABIES.e; }
 function childInfo(){ return CHILDREN[state.childType] || CHILDREN.e_g; }
