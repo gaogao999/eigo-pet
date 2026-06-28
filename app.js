@@ -128,7 +128,7 @@ window._eigoPetInit = function() {
 
   /* ---- state ---- */
   var KEY='eigopet_v1', BAKKEY=KEY+'_bak';
-  function today(){ return new Date().toISOString().slice(0,10); }
+  function today(){ return dayStr(new Date()); }
   var state = (function(){
     var s=null;
     var keys=[KEY, BAKKEY];
@@ -142,7 +142,7 @@ window._eigoPetInit = function() {
     return s;
   })();
   function save(){ try{ var js=JSON.stringify(state); localStorage.setItem(KEY,js); localStorage.setItem(BAKKEY,js); }catch(e){} }
-  function dayStr(d){ return d.toISOString().slice(0,10); }
+  function dayStr(d){ return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2); }
   function yesterday(){ var d=new Date(today()); d.setDate(d.getDate()-1); return dayStr(d); }
   function todayDone(){ return (state.todayDate===today())&&(state.todayWords.length>=state.dailyGoal); }
   function displayStreak(){ return (state.lastGoalDate===today()||state.lastGoalDate===yesterday())?state.streak:0; }
