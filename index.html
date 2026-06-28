@@ -490,6 +490,12 @@ const CHILDREN={
   o_g:{map:KID3, name:'くるり', desc:'おめめ ぱっちりの げんき こども。'},
   o_b:{map:KID4, name:'ぷく',   desc:'まるまる たべるの だいすき こども。'}
 };
+/* レア：くろデビル（カラー・専用パレット） */
+const DEVIL_PAL={o:'#15131a', k:'#332c40', R:'#e24b4a', w:'#fbf3df'};
+const DEVIL=[
+"..o......o..",".ooo....ooo.",".okko..okko.",".oookkkkooo.",
+"okkkkkkkkkko","okRkkkkkkRko","okkkkkkkkkko","okwoooooowko",
+"okkkkkkkkkko",".okkkkkkkko.","..okkkkkko..","...oo..oo..."];
 const ADULTS={
   star_e:  {map:ADULT_STAR,   name:'カンムリ',desc:'せわ かんぺき！ どうどうとした おとな。'},
   star_o:  {map:ADULT_STAR2,  name:'テンシ',  desc:'せわ かんぺき！ やさしさ あふれる おとな。'},
@@ -498,7 +504,8 @@ const ADULTS={
   normal_e:{map:ADULT,        name:'マルオ',  desc:'げんきで すなおな ふつうの子。'},
   normal_o:{map:ADULT_NORMAL2,name:'ポヨン',  desc:'おっとり マイペース。たべるの だいすき。'},
   wild_e:  {map:ADULT_WILD,   name:'トゲオ',  desc:'やんちゃで げんきいっぱい。いたずらっ子。'},
-  wild_o:  {map:ADULT_WILD2,  name:'ツノマル',desc:'まけずぎらいの あばれんぼう。'}
+  wild_o:  {map:ADULT_WILD2,  name:'ツノマル',desc:'まけずぎらいの あばれんぼう。'},
+  devil:   {map:DEVIL, pal:DEVIL_PAL, rare:true, name:'クロデビル', desc:'レア！ せわを サボりすぎると あらわれる。つの・あかい目・キバの いたずらデビル。'}
 };
 function babyInfo(){ return BABIES[state.babyType] || BABIES.e; }
 function childInfo(){ return CHILDREN[state.childType] || CHILDREN.e_g; }
@@ -520,7 +527,8 @@ function drawPet(){
   const map=petMap(), ps=8, BOX=120;
   const cols=Math.max.apply(null, map.map(r=>r.length)), rows=map.length;
   const ox=Math.round((BOX-cols*ps)/2), oy=Math.round((BOX-rows*ps)/2);
-  const P=currentPAL();
+  let P=currentPAL();
+  if(state.lv>=4 && adultInfo().pal) P=adultInfo().pal;  /* レアは専用カラー */
   let s='';
   for(let y=0;y<map.length;y++)for(let x=0;x<map[y].length;x++){
     const c=map[y][x]; if(P[c]) s+='<rect x="'+(ox+x*ps)+'" y="'+(oy+y*ps)+'" width="'+ps+'" height="'+ps+'" fill="'+P[c]+'"/>';
@@ -621,8 +629,8 @@ function addXp(n){
     if(state.lv===2 && !state.babyType){ state.babyType = parity; }
     else if(state.lv===3 && !state.childType){ state.childType = (state.babyType||'e')+'_'+(miss<=2?'g':'b'); }
     else if(state.lv===4 && !state.adultType){
-      const tier = miss===0 ? 'star' : miss<=2 ? 'good' : miss<=5 ? 'normal' : 'wild';
-      state.adultType = tier+'_'+parity;
+      if(miss>=8){ state.adultType='devil'; }
+      else { const tier = miss===0 ? 'star' : miss<=2 ? 'good' : miss<=5 ? 'normal' : 'wild'; state.adultType = tier+'_'+parity; }
     }
     bubble(stageName()+"になった！");
   }
@@ -746,27 +754,28 @@ document.getElementById('grades').onclick=(e)=>{
 };
 
 /* ---------- かんりしゃページ（キャラずかん・進化の系譜） ---------- */
-function spriteSVG(map, cell){
+function spriteSVG(map, cell, pal){
+  const P=pal||PAL;
   const cols=Math.max.apply(null, map.map(r=>r.length)), rows=map.length;
   let s='';
   for(let y=0;y<map.length;y++)for(let x=0;x<map[y].length;x++){
-    const c=map[y][x]; if(PAL[c]) s+='<rect x="'+(x*cell)+'" y="'+(y*cell)+'" width="'+cell+'" height="'+cell+'" fill="'+PAL[c]+'"/>';
+    const c=map[y][x]; if(P[c]) s+='<rect x="'+(x*cell)+'" y="'+(y*cell)+'" width="'+cell+'" height="'+cell+'" fill="'+P[c]+'"/>';
   }
   return '<svg width="'+(cols*cell)+'" height="'+(rows*cell)+'" viewBox="0 0 '+(cols*cell)+' '+(rows*cell)+'" shape-rendering="crispEdges">'+s+'</svg>';
 }
-function tnode(map, label, small){
-  return '<div class="tnode'+(small?' small':'')+'"><div class="tsprite">'+spriteSVG(map,small?3:4)+'</div><div class="tlabel">'+label+'</div></div>';
+function tnode(map, label, small, pal){
+  return '<div class="tnode'+(small?' small':'')+'"><div class="tsprite">'+spriteSVG(map,small?3:4,pal)+'</div><div class="tlabel">'+label+'</div></div>';
 }
-function gcardHTML(m,n,d){
-  return '<div class="gcard"><div class="gsprite">'+spriteSVG(m,5)+'</div><div class="gname">'+n+'</div><div class="gdesc">'+d+'</div></div>';
+function gcardHTML(m,n,d,pal){
+  return '<div class="gcard"><div class="gsprite">'+spriteSVG(m,5,pal)+'</div><div class="gname">'+n+'</div><div class="gdesc">'+d+'</div></div>';
 }
-function gridHTML(list){ return '<div class="ggrid">'+list.map(c=>gcardHTML(c.map,c.name,c.desc)).join('')+'</div>'; }
+function gridHTML(list){ return '<div class="ggrid">'+list.map(c=>gcardHTML(c.map,c.name,c.desc,c.pal)).join('')+'</div>'; }
 function renderAdmin(){
   document.getElementById('adminGallery').innerHTML =
     '<div class="gstage">タマゴ</div>'+gridHTML([{map:EGG,name:'タマゴ',desc:'もうすぐ うまれるよ。たいせつに あたためてね。'}])+
     '<div class="gstage">あかちゃん（2しゅるい）</div>'+gridHTML(Object.values(BABIES))+
     '<div class="gstage">こども（4しゅるい）</div>'+gridHTML(Object.values(CHILDREN))+
-    '<div class="gstage">おとな（8しゅるい）</div>'+gridHTML(Object.values(ADULTS));
+    '<div class="gstage">おとな（'+Object.keys(ADULTS).length+'しゅるい）</div>'+gridHTML(Object.values(ADULTS));
 
   let tree = tnode(EGG,'タマゴ')+'<div class="tarrow">↓ うまれる（おぼえた数の ぐうすう/きすう）</div>';
   tree += '<div class="eohead"><span>EVEN（ぐうすう）</span><span>ODD（きすう）</span></div>';
@@ -779,6 +788,8 @@ function renderAdmin(){
     tree += '<div class="tiertag">'+tl+'</div><div class="trow">'+
       tnode(ADULTS[t+'_e'].map,ADULTS[t+'_e'].name,true)+tnode(ADULTS[t+'_o'].map,ADULTS[t+'_o'].name,true)+'</div>';
   });
+  tree += '<div class="tiertag">★ レア（せわを サボりすぎると…）</div><div class="trow">'+
+    tnode(ADULTS.devil.map,ADULTS.devil.name,true,ADULTS.devil.pal)+'</div>';
   document.getElementById('adminTree').innerHTML = tree;
 }
 /* たんごリスト */
