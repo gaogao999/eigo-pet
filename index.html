@@ -243,6 +243,15 @@
     </div>
   </div>
 
+  <div id="forecast" class="goalcard" style="background:#f3f2fb; border-color:#e0ddf3;">
+    <div class="tsprite" id="fcSprite" style="background:#fff;"></div>
+    <div style="flex:1;">
+      <div id="fcTitle" style="font-size:13px; color:#7a6fa8; font-weight:700;">しんか よこく</div>
+      <div id="fcName" style="font-size:16px; font-weight:800; color:#6a4aa0; margin:2px 0 4px;"></div>
+      <div id="fcMsg" style="font-size:12px; color:#7a8a76; line-height:1.5;"></div>
+    </div>
+  </div>
+
   <div id="rewardBanner" style="display:none; text-align:center; background:#fff2cf; border:1px solid #f0d98a; border-radius:12px; padding:8px; margin-bottom:10px; font-size:13px; font-weight:800; color:#9a6b12;">⏰ いまは ごほうびタイム！ えさ・けいけんち 2ばい</div>
 
   <div class="statchips">
@@ -546,6 +555,14 @@ function adultInfo(){
   return ADULTS.normal_e;
 }
 function adultMap(){ return adultInfo().map; }
+/* いまの 勉強の しゅうかんだと どんな おとなに なるか */
+function predictedAdultKey(){
+  const ms=state.maxStreak||0, met=(state.metDates||[]).length, miss=state.careMiss+state.disciplineMiss;
+  const parity=(state.learned%2===0)?'e':'o';
+  if(miss>=8) return 'devil';
+  const tier=(ms>=7&&met>=10)?'star':(ms>=3||met>=5)?'good':(met>=2)?'normal':'wild';
+  return tier+'_'+parity;
+}
 function petMap(){
   if(state.lv>=4) return adultMap();
   if(state.lv>=3) return childInfo().map;
@@ -733,6 +750,28 @@ function renderGoal(){
   const bb=document.getElementById('boxBtn'); if(bb) bb.style.display=boxAvailable()?'block':'none';
   const rb=document.getElementById('rewardBanner'); if(rb) rb.style.display=isRewardTime()?'block':'none';
   document.querySelectorAll('#sndset .optbtn').forEach(b=> b.classList.toggle('sel', (b.dataset.v==='1')===!!state.sound));
+  // しんか よこく
+  const fc=document.getElementById('fcSprite');
+  if(fc){
+    if(state.lv>=4){
+      const ai=adultInfo();
+      fc.innerHTML=spriteSVG(ai.map,3,ai.pal);
+      document.getElementById('fcTitle').textContent='そだった おとな';
+      document.getElementById('fcName').textContent=ai.name;
+      document.getElementById('fcMsg').textContent='りっぱに そだったね！';
+    } else {
+      const key=predictedAdultKey(), pa=ADULTS[key];
+      fc.innerHTML=spriteSVG(pa.map,3,pa.pal);
+      document.getElementById('fcTitle').textContent='いまの ペースだと…';
+      document.getElementById('fcName').textContent=pa.name;
+      const ms=state.maxStreak||0, met=(state.metDates||[]).length;
+      const ns=Math.max(0,7-ms), nm=Math.max(0,10-met);
+      document.getElementById('fcMsg').textContent =
+        (key.indexOf('star')===0) ? 'さいこうの おとな コース！ この ちょうしで！'
+        : (key==='devil') ? 'サボりすぎ… べんきょう・おせわを しよう'
+        : ('さいこうを めざすなら：れんぞく あと'+ns+'日 ／ たっせい あと'+nm+'日！');
+    }
+  }
   // ホームの うながし
   const nd=document.getElementById('nudge');
   if(nd){ if(done>=goal){ nd.style.display='none'; }
