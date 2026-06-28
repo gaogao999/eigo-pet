@@ -35,19 +35,17 @@
   @keyframes hop{ 0%{transform:translateX(-50%) translateY(0)} 30%{transform:translateX(-50%) translateY(-22px)} 60%{transform:translateX(-50%) translateY(0)} 80%{transform:translateX(-50%) translateY(-8px)} 100%{transform:translateX(-50%) translateY(0)} }
   #petWrap{ position:absolute; bottom:40px; left:50%; transform:translateX(-50%); animation:bob 1.6s steps(2) infinite; }
   #petWrap.happy{ animation:hop .6s 2; }
-  #poop{ position:absolute; bottom:40px; left:30px; display:none; }
-  #poop.flushing{ animation:washaway 1s ease-in forwards; }
+  #poop{ position:absolute; bottom:40px; left:30px; display:none; image-rendering:pixelated; }
+  #poop.flushing{ animation:washaway 1s steps(8) forwards; }
   @keyframes washaway{
-    0%{ transform:translateX(0) rotate(0); opacity:1; }
-    25%{ transform:translateX(0) rotate(-10deg); opacity:1; }
-    100%{ transform:translateX(140px) rotate(50deg); opacity:0; }
+    0%{ transform:translateX(0); opacity:1; }
+    30%{ transform:translateX(0); opacity:1; }
+    100%{ transform:translateX(150px); opacity:0; }
   }
-  /* 左から くる なみ */
-  #flush{ position:absolute; bottom:30px; left:-100px; width:90px; height:50px; display:none; pointer-events:none;
-    background:radial-gradient(ellipse at 70% 50%, rgba(96,176,232,.85), rgba(96,176,232,.2) 65%, transparent 75%);
-    border-radius:0 70% 70% 0 / 0 50% 50% 0; }
-  #flush.on{ display:block; animation:wave 1s ease-in forwards; }
-  @keyframes wave{ 0%{ left:-100px; opacity:.3; } 20%{ opacity:.9; } 100%{ left:100%; opacity:0; } }
+  /* ピクセルの なみ（左→右） */
+  #flush{ position:absolute; bottom:30px; left:-72px; display:none; pointer-events:none; image-rendering:pixelated; }
+  #flush.on{ display:block; animation:wave 1s steps(12) forwards; }
+  @keyframes wave{ 0%{ left:-72px; } 100%{ left:100%; } }
   #bubble{ position:absolute; top:14px; left:50%; transform:translateX(-50%);
            background:#fff; border:1px solid var(--line); border-radius:999px;
            padding:5px 14px; font-size:14px; font-weight:700; color:var(--green); opacity:0; transition:opacity .2s; }
@@ -183,7 +181,17 @@
     <div id="bubble"></div>
     <div id="wagamark" style="position:absolute; top:24px; left:50%; transform:translateX(46px); font-size:30px; font-weight:800; color:#e0792f; display:none;">！</div>
     <div id="petWrap"><svg id="pet" width="126" height="108" shape-rendering="crispEdges"></svg><img id="petImg" alt="" style="display:none; width:120px; height:120px; image-rendering:pixelated; object-fit:contain;"></div>
-    <div id="flush"></div>
+    <div id="flush"><svg width="68" height="44" shape-rendering="crispEdges">
+      <rect x="0" y="26" width="68" height="18" fill="#4f9bd6"/>
+      <rect x="0" y="18" width="60" height="8" fill="#5fb0e8"/>
+      <rect x="36" y="10" width="24" height="8" fill="#5fb0e8"/>
+      <rect x="44" y="4" width="14" height="6" fill="#7cc4ee"/>
+      <rect x="44" y="0" width="5" height="4" fill="#fbf3df"/>
+      <rect x="52" y="0" width="5" height="4" fill="#fbf3df"/>
+      <rect x="36" y="10" width="5" height="3" fill="#fbf3df"/>
+      <rect x="6" y="18" width="7" height="3" fill="#cfe9fb"/>
+      <rect x="22" y="18" width="7" height="3" fill="#cfe9fb"/>
+      <rect x="2" y="28" width="9" height="3" fill="#cfe9fb"/></svg></div>
     <div id="poop"><svg width="48" height="42" shape-rendering="crispEdges">
       <rect x="5" y="29" width="38" height="11" fill="#5f3f1f"/>
       <rect x="10" y="19" width="28" height="11" fill="#7a5a2a"/>
