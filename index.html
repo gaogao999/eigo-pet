@@ -375,13 +375,25 @@
 </section>
 
 <!-- GAME (ジャンプ) -->
+<!-- GAME SELECT -->
+<section id="gameSelect" class="screen">
+  <div class="qhead">
+    <button class="back" id="backSelect">‹</button>
+    <div class="qprog">ミニゲーム</div>
+    <div style="width:34px"></div>
+  </div>
+  <p style="text-align:center; font-size:13px; color:#7a8a76; margin:0 0 16px;">あそぶ ゲームを えらんでね（えさ1）</p>
+  <button class="study-btn" id="selJump">🦘 ジャンプ</button>
+  <button class="study-btn" id="selSea" style="margin-top:12px; background:#3f8fd0;">🐟 うみ</button>
+</section>
+
 <section id="game" class="screen">
   <div class="qhead">
     <button class="back" id="backGame">‹</button>
-    <div class="qprog">ジャンプゲーム</div>
+    <div class="qprog" id="gTitle">ジャンプゲーム</div>
     <div style="width:34px"></div>
   </div>
-  <div style="text-align:center; font-size:13px; color:#7a8a76; margin-bottom:8px;">タップで ジャンプ！ しょうがいぶつを よけよう</div>
+  <div id="gInstr" style="text-align:center; font-size:13px; color:#7a8a76; margin-bottom:8px;">タップで ジャンプ！ しょうがいぶつを よけよう</div>
   <div style="position:relative;">
     <canvas id="gcanvas" width="340" height="200" style="width:100%; background:#f1ead7; border:1px solid #e2d8bd; border-radius:14px; display:block; touch-action:manipulation;"></canvas>
     <div id="gscore" style="position:absolute; top:10px; right:16px; font-size:15px; font-weight:700; color:#4a3526;">0</div>
@@ -844,9 +856,12 @@ document.getElementById('bSnack').onclick=()=>{
 };
 document.getElementById('bPlay').onclick=()=>{
   if(state.food<=0){ bubble("べんきょうして えさを あつめよう"); return; }
-  state.food--; state.weight=Math.max(5,state.weight-1); save(); render();
-  startGame();
+  show('gameSelect');
 };
+function consumePlay(){ state.food--; state.weight=Math.max(5,state.weight-1); save(); }
+document.getElementById('backSelect').onclick=()=>{ show('home'); render(); };
+document.getElementById('selJump').onclick=()=>{ if(state.food<=0){ bubble('えさが たりない'); return; } consumePlay(); startGame(); };
+document.getElementById('selSea').onclick=()=>{ if(state.food<=0){ bubble('えさが たりない'); return; } consumePlay(); startSeaGame(); };
 document.getElementById('bScold').onclick=()=>{
   if(state.wagamama){
     state.wagamama=false; state.discipline=Math.min(100,state.discipline+12);
@@ -1036,20 +1051,65 @@ function drawPetCanvas(ctx,map,ox,oy,cell){
     const c=map[y][x]; if(PAL[c]){ ctx.fillStyle=PAL[c]; ctx.fillRect(ox+x*cell, oy+y*cell, cell, cell); }
   }
 }
+function gameSetup(title, instr, btn){
+  show('game'); document.getElementById('gover').style.display='none';
+  document.getElementById('gTitle').textContent=title;
+  document.getElementById('gInstr').textContent=instr;
+  document.getElementById('gJump').textContent=btn;
+  const cv=document.getElementById('gcanvas');
+  return { cv, ctx:cv.getContext('2d'), W:cv.width, H:cv.height,
+    map:petMap(), cell:3 };
+}
 function startGame(){
-  show('game');
-  document.getElementById('gover').style.display='none';
-  const cv=document.getElementById('gcanvas'), ctx=cv.getContext('2d');
-  const W=cv.width, H=cv.height, groundY=H-26;
-  const map=petMap(), cell=3;
-  const petW=Math.max.apply(null,map.map(r=>r.length))*cell, petH=map.length*cell;
+  const s=gameSetup('ジャンプゲーム','タップで ジャンプ！ しょうがいぶつを よけよう','ジャンプ');
+  const groundY=s.H-26, petW=Math.max.apply(null,s.map.map(r=>r.length))*s.cell, petH=s.map.length*s.cell;
   if(game) cancelAnimationFrame(game.raf);
-  game={ ctx,W,H,groundY,map,cell,petW,petH,
+  game={ mode:'jump', ctx:s.ctx, W:s.W, H:s.H, groundY, map:s.map, cell:s.cell, petW, petH,
     px:34, py:groundY-petH, vy:0, onGround:true, jumps:0,
     obs:[], speed:2.4, t:0, score:0, over:false, raf:0 };
   loopGame();
 }
 function jump(){ if(game && !game.over && game.jumps<2){ game.vy=-9.6; game.jumps++; game.onGround=false; } }
+/* ミニゲーム②：うみ（自動で沈む・ボタンで浮く・障害物に当たると終わり） */
+function startSeaGame(){
+  const s=gameSetup('うみゲーム','タップで うく！ いわの あいだを とおろう','うく');
+  const petW=Math.max.apply(null,s.map.map(r=>r.length))*s.cell, petH=s.map.length*s.cell;
+  if(game) cancelAnimationFrame(game.raf);
+  game={ mode:'sea', ctx:s.ctx, W:s.W, H:s.H, map:s.map, cell:s.cell, petW, petH,
+    px:40, py:Math.round(s.H/2-petH/2), vy:0,
+    obs:[], gap:Math.round(petH*2.6), speed:2.2, t:0, score:0, over:false, raf:0 };
+  loopSea();
+}
+function floatUp(){ if(game && !game.over && game.mode==='sea'){ game.vy=-5.6; } }
+function loopSea(){
+  const g=game; if(!g || g.over) return;
+  g.t++; g.speed += 0.0008;
+  if(g.obs.length===0 || (g.W - g.obs[g.obs.length-1].x) > (150+Math.random()*70)){
+    const w=16+Math.floor(Math.random()*6), gy=24+Math.floor(Math.random()*(g.H-g.gap-48));
+    g.obs.push({x:g.W, w, gy}); /* gy=すきまの上端 */
+  }
+  g.obs.forEach(o=>o.x-=g.speed);
+  g.obs=g.obs.filter(o=>o.x+o.w>-4);
+  g.score=Math.floor(g.t/6);
+  // 物理：じどうで しずむ
+  g.vy += 0.4; g.py += g.vy;
+  if(g.py<0 || g.py+g.petH>g.H){ endGame(); return; }  /* 上下に ぶつかると おわり */
+  const pl=g.px+5, pr=g.px+g.petW-5, pt=g.py+3, pb=g.py+g.petH-3;
+  for(const o of g.obs){
+    if(pl<o.x+o.w && pr>o.x){ if(pt<o.gy || pb>o.gy+g.gap){ endGame(); return; } }
+  }
+  const ctx=g.ctx;
+  ctx.fillStyle='#5fb0e8'; ctx.fillRect(0,0,g.W,g.H);                 /* うみ */
+  ctx.fillStyle='#bfe3f7'; ctx.fillRect(8,14,16,3); ctx.fillRect(g.W-60,28,16,3); ctx.fillRect(g.W-120,10,16,3);
+  g.obs.forEach(o=>{
+    ctx.fillStyle='#3b8a5a'; ctx.fillRect(o.x,0,o.w,o.gy); ctx.fillRect(o.x,o.gy+g.gap,o.w,g.H-(o.gy+g.gap));
+    ctx.fillStyle='#2e6e47'; ctx.fillRect(o.x,o.gy-3,o.w,3); ctx.fillRect(o.x,o.gy+g.gap,o.w,3);
+  });
+  drawPetCanvas(ctx,g.map,g.px,Math.round(g.py),g.cell);
+  document.getElementById('gscore').textContent=g.score;
+  g.raf=requestAnimationFrame(loopSea);
+}
+function gameInput(){ if(!game || game.over) return; if(game.mode==='sea') floatUp(); else jump(); }
 function loopGame(){
   const g=game; if(!g || g.over) return;
   g.t++; g.speed += 0.0009;
@@ -1096,9 +1156,9 @@ function endGame(){
 function leaveGame(){ if(game){ game.over=true; cancelAnimationFrame(game.raf); } show('home'); render(); }
 (function(){
   const cv=document.getElementById('gcanvas');
-  cv.addEventListener('pointerdown', (e)=>{ e.preventDefault(); jump(); });
-  document.getElementById('gJump').onclick=jump;
-  document.getElementById('gRetry').onclick=startGame;
+  cv.addEventListener('pointerdown', (e)=>{ e.preventDefault(); gameInput(); });
+  document.getElementById('gJump').onclick=gameInput;
+  document.getElementById('gRetry').onclick=()=>{ (game&&game.mode==='sea')?startSeaGame():startGame(); };
   document.getElementById('gHome').onclick=leaveGame;
   document.getElementById('backGame').onclick=leaveGame;
 })();
