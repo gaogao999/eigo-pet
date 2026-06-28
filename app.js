@@ -133,7 +133,7 @@ window._eigoPetInit = function() {
     var s=null;
     var keys=[KEY, BAKKEY];
     for(var ki=0;ki<keys.length;ki++){ try{ var raw=localStorage.getItem(keys[ki]); if(raw){ s=JSON.parse(raw); break; } }catch(e){} }
-    var def={ name:"ぴよ",lv:1,xp:0,hunger:80,happy:80,food:0,dirty:false,streak:1,learned:0,last:today(),grade:"g3",discipline:50,weight:5,careMiss:0,disciplineMiss:0,wagamama:false,babyType:null,childType:null,adultType:null,customImg:{},gameHi:0,dailyGoal:20,todayDate:today(),todayWords:[],lastGoalDate:null,metDates:[],wrongWords:[],petColor:'brown',bg:'meadow',freezeTickets:0,lastTicketDate:null,rewardHour:null,lastBoxWeek:null,titles:[],sound:true,mastery:{},maxStreak:0,sick:false,born:Date.now(),stageSince:Date.now(),lifespanDays:12,youngType:null,memories:[],schemaV:2 };
+    var def={ name:"ぴよ",lv:1,xp:0,hunger:80,happy:80,food:0,dirty:false,streak:1,learned:0,last:today(),grade:"g3",discipline:50,weight:5,careMiss:0,disciplineMiss:0,wagamama:false,babyType:null,childType:null,adultType:null,customImg:{},gameHi:0,dailyGoal:20,todayDate:today(),todayWords:[],lastGoalDate:null,metDates:[],wrongWords:[],petColor:'brown',bg:'meadow',freezeTickets:0,lastTicketDate:null,rewardHour:null,lastBoxWeek:null,titles:[],sound:true,mastery:{},maxStreak:0,sick:false,born:Date.now(),stageSince:Date.now(),lifespanDays:12+Math.floor(Math.random()*3),youngType:null,memories:[],schemaV:2 };
     s=Object.assign({},def,s||{});
     if(!WORDBANK[s.grade]) s.grade="jun2";
     if(s.grade==='g3') s.grade='jun2';
@@ -202,7 +202,7 @@ window._eigoPetInit = function() {
 
   /* ---- time-based lifecycle ---- */
   var DAY_MS=86400000;
-  var STAGE_DUR=[5*60000, 60*60000, DAY_MS, DAY_MS]; // タマゴ/ベビー/キッズ/ヤング 各ステージの長さ
+  var STAGE_DUR=[5*60000, 60*60000, DAY_MS, 2*DAY_MS]; // タマゴ5分/ベビー1時間/キッズ1日/ヤング2日（たまごっち準拠）。寿命は10〜15日
   function ageMs(){ return Date.now()-(state.born||Date.now()); }
   function ageDays(){ return ageMs()/DAY_MS; }
   function stageElapsed(){ return Date.now()-(state.stageSince||Date.now()); }
@@ -250,7 +250,7 @@ window._eigoPetInit = function() {
     state.hunger=80; state.happy=80; state.dirty=false; state.weight=5;
     state.careMiss=0; state.disciplineMiss=0; state.wagamama=false;
     state.babyType=null; state.childType=null; state.youngType=null; state.adultType=null;
-    state.sick=false; state.lifespanDays=11+Math.floor(Math.random()*3);
+    state.sick=false; state.lifespanDays=12+Math.floor(Math.random()*3);
     var fw=document.getElementById('farewell'); if(fw) fw.style.display='none';
     save(); show('home'); render();
   }
