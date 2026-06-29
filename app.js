@@ -71,26 +71,25 @@ window._eigoPetInit = function() {
   var DEVIL=["..o.........o..",".ooo.......ooo.",".okko.....okko.","..ookkkkkkkoo..","...okkkkkkkkko.","okkYYkkkkkYYkko","okkYekkkkkeYkko","okkkkkpkpkkkkko","okkkkkkkkkkkkko",".okkkkkkkkkkko.","..okkkkkkkko.oo","...oo...oo...ok",".............oo"];
 
   var BABIES = {
-    e: { img:'ぴよたま', map:BABY,  name:'ぴよたま', desc:'うまれたて。まんまるで げんきな あかちゃん。' },
-    o: { img:'もふたま', map:BABY2, name:'もふたま', desc:'うまれたて。ふわふわの ねぼすけ あかちゃん。' }
+    a: { img:'ぴよたま', map:BABY, name:'ぴよたま', desc:'うまれたて。まんまるで げんきな あかちゃん。' }
   };
   var CHILDREN = {
-    e_g: { img:'ぴな',     map:KID,  name:'ぴな',     desc:'すなおで げんきな こども。' },
-    e_b: { img:'うさたま', map:KID2, name:'うさたま', desc:'みみが かわいい あまえんぼう こども。' },
-    o_g: { img:'しろころ', map:KID3, name:'しろころ', desc:'まんまる ころころの げんき こども。' },
-    o_b: { img:'ぷくたま', map:KID4, name:'ぷくたま', desc:'ぷくぷく ほっぺの たべるの だいすき こども。' }
+    a: { img:'ぴな', map:KID, name:'ぴな', desc:'すなおで げんきな こども。' }
   };
   var YOUNG=["...o......o...","...oo....oo...","..oowwwwwwoo..",".owwwwwwwwwwo.","owwwoowwwoowwo","owwwwwwwwwwwwo","owwwwoooooowwo","owwwwwwwwwwwwo","owwwwwwwwwwwwo",".owwwwwwwwwwo.","..owwwwwwwwo..","...oo.oo.oo...",".............."];
   var YOUNG2=[".....oooo.....","....o....o....","..oowwwwwwoo..",".owwwwwwwwwwo.","owwoowwwwoowwo","owwwwwwwwwwwwo","owwwwwwwwwwwwo","owwwoooooowwwo","owwwwwwwwwwwwo",".owwwwwwwwwwo.","..owwwwwwwwo..","...oo.oo.oo...",".............."];
+  // ヤングは おせわランク（star/good/normal/wild）に わかれる。この子が どの アダルト系統に そだつかの よこく
   var YOUNGS = {
-    e: { img:'すいすいたま', map:YOUNG,  name:'すいすいたま', desc:'すいすい うごく げんきな わかもの。' },
-    o: { img:'くさたま',     map:YOUNG2, name:'くさたま',     desc:'しぜんが だいすきな おちついた わかもの。' }
+    star:   { img:'すいすいたま', map:YOUNG,  name:'すいすいたま', desc:'きらきら かがやく ゆうとうな わかもの。' },
+    good:   { img:'しろころ',     map:YOUNG2, name:'しろころ',     desc:'やさしくて おだやかな わかもの。' },
+    normal: { img:'もふたま',     map:YOUNG,  name:'もふたま',     desc:'マイペースで ふつうの わかもの。' },
+    wild:   { img:'くさたま',     map:YOUNG2, name:'くさたま',     desc:'やんちゃで げんきな わかもの。' }
   };
   // アダルトは おせわの せいせきで tier がきまり、その中から ランダムで しんかする
   var ADULT_TIERS = {
     star:   ['おひさま','みらたま','にんじゃ','ぴこぴこ'],
-    good:   ['どきどき','はがた','かぶら','うらら','ねむね'],
-    normal: ['はんば','もぐもぐ','げーむ','たまぱ','めっこ'],
+    good:   ['どきどき','はがた','かぶら','うらら','ねむね','うさたま'],
+    normal: ['はんば','もぐもぐ','げーむ','たまぱ','めっこ','ぷくたま'],
     wild:   ['めらめら','ちゃめ','がくがく','くちぱ','ぴねむ','ばぶたま'],
     devil:  ['くろだま','おばけ']
   };
@@ -104,6 +103,8 @@ window._eigoPetInit = function() {
     'かぶら':'のんびりやさん。しぜんが だいすき。',
     'うらら':'ほんわか おっとり マイペース。',
     'ねむね':'ものしずかで かんがえぶかい まほうつかい。',
+    'うさたま':'みみが かわいい やさしい あまえんぼう。',
+    'ぷくたま':'ぷくぷく ほっぺの たべるの だいすきっ子。',
     'はんば':'たべるの だいすき。げんきな ふつうの子。',
     'もぐもぐ':'おっとり マイペース。たべるの だいすき。',
     'げーむ':'あそぶの だいすき。すなおな ふつうの子。',
@@ -125,9 +126,10 @@ window._eigoPetInit = function() {
   var imgCache={};
   function imgSrc(n){ return 'characters/'+encodeURIComponent(n)+'.png'; }
   function getImg(n){ if(!imgCache[n]){ var im=new Image(); im.src=imgSrc(n); imgCache[n]=im; } return imgCache[n]; }
-  function babyInfo()  { return BABIES[state.babyType]  || BABIES.e; }
-  function childInfo() { return CHILDREN[state.childType] || CHILDREN.e_g; }
-  function youngInfo() { return YOUNGS[state.youngType] || YOUNGS.e; }
+  function babyInfo()  { return BABIES[state.babyType]  || BABIES.a; }
+  function childInfo() { return CHILDREN[state.childType] || CHILDREN.a; }
+  function youngTierKey(){ var t=predictedTier(); return (t==='devil')?'wild':t; } // ヤングは 4ランク（devilは wild あつかい）
+  function youngInfo() { return YOUNGS[state.youngType] || YOUNGS.normal; }
   function adultById(id){ return ADULTS[id] || (id&&LEGACY_ADULT[id]&&ADULTS[LEGACY_ADULT[id]]) || ADULTS[ADULT_TIERS.normal[0]]; }
   function adultInfo() { return adultById(state.adultType); }
   function adultMap()  { return adultInfo().map; }
@@ -277,13 +279,12 @@ window._eigoPetInit = function() {
   function checkEvolve(){
     if(state._farewell) return false;
     if(state.lv<5 && stageElapsed()>=STAGE_DUR[state.lv-1] && studiedToday()){
-      var parity=(state.learned%2===0)?'e':'o';
       var miss=state.careMiss+state.disciplineMiss;
       var ms=state.maxStreak||0, met=(state.metDates||[]).length;
       state.lv++; state.stageSince=Date.now();
-      if(state.lv===2&&!state.babyType){ state.babyType=parity; }
-      else if(state.lv===3&&!state.childType){ state.childType=(state.babyType||'e')+'_'+(met>=2?'g':'b'); }
-      else if(state.lv===4&&!state.youngType){ state.youngType=parity; }
+      if(state.lv===2&&!state.babyType){ state.babyType='a'; }
+      else if(state.lv===3&&!state.childType){ state.childType='a'; }
+      else if(state.lv===4&&!state.youngType){ state.youngType=youngTierKey(); }
       else if(state.lv===5&&!state.adultType){
         var tier=(miss>=8)?'devil':(ms>=7&&met>=10)?'star':(ms>=3||met>=5)?'good':(met>=2)?'normal':'wild';
         state.adultType=pickAdult(tier);
@@ -418,13 +419,13 @@ window._eigoPetInit = function() {
     var col=collectedAdults(), ak=Object.keys(ADULTS), got=ak.filter(function(k){return col[k];}).length;
     var adultHTML='<div class="gstage">アダルト ずかん（'+got+'/'+ak.length+'）</div><div class="ggrid">'+ak.map(function(k){ var a=ADULTS[k], has=col[k]; return '<div class="gcard"'+(has?'':' style="opacity:.4;"')+'><div class="gsprite">'+(has?spriteHTML(a,5):'<div style="height:65px;display:flex;align-items:center;justify-content:center;font-size:28px;color:var(--mut);">？</div>')+'</div><div class="gname">'+(has?a.name:'？？？')+'</div><div class="gdesc">'+(has?a.desc:'まだ そだてていない')+'</div></div>'; }).join('')+'</div>';
     document.getElementById('adminGallery').innerHTML='<div class="gstage">タマゴ</div>'+gridHTML([{map:EGG,name:'タマゴ',desc:'もうすぐ うまれるよ。'}])+'<div class="gstage">ベビー</div>'+gridHTML(Object.values(BABIES))+'<div class="gstage">キッズ</div>'+gridHTML(Object.values(CHILDREN))+'<div class="gstage">ヤング</div>'+gridHTML(Object.values(YOUNGS))+adultHTML;
-    var tree=tnode({map:EGG},'タマゴ')+'<div class="tarrow">↓</div><div class="eohead"><span>EVEN</span><span>ODD</span></div>';
-    tree+='<div class="trow">'+tnode(BABIES.e,BABIES.e.name,true)+tnode(BABIES.o,BABIES.o.name,true)+'</div><div class="tarrow">↓</div>';
-    tree+='<div class="trow">'+tnode(CHILDREN.e_g,CHILDREN.e_g.name,true)+tnode(CHILDREN.o_g,CHILDREN.o_g.name,true)+'</div>';
-    tree+='<div class="trow">'+tnode(CHILDREN.e_b,CHILDREN.e_b.name,true)+tnode(CHILDREN.o_b,CHILDREN.o_b.name,true)+'</div><div class="tarrow">↓</div>';
-    tree+='<div class="tiertag">ヤング</div><div class="trow">'+tnode(YOUNGS.e,YOUNGS.e.name,true)+tnode(YOUNGS.o,YOUNGS.o.name,true)+'</div><div class="tarrow">↓</div>';
+    var tree=tnode({map:EGG},'タマゴ')+'<div class="tarrow">↓</div>';
+    tree+='<div class="trow">'+tnode(BABIES.a,BABIES.a.name,true)+'</div><div class="tarrow">↓</div>';
+    tree+='<div class="trow">'+tnode(CHILDREN.a,CHILDREN.a.name,true)+'</div><div class="tarrow">↓</div>';
+    var ytiers=[['star','⭐さいこう'],['good','◎よいこ'],['normal','○ふつう'],['wild','△わんぱく']];
+    tree+='<div class="tiertag">ヤング（おせわランクで わかれる）</div><div class="trow">'+ytiers.map(function(t){ return tnode(YOUNGS[t[0]],YOUNGS[t[0]].name,true); }).join('')+'</div><div class="tarrow">↓</div>';
     var tiers=[['star','⭐さいこう'],['good','◎よいこ'],['normal','○ふつう'],['wild','△わんぱく'],['devil','★レア']];
-    for(var ti=0;ti<tiers.length;ti++){ var tl=tiers[ti]; tree+='<div class="tiertag">'+tl[1]+'</div><div class="trow">'+ADULT_TIERS[tl[0]].map(function(id){ return tnode(ADULTS[id],ADULTS[id].name,true); }).join('')+'</div>'; }
+    for(var ti=0;ti<tiers.length;ti++){ var tl=tiers[ti]; tree+='<div class="tiertag">アダルト：'+tl[1]+'</div><div class="trow">'+ADULT_TIERS[tl[0]].map(function(id){ return tnode(ADULTS[id],ADULTS[id].name,true); }).join('')+'</div>'; }
     if((state.memories||[]).length){
       var mh='<div class="gstage">おもいで（これまでの子）</div>';
       state.memories.forEach(function(m){ var ai=adultById(m.adultType); mh+='<div class="gcard" style="display:flex;gap:12px;align-items:center;text-align:left;margin-bottom:8px;"><div style="flex:none;">'+spriteHTML(ai,3)+'</div><div><div class="gname">'+m.name+'（'+(m.adultName||ai.name)+'）</div><div class="gdesc">'+m.days+'日 いっしょ ／ '+m.died+' たびだち ／ おぼえた '+m.learned+'こ</div></div></div>'; });
