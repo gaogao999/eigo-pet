@@ -150,7 +150,7 @@ window._eigoPetInit = function() {
     var petSvg=document.getElementById('pet');
     var petImg=document.getElementById('petImg');
     if(info.img){
-      if(petImg){ petImg.src=imgSrc(info.img); petImg.style.display='block'; } // 睡眠は おふとん演出。スプライトは つねに つうじょう絵
+      if(petImg){ var sleepy=(typeof asleep!=='undefined')&&asleep; petImg.onerror=sleepy?function(){ petImg.onerror=null; petImg.src=imgSrc(info.img); }:null; petImg.src=sleepy?imgSrc(info.img+'_sleep'):imgSrc(info.img); petImg.style.display='block'; } // 寝るときは 閉じ目スプライト
       if(petSvg){ petSvg.style.display='none'; petSvg.innerHTML=''; }
       applyBg(); return;
     }
