@@ -307,7 +307,7 @@ window._eigoPetInit = function() {
     document.getElementById('poop').style.display=state.dirty?'block':'none';
     document.getElementById('wagamark').style.display=(state.wagamama&&state.lv>=2)?'block':'none';
     document.getElementById('sickmark').style.display=state.sick?'block':'none';
-    document.getElementById('medCnt').textContent=state.sick?'えさ20で なおす':'げんき';
+    document.getElementById('medCnt').textContent=state.sick?('えさ'+MED_COST+'で なおす'):('げんき／えさ'+MED_COST);
     document.querySelectorAll('.gbtn').forEach(function(b){ b.classList.toggle('sel',b.dataset.g===state.grade); });
     drawPet();
     renderGoal();
