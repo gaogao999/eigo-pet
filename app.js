@@ -482,8 +482,8 @@ window._eigoPetInit = function() {
     document.getElementById('reward').textContent='';
     var pool=currentWords().filter(function(w){ return w[0]!==en&&w[1]!==correct[1]; });
     var opts=shuffle([correct].concat(shuffle(pool).slice(0,3)));
-    var box=document.getElementById('choices'); box.innerHTML='';
-    opts.forEach(function(o){ var b=document.createElement('button'); b.className='ch'; b.innerHTML=choiceHtml(o); b.onclick=function(){ if(b._lp){ b._lp=false; return; } answer(b,o===correct,en); }; attachLongPress(b,function(){ showEasy(o); }); box.appendChild(b); });
+    var box=document.getElementById('choices'); box.innerHTML=''; box.style.pointerEvents='';
+    opts.forEach(function(o){ var b=document.createElement('button'); b.className='ch'; b.innerHTML=choiceHtml(o); if(o===correct) b._isCorrect=true; b.onclick=function(){ if(b._lp){ b._lp=false; return; } answer(b,o===correct,en); }; attachLongPress(b,function(){ showEasy(o); }); box.appendChild(b); });
     speak(en);
   }
   function recordLearned(en){ if(state.todayDate!==today()){ state.todayDate=today(); state.todayWords=[]; } var k=en.toLowerCase(), already=state.todayWords.indexOf(k)>=0; if(!already) state.todayWords.push(k); if(!already&&state.todayWords.length===state.dailyGoal){ onGoalReached(); } }
@@ -498,6 +498,17 @@ window._eigoPetInit = function() {
   if(window.speechSynthesis){ speechSynthesis.onvoiceschanged=function(){ enVoice=pickVoice(); }; ensureVoice(); }
   function speak(en){ try{ if(!window.speechSynthesis) return; var u=new SpeechSynthesisUtterance(en); var v=ensureVoice(); if(v){ u.voice=v; u.lang=v.lang; } else { u.lang='en-US'; } u.rate=0.8; u.pitch=1.0; speechSynthesis.cancel(); speechSynthesis.speak(u); }catch(e){} }
   document.getElementById('speak').onclick=function(){ speak(document.getElementById('qword').textContent); };
+  document.getElementById('dontKnow').onclick=function(){
+    if(!curWord) return;
+    var box=document.getElementById('choices');
+    if(box.style.pointerEvents==='none') return; // すでに回答済み
+    box.style.pointerEvents='none';
+    var btns=box.querySelectorAll('.ch'); for(var i=0;i<btns.length;i++){ if(btns[i]._isCorrect) btns[i].classList.add('ok'); }
+    onAnswer(curWord[0],false); save(); // わからない＝復習まちへ
+    document.getElementById('reward').textContent='こたえ：'+curWord[1];
+    showEasy(curWord);
+    setTimeout(function(){ qIdx++; nextQ(); },2000);
+  };
 
   /* ---- wagamama ---- */
   var wagaTimer=null;
