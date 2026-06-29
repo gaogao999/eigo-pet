@@ -244,7 +244,7 @@ window._eigoPetInit = function() {
     return false;
   }
   function checkDeath(){
-    if(state._farewell) return true;
+    if(state._farewell){ showFarewell(adultInfo()); return true; } // お別れ未完了で再起動した場合も再表示
     if(state.lv>=5 && ageDays()>=state.lifespanDays){ farewell(); return true; }
     return false;
   }
