@@ -4,7 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <script src="./support.js"></script>
-<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('./sw.js').catch(function(){});});}</script>
+<script>/* 以前のService Workerを解除しキャッシュを削除（更新が確実に届くように） */
+if('serviceWorker' in navigator){navigator.serviceWorker.getRegistrations().then(function(rs){rs.forEach(function(r){r.unregister();});}).catch(function(){});}
+if(window.caches){caches.keys().then(function(ks){ks.forEach(function(k){caches.delete(k);});}).catch(function(){});}</script>
 </head>
 <body>
 <x-dc>
@@ -275,9 +277,6 @@
     <div style="margin-top:8px;font-size:12px;font-weight:700;color:var(--mut);"><span style="color:#d97706;">🔁 ふくしゅうまち <span id="reviewN">0</span>ご</span>　— まちがえた単語は でやすく、2かい れんぞくせいかいで「おぼえた」</div>
   </div>
 
-  <div style="text-align:center;margin-top:16px;font-size:13px;color:var(--mut);font-weight:700;" id="goalset">1にちの もくひょう：<strong style="color:var(--g);font-size:15px;">30こ</strong></div>
-  <div style="text-align:center;margin-top:10px;font-size:12px;color:var(--mut);font-weight:700;">ごほうびタイム：<strong style="color:var(--g);">15〜17時</strong>（えさ・けいけんち 2ばい）</div>
-  <div style="text-align:center;margin-top:10px;font-size:13px;color:var(--mut);font-weight:700;" id="sndset">こうかおん：<button class="optbtn" data-v="1">ON</button><button class="optbtn" data-v="0">OFF</button></div>
 </section>
 
 <!-- STUDY -->
@@ -340,6 +339,9 @@
     <div id="wlList"></div>
   </div>
   <div id="tab-data" class="atabpane" style="display:none;">
+    <h3 style="font-size:15px;font-weight:900;margin:4px 0 8px;color:var(--ink);">せってい</h3>
+    <div style="text-align:left;font-size:13px;color:var(--mut);font-weight:700;margin-bottom:8px;" id="sndset">こうかおん：<button class="optbtn" data-v="1">ON</button><button class="optbtn" data-v="0">OFF</button></div>
+    <div style="font-size:12px;color:var(--mut);font-weight:700;line-height:1.8;margin-bottom:16px;">1にちの もくひょう：<strong style="color:var(--g);">30こ</strong> ／ ごほうびタイム：<strong style="color:var(--g);">15〜17時</strong>（えさ・けいけんち 2ばい）</div>
     <p style="font-size:13px;color:var(--mut);line-height:1.7;margin:4px 0 12px;font-weight:700;">しんちょくは この たんまつに ほぞんされています。ときどき バックアップを とっておくと あんしんです。</p>
     <div id="dataStat" style="font-size:13px;color:var(--ink);font-weight:800;background:var(--gl);border:2px solid var(--bdr);border-radius:8px;padding:12px 14px;margin-bottom:16px;"></div>
     <h3 style="font-size:15px;font-weight:900;margin:4px 0 8px;color:var(--ink);">バックアップ（書き出し）</h3>
