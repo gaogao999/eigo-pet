@@ -24,11 +24,11 @@
     body{font-family:'M PLUS Rounded 1c',-apple-system,'Hiragino Maru Gothic ProN',sans-serif;background:var(--bg);color:var(--ink);overscroll-behavior:none;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom);user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;}
     .screen{max-width:440px;margin:0 auto;padding:16px 16px 28px;display:none;}
     .screen.on{display:block;}
-    body.hastab .screen.on{padding-bottom:96px;}
-    /* ホームは1画面に収める：やど(飼育エリア)が余白を吸収して伸縮 */
-    body.hastab #home.on{display:flex;flex-direction:column;height:calc(100dvh - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));}
-    #home.on>*{flex:0 0 auto;}
-    #home.on .yard{flex:1 1 auto;min-height:150px;max-height:260px;}
+    body.hastab .screen.on{padding-bottom:88px;}
+    /* ホームは1画面に収める：やど(キャラ画面)はフルサイズ固定、周りを詰める */
+    body.hastab #home.on{padding-top:6px;}
+    #home.on .yard{height:240px;}
+    #bFeed,#bSnack,#bPlay,#bScold,#bClean,#bMed{padding:8px 4px!important;}
     #tabbar{position:fixed;left:0;right:0;bottom:0;z-index:50;display:none;background:rgba(255,255,255,.97);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-top:2px solid var(--bdr);padding:8px 16px calc(8px + env(safe-area-inset-bottom));}
     #tabbar.on{display:flex;justify-content:center;}
     .tabrow{display:flex;gap:6px;width:100%;max-width:360px;}
@@ -43,9 +43,7 @@
     .ground{position:absolute;left:0;right:0;bottom:0;height:46px;background:#e7dcbf;}
     #scene{position:absolute;inset:0;opacity:.55;pointer-events:none;}
     #scene svg{display:block;}
-    #petWrap{position:absolute;bottom:30px;left:50%;transform:translateX(-50%);animation:bob 1.6s steps(2) infinite;}
-    #pet{display:block;width:auto;height:clamp(84px,13.5dvh,120px);}
-    #petImg{height:clamp(84px,13.5dvh,120px)!important;width:auto!important;}
+    #petWrap{position:absolute;bottom:40px;left:50%;transform:translateX(-50%);animation:bob 1.6s steps(2) infinite;}
     #petWrap.happy{animation:hop .6s 2;}
     #bubble{position:absolute;top:14px;left:50%;transform:translateX(-50%);background:#fff;border:2px solid var(--bdr);border-radius:8px;padding:5px 18px;font-size:14px;font-weight:800;color:var(--g);opacity:0;transition:opacity .2s;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,.08);}
     #poop{position:absolute;bottom:40px;left:30px;display:none;image-rendering:pixelated;}
@@ -135,7 +133,7 @@
 
 <!-- HOME -->
 <section id="home" class="screen on">
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
     <div id="petName" style="display:flex;align-items:center;gap:6px;cursor:pointer;">
       <span id="petNameText" style="font-size:22px;font-weight:900;color:var(--g);">ぴよ</span>
       <svg width="12" height="12" viewBox="0 0 12 12" shape-rendering="crispEdges" style="opacity:.5;"><rect x="0" y="8" width="12" height="2" fill="var(--g)"/><rect x="8" y="0" width="4" height="4" fill="var(--g)"/><rect x="6" y="2" width="4" height="4" fill="var(--g)"/><rect x="2" y="4" width="8" height="4" fill="var(--g)"/></svg>
@@ -164,7 +162,7 @@
   </div>
 
   <!-- Status bars -->
-  <div style="display:flex;flex-direction:column;gap:7px;margin:12px 0 6px;">
+  <div style="display:flex;flex-direction:column;gap:5px;margin:6px 0 4px;">
     <div style="display:flex;align-items:center;gap:8px;">
       <span style="font-size:11px;font-weight:900;color:#f97316;width:32px;text-align:right;flex-shrink:0;">HP</span>
       <div class="bar"><i id="hungerBar" style="background:linear-gradient(90deg,#fb923c,#f97316);"></i></div>
@@ -217,9 +215,9 @@
     </button>
   </div>
 
-  <div id="nudge" style="display:none;text-align:center;background:#fefce8;border:2px solid #fde68a;border-radius:8px;padding:12px 14px;margin-top:14px;font-size:13px;font-weight:800;color:#92400e;cursor:pointer;"></div>
-  <div id="growthLine" style="text-align:center;margin-top:14px;font-size:13px;font-weight:700;color:var(--g);"></div>
-  <div style="text-align:center;margin-top:8px;font-size:12px;color:var(--mut);font-weight:700;">たいじゅう <span id="weight">5</span>g ／ <span id="streak">1</span>にち つづけてるよ</div>
+  <div id="nudge" style="display:none;text-align:center;background:#fefce8;border:2px solid #fde68a;border-radius:8px;padding:10px 14px;margin-top:10px;font-size:13px;font-weight:800;color:#92400e;cursor:pointer;"></div>
+  <div id="growthLine" style="text-align:center;margin-top:10px;font-size:13px;font-weight:700;color:var(--g);"></div>
+  <div style="text-align:center;margin-top:6px;font-size:12px;color:var(--mut);font-weight:700;">たいじゅう <span id="weight">5</span>g ／ <span id="streak">1</span>にち つづけてるよ</div>
   <div id="rev" style="text-align:center;margin-top:6px;font-size:11px;color:var(--mut);font-family:'DotGothic16',sans-serif;"></div>
 </section>
 
