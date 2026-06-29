@@ -133,7 +133,7 @@ window._eigoPetInit = function() {
     var s=null;
     var keys=[KEY, BAKKEY];
     for(var ki=0;ki<keys.length;ki++){ try{ var raw=localStorage.getItem(keys[ki]); if(raw){ s=JSON.parse(raw); break; } }catch(e){} }
-    var def={ name:"ぴよ",lv:1,xp:0,hunger:80,happy:80,food:0,dirty:false,streak:1,learned:0,last:today(),grade:"g3",discipline:50,weight:5,careMiss:0,disciplineMiss:0,wagamama:false,babyType:null,childType:null,adultType:null,customImg:{},gameHi:0,dailyGoal:30,todayDate:today(),todayWords:[],lastGoalDate:null,metDates:[],wrongWords:[],petColor:'brown',bg:'meadow',freezeTickets:0,lastTicketDate:null,rewardHour:null,lastBoxWeek:null,titles:[],sound:true,mastery:{},learn:{},maxStreak:0,sick:false,born:Date.now(),stageSince:Date.now(),lifespanDays:12+Math.floor(Math.random()*3),youngType:null,memories:[],schemaV:2,lastBackupNudge:null };
+    var def={ name:"ぴよ",lv:1,xp:0,hunger:80,happy:80,food:0,dirty:false,streak:1,learned:0,last:today(),grade:"g3",discipline:50,weight:5,careMiss:0,disciplineMiss:0,wagamama:false,babyType:null,childType:null,adultType:null,customImg:{},gameHi:0,dailyGoal:30,todayDate:today(),todayWords:[],lastGoalDate:null,metDates:[],wrongWords:[],petColor:'brown',bg:'meadow',freezeTickets:0,lastTicketDate:null,rewardHour:null,lastBoxWeek:null,titles:[],sound:true,mastery:{},learn:{},maxStreak:0,sick:false,born:Date.now(),stageSince:Date.now(),lifespanDays:12+Math.floor(Math.random()*3),youngType:null,memories:[],schemaV:2,lastBackupNudge:null,lastTick:Date.now() };
     s=Object.assign({},def,s||{});
     s.dailyGoal=30; // 1日の目標は30に固定
     // 単語ごとの学習状況(learn)へ移行：旧mastery(正解数>=2でおぼえた)＋wrongWords(にがて)から復元
@@ -193,18 +193,26 @@ window._eigoPetInit = function() {
   ];
   function checkTitles(){ var got=null; TITLES.forEach(function(t){ if(state.titles.indexOf(t.id)<0&&t.cond(state)){ state.titles.push(t.id); got=t.name; } }); if(got){ bubble('しょうごう ゲット！'); sfx('fanfare'); } }
   function checkTickets(){ if(state.lastTicketDate!==today()&&todayCount()>=state.dailyGoal*2){ state.freezeTickets=Math.min(5,state.freezeTickets+1); state.lastTicketDate=today(); bubble('おやすみ券 ゲット！'); } }
+  // 時間で少しずつ お腹・ごきげんが へる（世話している感）
+  function decayStats(){
+    var now=Date.now(), last=state.lastTick||now, hrs=(now-last)/3600000;
+    state.lastTick=now;
+    if(hrs<=0) return;
+    hrs=Math.min(hrs,72);
+    state.hunger=Math.max(0, state.hunger - 1.5*hrs);   // 約 -36/日
+    state.happy =Math.max(0, state.happy  - 1.0*hrs);   // 約 -24/日
+    if(state.sick) state.happy=Math.max(0, state.happy - 0.5*hrs);
+  }
   function applyDaily(){
     if(state.todayDate!==today()){ state.todayDate=today(); state.todayWords=[]; }
     if(state.last===today()) return;
     var prev=new Date(state.last), now=new Date(today());
     var diff=Math.round((now-prev)/86400000);
-    state.hunger=Math.max(0,state.hunger-30*Math.min(diff,3));
-    state.happy=Math.max(0,state.happy-20*Math.min(diff,3));
     state.discipline=Math.max(0,state.discipline-5*Math.min(diff,3));
     if(state.hunger===0) state.careMiss++;
     if(state.happy===0) state.careMiss++;
-    if(state.lv>=2&&!state.sick){ var p=0.12+(state.hunger<30?0.12:0)+(state.happy<30?0.12:0); if(Math.random()<p*Math.min(diff,3)) state.sick=true; }
-    if(state.sick) state.happy=Math.max(0,state.happy-10);
+    // 病気：健康なら基本5%、お腹/ごきげんが低い・太りすぎだと上がる
+    if(state.lv>=2&&!state.sick){ var p=0.05+(state.hunger<30?0.12:0)+(state.happy<30?0.12:0)+Math.min(0.12,Math.max(0,(state.weight-20))*0.006); if(Math.random()<p*Math.min(diff,3)) state.sick=true; }
     // 寿命：よく勉強・世話できると延び、放置・病気放置で縮む（10〜15日）
     var good=(state.lastGoalDate===yesterday())&&state.hunger>0&&state.happy>0&&!state.sick;
     state.lifespanDays=Math.max(10,Math.min(15,(state.lifespanDays||12)+(good?0.5:-1*Math.min(diff,3))));
@@ -342,7 +350,7 @@ window._eigoPetInit = function() {
 
   /* ---- care ---- */
   document.getElementById('bFeed').onclick=function(){ if(state.food<=0){ bubble("べんきょうして えさをあつめよう"); return; } state.food--; state.hunger=Math.min(100,state.hunger+25); state.happy=Math.min(100,state.happy+5); state.weight+=1; addXp(5); if(Math.random()<0.45) state.dirty=true; bubble("もぐもぐ"); cheer(); save(); render(); };
-  document.getElementById('bSnack').onclick=function(){ state.happy=Math.min(100,state.happy+14); state.weight+=3; if(Math.random()<0.5) state.dirty=true; bubble("おいしい！でも たいじゅう+"); cheer(); save(); render(); };
+  document.getElementById('bSnack').onclick=function(){ state.happy=Math.min(100,state.happy+14); state.weight+=3; if(Math.random()<0.35) state.dirty=true; bubble("おいしい！でも たいじゅう+"); cheer(); save(); render(); };
   document.getElementById('bPlay').onclick=function(){ if(state.food<=0){ bubble("べんきょうして えさを あつめよう"); return; } show('gameSelect'); };
   function consumePlay(){ state.food--; state.weight=Math.max(5,state.weight-1); save(); }
   document.getElementById('backSelect').onclick=function(){ show('home'); render(); };
@@ -433,7 +441,7 @@ window._eigoPetInit = function() {
   function loopGame(){ var g=game; if(!g||g.over) return; g.t++; g.speed+=0.0009; if(g.obs.length===0||(g.W-g.obs[g.obs.length-1].x)>(150+Math.random()*130)){ g.obs.push({x:g.W,w:14+Math.floor(Math.random()*8),h:18+Math.floor(Math.random()*22)}); } g.obs.forEach(function(o){ o.x-=g.speed; }); g.obs=g.obs.filter(function(o){ return o.x+o.w>-4; }); g.score=Math.floor(g.t/6); var prevFeet=g.py+g.petH; g.vy+=0.55; g.py+=g.vy; g.onGround=false; if(g.py>=g.groundY-g.petH){ g.py=g.groundY-g.petH; g.vy=0; g.onGround=true; g.jumps=0; } var pl=g.px+5,pr=g.px+g.petW-5; for(var oi=0;oi<g.obs.length;oi++){ var o=g.obs[oi]; var ol=o.x,orr=o.x+o.w,top=g.groundY-o.h; if(pl<orr&&pr>ol){ if(g.vy>=0&&prevFeet<=top+6&&g.py+g.petH>=top){ g.py=top-g.petH; g.vy=0; g.onGround=true; g.jumps=0; } else if(g.py+g.petH>top){ endGame(); return; } } } var ctx=g.ctx; ctx.clearRect(0,0,g.W,g.H); ctx.fillStyle='#e0d3b0'; ctx.fillRect(0,g.groundY,g.W,g.H-g.groundY); ctx.fillStyle='#4a3526'; ctx.fillRect(0,g.groundY,g.W,2); g.obs.forEach(function(o){ ctx.fillStyle='#7a5a2a'; ctx.fillRect(o.x,g.groundY-o.h,o.w,o.h); ctx.fillStyle='#4a3526'; ctx.fillRect(o.x,g.groundY-o.h,o.w,2); }); drawPetCanvas(ctx,g.map,g.px,Math.round(g.py),g.cell); document.getElementById('gscore').textContent=g.score; g.raf=requestAnimationFrame(loopGame); }
   function endGame(){ var g=game; g.over=true; cancelAnimationFrame(g.raf); var sc=g.score; var happyGain=Math.min(30,6+Math.floor(sc/4)); state.happy=Math.min(100,state.happy+happyGain); var eBonus=sc>=40?2:sc>=20?1:0; state.food+=eBonus; addXp(5); if(sc>(state.gameHi||0)) state.gameHi=sc; save(); document.getElementById('goverScore').textContent='スコア '+sc+'（さいこう '+state.gameHi+'）'; document.getElementById('goverReward').textContent='ごきげん +'+happyGain+(eBonus?' ／ えさ +'+eBonus:''); document.getElementById('gover').style.display='flex'; }
   function leaveGame(){ if(game){ game.over=true; cancelAnimationFrame(game.raf); } show('home'); render(); }
-  (function(){ var cv=document.getElementById('gcanvas'); cv.addEventListener('pointerdown',function(e){ e.preventDefault(); gameInput(); }); document.getElementById('gJump').onclick=gameInput; document.getElementById('gRetry').onclick=function(){ if(game&&game.mode==='sea') startSeaGame(); else startGame(); }; document.getElementById('gHome').onclick=leaveGame; document.getElementById('backGame').onclick=leaveGame; })();
+  (function(){ var cv=document.getElementById('gcanvas'); cv.addEventListener('pointerdown',function(e){ e.preventDefault(); gameInput(); }); document.getElementById('gJump').onclick=gameInput; document.getElementById('gRetry').onclick=function(){ if(state.food<=0){ leaveGame(); bubble('えさが なくなった！べんきょうで あつめよう'); return; } consumePlay(); if(game&&game.mode==='sea') startSeaGame(); else startGame(); }; document.getElementById('gHome').onclick=leaveGame; document.getElementById('backGame').onclick=leaveGame; })();
 
   /* ---- study ---- */
   var session, qIdx, qList;
@@ -533,15 +541,17 @@ window._eigoPetInit = function() {
   var wagaTimer=null;
   function homeVisible(){ return document.getElementById('home').classList.contains('on')&&!document.hidden; }
   function triggerWagamama(){ if(state.wagamama||state.lv<2) return; state.wagamama=true; render(); bubble("！ かまって！"); clearTimeout(wagaTimer); wagaTimer=setTimeout(function(){ if(state.wagamama){ state.wagamama=false; state.disciplineMiss++; state.discipline=Math.max(0,state.discipline-4); save(); render(); } },22000); }
-  setInterval(function(){ if(homeVisible()&&!state.wagamama&&Math.random()<0.5) triggerWagamama(); },30000);
+  setInterval(function(){ if(homeVisible()&&!state.wagamama&&Math.random()<0.30) triggerWagamama(); },60000);
 
   /* ---- boot ---- */
+  decayStats();
   applyDaily();
+  save();
   if(!checkDeath()) checkEvolve();
   document.body.classList.add('hastab');
   show('home');
   render();
-  setInterval(function(){ if(state._farewell) return; var c=checkEvolve(); if(checkDeath()) return; if(homeVisible()&&!c) render(); },60000);
+  setInterval(function(){ if(state._farewell) return; decayStats(); save(); var c=checkEvolve(); if(checkDeath()) return; if(homeVisible()&&!c) render(); },60000);
   // バックアップ催促（週1・進捗が貯まってから）
   if(!state._farewell && state.learned>=30){ var lb=state.lastBackupNudge; var due=!lb || (Math.round((new Date(today())-new Date(lb))/86400000)>=7); if(due){ state.lastBackupNudge=today(); save(); setTimeout(function(){ bubble('ときどき データを バックアップしてね（せってい→データ）'); },2500); } }
   try{ document.getElementById('rev').textContent='バージョン '+(typeof APP_REV!=='undefined'?APP_REV:'?'); }catch(e){}
