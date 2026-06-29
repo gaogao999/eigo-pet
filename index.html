@@ -101,6 +101,14 @@ if(window.caches){caches.keys().then(function(ks){ks.forEach(function(k){caches.
     .wdot{flex:1;text-align:center;font-size:10px;font-weight:700;color:var(--mut);background:var(--gl);border-radius:4px;padding:4px 0;}
     .wdot.met{background:var(--g);color:#fff;}
     .wdot.today{outline:2px solid var(--g);outline-offset:-2px;}
+    .shopcard{display:flex;align-items:center;gap:10px;background:var(--card);border:2px solid var(--bdr);border-radius:12px;padding:12px 14px;margin-bottom:10px;}
+    .shopinfo{flex:1;min-width:0;}
+    .shopname{font-size:15px;font-weight:900;color:var(--ink);}
+    .shopdesc{font-size:12px;color:var(--mut);font-weight:700;margin-top:2px;line-height:1.4;}
+    .shopbuy{flex-shrink:0;min-width:84px;border:none;border-radius:10px;padding:10px 12px;font-size:14px;font-weight:900;background:linear-gradient(135deg,#29a65e,#5cde94);color:#fff;cursor:pointer;font-family:inherit;box-shadow:0 2px 8px rgba(41,166,94,.3);line-height:1.2;}
+    .shopbuy:disabled{background:#cbd5d1;box-shadow:none;cursor:default;color:#fff;}
+    .shopbuy:active:not(:disabled){transform:scale(.94);}
+    .shopmax{flex-shrink:0;min-width:84px;text-align:center;font-size:13px;font-weight:900;color:var(--g);background:var(--gl);border-radius:10px;padding:10px 12px;}
     .goalbtn{border:2px solid var(--bdr);background:var(--card);border-radius:6px;padding:6px 16px;margin-left:6px;font-size:14px;font-weight:800;color:var(--mut);cursor:pointer;font-family:inherit;}
     .goalbtn.sel{background:var(--g);color:#fff;border-color:var(--g);}
     .optbtn{border:2px solid var(--bdr);background:var(--card);border-radius:6px;padding:6px 14px;margin-left:6px;font-size:13px;font-weight:700;color:var(--mut);cursor:pointer;font-family:inherit;}
@@ -356,6 +364,16 @@ if(window.caches){caches.keys().then(function(ks){ks.forEach(function(k){caches.
   </div>
 </section>
 
+<!-- SHOP -->
+<section id="shop" class="screen">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin:4px 0 14px;">
+    <h2 style="font-size:22px;font-weight:900;color:var(--ink);margin:0;">ショップ</h2>
+    <span id="shopEsa" style="font-size:14px;font-weight:800;color:#c2410c;background:#fff7ed;border:2px solid #fed7aa;border-radius:8px;padding:6px 12px;">🍚 えさ 0</span>
+  </div>
+  <p style="font-size:12px;color:var(--mut);font-weight:700;margin:0 0 14px;">べんきょうで あつめた えさで かえるよ！</p>
+  <div id="shopList"></div>
+</section>
+
 <!-- GAME SELECT -->
 <section id="gameSelect" class="screen">
   <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
@@ -449,6 +467,12 @@ if(window.caches){caches.keys().then(function(ks){ks.forEach(function(k){caches.
         <svg width="20" height="18" viewBox="0 0 20 18" shape-rendering="crispEdges"><rect x="7" y="0" width="6" height="3" fill="currentColor"/><rect x="4" y="3" width="12" height="3" fill="currentColor"/><rect x="0" y="6" width="6" height="3" fill="currentColor"/><rect x="14" y="6" width="6" height="3" fill="currentColor"/><rect x="0" y="9" width="20" height="3" fill="currentColor"/><rect x="0" y="12" width="6" height="6" fill="currentColor"/><rect x="14" y="12" width="6" height="6" fill="currentColor"/></svg>
       </span>
       がくしゅう
+    </button>
+    <button class="tab" data-s="shop">
+      <span class="ti">
+        <svg width="20" height="20" viewBox="0 0 20 20" shape-rendering="crispEdges"><rect x="2" y="2" width="4" height="2" fill="currentColor"/><rect x="6" y="4" width="12" height="2" fill="currentColor"/><rect x="5" y="6" width="13" height="8" fill="currentColor"/><rect x="8" y="8" width="2" height="4" fill="currentColor"/><rect x="13" y="8" width="2" height="4" fill="currentColor"/><rect x="6" y="15" width="3" height="3" fill="currentColor"/><rect x="13" y="15" width="3" height="3" fill="currentColor"/></svg>
+      </span>
+      ショップ
     </button>
     <button class="tab" data-s="admin">
       <span class="ti">

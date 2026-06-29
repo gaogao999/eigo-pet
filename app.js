@@ -445,9 +445,27 @@ window._eigoPetInit = function() {
 
   /* ---- study ---- */
   var session, qIdx, qList;
-  var MAIN_TABS=['home','learn','admin'];
+  var MAIN_TABS=['home','learn','shop','admin'];
   function show(id){ document.querySelectorAll('.screen').forEach(function(s){ s.classList.remove('on'); }); document.getElementById(id).classList.add('on'); var tb=document.getElementById('tabbar'); if(MAIN_TABS.indexOf(id)>=0){ tb.classList.add('on'); document.querySelectorAll('#tabbar .tab').forEach(function(b){ b.classList.toggle('sel',b.dataset.s===id); }); } else { tb.classList.remove('on'); } window.scrollTo(0,0); }
-  function gotoTab(s){ if(s==='admin'){ renderAdmin(); wlGrade=state.grade; renderWordList(); setAdminTab('zukan'); } show(s); render(); }
+  function gotoTab(s){ if(s==='admin'){ renderAdmin(); wlGrade=state.grade; renderWordList(); setAdminTab('zukan'); } if(s==='shop'){ renderShop(); } show(s); render(); }
+  /* ---- ショップ（エサの使い道） ---- */
+  var SHOP=[
+    {id:'ticket', icon:'🎫', name:'おやすみ券', desc:'れんぞく記録を 1日 まもれる', cost:25, max:function(){ return state.freezeTickets>=9; }, buy:function(){ state.freezeTickets=Math.min(9,state.freezeTickets+1); }},
+    {id:'feast',  icon:'🍱', name:'ごちそう',   desc:'おなか まんたん＋ごきげん（太らない）', cost:12, buy:function(){ state.hunger=100; state.happy=Math.min(100,state.happy+25); }},
+    {id:'toy',    icon:'🧸', name:'おもちゃ',   desc:'ごきげん +30', cost:8,  buy:function(){ state.happy=Math.min(100,state.happy+30); }},
+    {id:'charm',  icon:'🛡', name:'いのちの おまもり', desc:'じゅみょう +1日（さいだい15）', cost:40, max:function(){ return (state.lifespanDays||12)>=15; }, buy:function(){ state.lifespanDays=Math.min(15,(state.lifespanDays||12)+1); }}
+  ];
+  function renderShop(){
+    var esa=document.getElementById('shopEsa'); if(esa) esa.textContent='🍚 えさ '+state.food;
+    var box=document.getElementById('shopList'); if(!box) return;
+    box.innerHTML=SHOP.map(function(it){
+      var maxed=it.max&&it.max(), afford=state.food>=it.cost;
+      var btn = maxed ? '<span class="shopmax">MAX</span>'
+        : '<button class="shopbuy" data-id="'+it.id+'"'+(afford?'':' disabled')+'>えさ '+it.cost+(afford?'':'<br><span style="font-size:10px;">たりない</span>')+'</button>';
+      return '<div class="shopcard"><div class="shopinfo"><div class="shopname">'+it.icon+' '+it.name+'</div><div class="shopdesc">'+it.desc+'</div></div>'+btn+'</div>';
+    }).join('');
+  }
+  document.getElementById('shopList').onclick=function(e){ var b=e.target.closest('.shopbuy'); if(!b) return; var it=SHOP.find(function(x){ return x.id===b.dataset.id; }); if(!it) return; if(it.max&&it.max()){ return; } if(state.food<it.cost){ bubble('えさが たりない'); return; } state.food-=it.cost; it.buy(); save(); sfx('unlock'); cheer(); bubble(it.name+' を かった！'); renderShop(); render(); };
   document.getElementById('tabbar').onclick=function(e){ var b=e.target.closest('.tab'); if(!b) return; gotoTab(b.dataset.s); };
   var ADMIN_TABS=['zukan','kisekae','keifu','tango','data'];
   function swipeTab(dir){ var cur=document.querySelector('.screen.on'); if(!cur) return; if(document.getElementById('goalCele').style.display==='flex') return; if(cur.id==='admin'){ var i=ADMIN_TABS.indexOf(curAdminTab),ni=i+dir; if(ni>=0&&ni<ADMIN_TABS.length){ setAdminTab(ADMIN_TABS[ni]); return; } if(dir<0&&i<=0){ gotoTab('learn'); } return; } if(MAIN_TABS.indexOf(cur.id)>=0){ var i2=MAIN_TABS.indexOf(cur.id),ni2=i2+dir; if(ni2>=0&&ni2<MAIN_TABS.length) gotoTab(MAIN_TABS[ni2]); } }
