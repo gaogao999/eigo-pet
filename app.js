@@ -384,7 +384,7 @@ window._eigoPetInit = function() {
   function showGoalCelebration(){ document.getElementById('celeMsg').innerHTML='きょう '+state.dailyGoal+'こ おぼえたよ！<br>'+displayStreak()+'にち れんぞく'; document.getElementById('celeReward').textContent='ごほうび：えさ +5 ／ ごきげん まんたん'; document.getElementById('goalCele').style.display='flex'; cheer(); }
   var bubT;
   function bubble(t){ var b=document.getElementById('bubble'); b.textContent=t; b.style.opacity=1; clearTimeout(bubT); bubT=setTimeout(function(){ b.style.opacity=0; },1100); }
-  function cheer(){ var w=document.getElementById('petWrap'); w.classList.add('happy'); setTimeout(function(){ w.classList.remove('happy'); },1200); }
+  function cheer(){ var w=document.getElementById('petWrap'); if(!w) return; wakePet(); w.classList.add('happy'); setTimeout(function(){ w.classList.remove('happy'); },1200); }
 
   /* ---- care ---- */
   document.getElementById('bFeed').onclick=function(){ if(state.food<=0){ bubble("べんきょうして えさをあつめよう"); return; } state.food--; state.hunger=Math.min(100,state.hunger+25); state.happy=Math.min(100,state.happy+5); state.weight+=1; addXp(5); if(Math.random()<0.45) state.dirty=true; bubble("もぐもぐ"); cheer(); save(); render(); };
@@ -599,8 +599,37 @@ window._eigoPetInit = function() {
   /* ---- wagamama ---- */
   var wagaTimer=null;
   function homeVisible(){ return document.getElementById('home').classList.contains('on')&&!document.hidden; }
-  function triggerWagamama(){ if(state.wagamama||state.lv<2) return; state.wagamama=true; render(); bubble("！ かまって！"); clearTimeout(wagaTimer); wagaTimer=setTimeout(function(){ if(state.wagamama){ state.wagamama=false; state.disciplineMiss++; state.discipline=Math.max(0,state.discipline-4); save(); render(); } },22000); }
+  function triggerWagamama(){ if(state.wagamama||state.lv<2) return; if(typeof wakePet==='function') wakePet(); state.wagamama=true; render(); bubble("！ かまって！"); clearTimeout(wagaTimer); wagaTimer=setTimeout(function(){ if(state.wagamama){ state.wagamama=false; state.disciplineMiss++; state.discipline=Math.max(0,state.discipline-4); save(); render(); } },22000); }
   setInterval(function(){ if(homeVisible()&&!state.wagamama&&Math.random()<0.30) triggerWagamama(); },60000);
+
+  /* ---- 躍動感（ホームでの ふるまい：おさんぽ・おひるね） ---- */
+  var asleep=false, walkTimer=null, behaveT=null;
+  function petWrapEl(){ return document.getElementById('petWrap'); }
+  function isNightTime(){ var b=curBg(); if(b&&b.id==='night') return true; try{ var h=new Date().getHours(); return h>=22||h<6; }catch(e){ return false; } }
+  function wakePet(){ if(!asleep) return; asleep=false; var w=petWrapEl(); if(w) w.classList.remove('asleep'); var z=document.getElementById('zzz'); if(z) z.classList.remove('on'); }
+  function sleepPet(){ if(asleep) return; asleep=true; var w=petWrapEl(); if(w){ w.classList.remove('walking'); w.classList.add('asleep'); } var z=document.getElementById('zzz'); if(z) z.classList.add('on'); }
+  function walkTo(){
+    var w=petWrapEl(); if(!w) return;
+    var cur=parseFloat(w.dataset.lx||'50');
+    var target=24+Math.random()*52;                 // 24%〜76% の はんいで うろうろ
+    if(Math.abs(target-cur)<10){ target=cur<50?cur+18:cur-18; }
+    target=Math.max(24,Math.min(76,target));
+    w.classList.toggle('flip', target<cur);          // すすむ ほうこうを むく
+    w.classList.add('walking');
+    w.style.left=target+'%'; w.dataset.lx=target;
+    clearTimeout(walkTimer); walkTimer=setTimeout(function(){ var ww=petWrapEl(); if(ww&&!asleep) ww.classList.remove('walking'); },1350);
+  }
+  function behaveStep(){
+    scheduleBehave();
+    if(state._farewell || !homeVisible() || state.wagamama) return;
+    if(state.lv<2){ wakePet(); var w0=petWrapEl(); if(w0){ w0.classList.remove('flip','walking'); w0.style.left='50%'; w0.dataset.lx='50'; } return; } // タマゴは うごかない
+    if(asleep){ if(!isNightTime()&&Math.random()<0.4) wakePet(); return; }
+    var sleepChance=isNightTime()?0.55:(state.sick?0.30:(state.happy<25?0.28:0.07));
+    if(Math.random()<sleepChance){ sleepPet(); return; }
+    if(Math.random()<0.78) walkTo();                 // のこりは その場で ひとやすみ
+  }
+  function scheduleBehave(){ clearTimeout(behaveT); behaveT=setTimeout(behaveStep, 1700+Math.random()*2400); }
+  scheduleBehave();
 
   /* ---- boot ---- */
   try{ if(navigator.storage&&navigator.storage.persist) navigator.storage.persist(); }catch(e){} // 保存領域を消されにくくする(対応ブラウザのみ)
