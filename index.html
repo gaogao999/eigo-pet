@@ -45,8 +45,12 @@ if(window.caches){caches.keys().then(function(ks){ks.forEach(function(k){caches.
     .ground{position:absolute;left:0;right:0;bottom:0;height:46px;background:#e7dcbf;}
     #scene{position:absolute;inset:0;opacity:.55;pointer-events:none;}
     #scene svg{display:block;}
-    #petWrap{position:absolute;bottom:40px;left:50%;transform:translateX(-50%);animation:bob 1.6s steps(2) infinite;transition:left 1.3s ease-in-out;}
+    #petWrap{position:absolute;bottom:40px;left:50%;transform:translateX(-50%);animation:bob 1.6s steps(2) infinite;transition:left 1.3s ease-in-out;z-index:2;}
     #petWrap.happy{animation:hop .6s 2;}
+    #futon{position:absolute;left:50%;transform:translateX(-50%);bottom:30px;z-index:1;display:none;pointer-events:none;}
+    #blanket{position:absolute;left:50%;transform:translateX(-50%);bottom:30px;z-index:3;display:none;pointer-events:none;}
+    #petWrap.asleep{bottom:54px;transition:none;}
+    body.sleeping #futon,body.sleeping #blanket{display:block;}
     #pet,#petImg{transition:transform .25s;}
     #petWrap.flip #pet,#petWrap.flip #petImg{transform:scaleX(-1);}
     #petWrap.walking #pet,#petWrap.walking #petImg{animation:waddle .42s ease-in-out infinite;}
@@ -176,11 +180,13 @@ if(window.caches){caches.keys().then(function(ks){ks.forEach(function(k){caches.
     <div id="sickmark" style="position:absolute;top:20px;left:50%;transform:translateX(-70px);display:none;">
       <svg width="20" height="20" viewBox="0 0 20 20" shape-rendering="crispEdges"><rect x="2" y="0" width="4" height="4" fill="#ef4444"/><rect x="14" y="0" width="4" height="4" fill="#ef4444"/><rect x="6" y="4" width="4" height="4" fill="#ef4444"/><rect x="10" y="4" width="4" height="4" fill="#ef4444"/><rect x="2" y="8" width="4" height="4" fill="#ef4444"/><rect x="14" y="8" width="4" height="4" fill="#ef4444"/></svg>
     </div>
+    <div id="futon"><svg width="170" height="46" viewBox="0 0 170 46" shape-rendering="crispEdges"><rect x="8" y="18" width="154" height="26" fill="#f4ead2"/><rect x="8" y="18" width="154" height="5" fill="#fff8e7"/><rect x="8" y="39" width="154" height="5" fill="#e2d2a8"/><rect x="4" y="22" width="4" height="18" fill="#e2d2a8"/><rect x="162" y="22" width="4" height="18" fill="#e2d2a8"/></svg></div>
     <div id="petWrap">
       <svg id="pet" width="126" height="108" shape-rendering="crispEdges"></svg>
       <img id="petImg" alt="" style="display:none;width:120px;height:120px;image-rendering:pixelated;object-fit:contain;">
       <div id="zzz">z<span>z</span><span>z</span></div>
     </div>
+    <div id="blanket"><svg width="156" height="70" viewBox="0 0 156 70" shape-rendering="crispEdges"><rect x="10" y="22" width="136" height="44" fill="#a9d2ef"/><rect x="6" y="26" width="4" height="36" fill="#8fb9d6"/><rect x="146" y="26" width="4" height="36" fill="#8fb9d6"/><rect x="10" y="62" width="136" height="4" fill="#8fb9d6"/><rect x="6" y="10" width="144" height="14" fill="#e3f1fb"/><rect x="6" y="10" width="144" height="3" fill="#f1f8fe"/><rect x="6" y="22" width="144" height="3" fill="#bcd9ef"/><rect x="2" y="13" width="4" height="10" fill="#bcd9ef"/><rect x="150" y="13" width="4" height="10" fill="#bcd9ef"/><rect x="34" y="36" width="3" height="3" fill="#cbe4f7"/><rect x="66" y="44" width="3" height="3" fill="#cbe4f7"/><rect x="98" y="35" width="3" height="3" fill="#cbe4f7"/><rect x="122" y="45" width="3" height="3" fill="#cbe4f7"/></svg></div>
     <div id="flush"><svg width="68" height="44" shape-rendering="crispEdges"><rect x="0" y="26" width="68" height="18" fill="#4f9bd6"/><rect x="0" y="18" width="60" height="8" fill="#5fb0e8"/><rect x="36" y="10" width="24" height="8" fill="#5fb0e8"/><rect x="44" y="4" width="14" height="6" fill="#7cc4ee"/><rect x="44" y="0" width="5" height="4" fill="#fbf3df"/><rect x="52" y="0" width="5" height="4" fill="#fbf3df"/><rect x="36" y="10" width="5" height="3" fill="#fbf3df"/><rect x="6" y="18" width="7" height="3" fill="#cfe9fb"/><rect x="22" y="18" width="7" height="3" fill="#cfe9fb"/><rect x="2" y="28" width="9" height="3" fill="#cfe9fb"/></svg></div>
     <div id="poop"><svg width="48" height="42" shape-rendering="crispEdges"><rect x="5" y="29" width="38" height="11" fill="#5f3f1f"/><rect x="10" y="19" width="28" height="11" fill="#7a5a2a"/><rect x="15" y="10" width="18" height="10" fill="#8a6234"/><rect x="19" y="3" width="9" height="8" fill="#9c7438"/><rect x="13" y="21" width="6" height="3" fill="#a5783f"/><rect x="24" y="31" width="7" height="3" fill="#a5783f"/></svg></div>
   </div>
