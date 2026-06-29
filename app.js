@@ -70,11 +70,12 @@ window._eigoPetInit = function() {
   var DEVIL_PAL = { o:'#15131a', k:'#2c2733', Y:'#f6d65e', e:'#15131a', p:'#f3a3bf' };
   var DEVIL=["..o.........o..",".ooo.......ooo.",".okko.....okko.","..ookkkkkkkoo..","...okkkkkkkkko.","okkYYkkkkkYYkko","okkYekkkkkeYkko","okkkkkpkpkkkkko","okkkkkkkkkkkkko",".okkkkkkkkkkko.","..okkkkkkkko.oo","...oo...oo...ok",".............oo"];
 
+  var EGG_INFO = { img:'たまご', map:EGG, name:'タマゴ', desc:'もうすぐ うまれるよ。' };
   var BABIES = {
-    a: { img:'ぴよたま', map:BABY, name:'ぴよたま', desc:'うまれたて。まんまるで げんきな あかちゃん。' }
+    a: { img:'ぴよっこ', map:BABY, name:'ぴよっこ', desc:'たまごから かえったばかり。からを かぶった あかちゃん。' }
   };
   var CHILDREN = {
-    a: { img:'ぴな', map:KID, name:'ぴな', desc:'すなおで げんきな こども。' }
+    a: { img:'ちびっこ', map:KID, name:'ちびっこ', desc:'げんきに あるきまわる ちいさな こども。' }
   };
   var YOUNG=["...o......o...","...oo....oo...","..oowwwwwwoo..",".owwwwwwwwwwo.","owwwoowwwoowwo","owwwwwwwwwwwwo","owwwwoooooowwo","owwwwwwwwwwwwo","owwwwwwwwwwwwo",".owwwwwwwwwwo.","..owwwwwwwwo..","...oo.oo.oo...",".............."];
   var YOUNG2=[".....oooo.....","....o....o....","..oowwwwwwoo..",".owwwwwwwwwwo.","owwoowwwwoowwo","owwwwwwwwwwwwo","owwwwwwwwwwwwo","owwwoooooowwwo","owwwwwwwwwwwwo",".owwwwwwwwwwo.","..owwwwwwwwo..","...oo.oo.oo...",".............."];
@@ -88,8 +89,8 @@ window._eigoPetInit = function() {
   // アダルトは おせわの せいせきで tier がきまり、その中から ランダムで しんかする
   var ADULT_TIERS = {
     star:   ['おひさま','みらたま','にんじゃ','ぴこぴこ'],
-    good:   ['どきどき','はがた','かぶら','うらら','ねむね','うさたま'],
-    normal: ['はんば','もぐもぐ','げーむ','たまぱ','めっこ','ぷくたま'],
+    good:   ['どきどき','はがた','かぶら','うらら','ねむね','うさたま','ぴよたま'],
+    normal: ['はんば','もぐもぐ','げーむ','たまぱ','めっこ','ぷくたま','ぴな'],
     wild:   ['めらめら','ちゃめ','がくがく','くちぱ','ぴねむ','ばぶたま'],
     devil:  ['くろだま','おばけ']
   };
@@ -105,6 +106,8 @@ window._eigoPetInit = function() {
     'ねむね':'ものしずかで かんがえぶかい まほうつかい。',
     'うさたま':'みみが かわいい やさしい あまえんぼう。',
     'ぷくたま':'ぷくぷく ほっぺの たべるの だいすきっ子。',
+    'ぴよたま':'まんまるで ほんわか。げんきな よいこ。',
+    'ぴな':'すなおで げんきいっぱいの ふつうの子。',
     'はんば':'たべるの だいすき。げんきな ふつうの子。',
     'もぐもぐ':'おっとり マイペース。たべるの だいすき。',
     'げーむ':'あそぶの だいすき。すなおな ふつうの子。',
@@ -140,7 +143,7 @@ window._eigoPetInit = function() {
   }
   function predictedAdultKey(){ return ADULT_TIERS[predictedTier()][0]; }
   function pickAdult(tier){ var pool=ADULT_TIERS[tier]||ADULT_TIERS.normal; return pool[(Math.random()*pool.length)|0]; }
-  function petInfo(){ if(state.lv>=5) return adultInfo(); if(state.lv>=4) return youngInfo(); if(state.lv>=3) return childInfo(); if(state.lv>=2) return babyInfo(); return {map:EGG}; }
+  function petInfo(){ if(state.lv>=5) return adultInfo(); if(state.lv>=4) return youngInfo(); if(state.lv>=3) return childInfo(); if(state.lv>=2) return babyInfo(); return EGG_INFO; }
   function petMap(){ var i=petInfo(); return i.map||EGG; }
   function drawPet(){
     var info=petInfo();
@@ -418,8 +421,8 @@ window._eigoPetInit = function() {
   function renderAdmin(){
     var col=collectedAdults(), ak=Object.keys(ADULTS), got=ak.filter(function(k){return col[k];}).length;
     var adultHTML='<div class="gstage">アダルト ずかん（'+got+'/'+ak.length+'）</div><div class="ggrid">'+ak.map(function(k){ var a=ADULTS[k], has=col[k]; return '<div class="gcard"'+(has?'':' style="opacity:.4;"')+'><div class="gsprite">'+(has?spriteHTML(a,5):'<div style="height:65px;display:flex;align-items:center;justify-content:center;font-size:28px;color:var(--mut);">？</div>')+'</div><div class="gname">'+(has?a.name:'？？？')+'</div><div class="gdesc">'+(has?a.desc:'まだ そだてていない')+'</div></div>'; }).join('')+'</div>';
-    document.getElementById('adminGallery').innerHTML='<div class="gstage">タマゴ</div>'+gridHTML([{map:EGG,name:'タマゴ',desc:'もうすぐ うまれるよ。'}])+'<div class="gstage">ベビー</div>'+gridHTML(Object.values(BABIES))+'<div class="gstage">キッズ</div>'+gridHTML(Object.values(CHILDREN))+'<div class="gstage">ヤング</div>'+gridHTML(Object.values(YOUNGS))+adultHTML;
-    var tree=tnode({map:EGG},'タマゴ')+'<div class="tarrow">↓</div>';
+    document.getElementById('adminGallery').innerHTML='<div class="gstage">タマゴ</div>'+gridHTML([EGG_INFO])+'<div class="gstage">ベビー</div>'+gridHTML(Object.values(BABIES))+'<div class="gstage">キッズ</div>'+gridHTML(Object.values(CHILDREN))+'<div class="gstage">ヤング</div>'+gridHTML(Object.values(YOUNGS))+adultHTML;
+    var tree=tnode(EGG_INFO,'タマゴ')+'<div class="tarrow">↓</div>';
     tree+='<div class="trow">'+tnode(BABIES.a,BABIES.a.name,true)+'</div><div class="tarrow">↓</div>';
     tree+='<div class="trow">'+tnode(CHILDREN.a,CHILDREN.a.name,true)+'</div><div class="tarrow">↓</div>';
     var ytiers=[['star','⭐さいこう'],['good','◎よいこ'],['normal','○ふつう'],['wild','△わんぱく']];
