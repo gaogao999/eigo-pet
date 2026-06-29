@@ -472,7 +472,17 @@ window._eigoPetInit = function() {
   function firstSenseKana(w){ var s=(w[2]||w[1]||''); return s.split(/[\u3001,\uff0c]/)[0].trim(); }
   function easyText(w){ var k=(w[0]||''); var e=(typeof EASY!=='undefined')?(EASY[k]||EASY[k.toLowerCase()]):null; return e||firstSenseKana(w); }
   function showEasy(w){ var box=document.getElementById('easyHint'); box.innerHTML='<div class="ehlabel">やさしいいみ</div><div class="ehmean">'+escJa(easyText(w))+'</div>'; box.style.display='block'; }
-  function attachLongPress(el,cb){ var t=null; var start=function(){ el._lp=false; t=setTimeout(function(){ el._lp=true; cb(); },450); }; var cancel=function(){ if(t){ clearTimeout(t); t=null; } }; el.addEventListener('touchstart',start,{passive:true}); el.addEventListener('touchend',cancel); el.addEventListener('touchmove',cancel); el.addEventListener('mousedown',start); el.addEventListener('mouseup',cancel); el.addEventListener('mouseleave',cancel); }
+  function attachLongPress(el,cb){
+    var t=null, longFired=false, touched=false;
+    function start(){ longFired=false; el._lp=false; clearTimeout(t); t=setTimeout(function(){ longFired=true; el._lp=true; cb(); },450); }
+    function cancel(){ if(t){ clearTimeout(t); t=null; } }
+    el.addEventListener('touchstart',function(){ touched=true; start(); },{passive:true});
+    el.addEventListener('touchend',function(e){ cancel(); if(longFired){ try{ e.preventDefault(); }catch(_){} } }); // 長押し後の擬似クリックを抑止
+    el.addEventListener('touchmove',cancel);
+    el.addEventListener('mousedown',function(){ if(touched){ touched=false; return; } start(); }); // タッチ由来の擬似mousedownは無視(=_lpを消さない)
+    el.addEventListener('mouseup',cancel);
+    el.addEventListener('mouseleave',cancel);
+  }
   function updateStudyProg(){ var fill=document.getElementById('studyProgFill'); if(fill) fill.style.width=((qIdx/(qList?qList.length:1))*100)+'%'; }
   function nextQ(){
     document.getElementById('easyHint').style.display='none';
