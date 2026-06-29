@@ -71,52 +71,90 @@ window._eigoPetInit = function() {
   var DEVIL=["..o.........o..",".ooo.......ooo.",".okko.....okko.","..ookkkkkkkoo..","...okkkkkkkkko.","okkYYkkkkkYYkko","okkYekkkkkeYkko","okkkkkpkpkkkkko","okkkkkkkkkkkkko",".okkkkkkkkkkko.","..okkkkkkkko.oo","...oo...oo...ok",".............oo"];
 
   var BABIES = {
-    e: { map:BABY,  name:'ぴよ',   desc:'うまれたて。げんきに めをさます あかちゃん。' },
-    o: { map:BABY2, name:'すぴか', desc:'うまれたて。よく ねる ねぼすけ あかちゃん。' }
+    e: { img:'ぴよたま', map:BABY,  name:'ぴよたま', desc:'うまれたて。まんまるで げんきな あかちゃん。' },
+    o: { img:'もふたま', map:BABY2, name:'もふたま', desc:'うまれたて。ふわふわの ねぼすけ あかちゃん。' }
   };
   var CHILDREN = {
-    e_g: { map:KID,  name:'ぴょん', desc:'すなおで げんきな こども。' },
-    e_b: { map:KID2, name:'みみ',   desc:'たれ耳の あまえんぼう こども。' },
-    o_g: { map:KID3, name:'くるり', desc:'おめめ ぱっちりの げんき こども。' },
-    o_b: { map:KID4, name:'ぷく',   desc:'まるまる たべるの だいすき こども。' }
+    e_g: { img:'ぴな',     map:KID,  name:'ぴな',     desc:'すなおで げんきな こども。' },
+    e_b: { img:'うさたま', map:KID2, name:'うさたま', desc:'みみが かわいい あまえんぼう こども。' },
+    o_g: { img:'しろころ', map:KID3, name:'しろころ', desc:'まんまる ころころの げんき こども。' },
+    o_b: { img:'ぷくたま', map:KID4, name:'ぷくたま', desc:'ぷくぷく ほっぺの たべるの だいすき こども。' }
   };
   var YOUNG=["...o......o...","...oo....oo...","..oowwwwwwoo..",".owwwwwwwwwwo.","owwwoowwwoowwo","owwwwwwwwwwwwo","owwwwoooooowwo","owwwwwwwwwwwwo","owwwwwwwwwwwwo",".owwwwwwwwwwo.","..owwwwwwwwo..","...oo.oo.oo...",".............."];
   var YOUNG2=[".....oooo.....","....o....o....","..oowwwwwwoo..",".owwwwwwwwwwo.","owwoowwwwoowwo","owwwwwwwwwwwwo","owwwwwwwwwwwwo","owwwoooooowwwo","owwwwwwwwwwwwo",".owwwwwwwwwwo.","..owwwwwwwwo..","...oo.oo.oo...",".............."];
   var YOUNGS = {
-    e: { map:YOUNG,  name:'ティル', desc:'ぐんぐん せいちょうちゅうの わかもの。' },
-    o: { map:YOUNG2, name:'ノヴァ', desc:'おちついた かんがえぶかい せいねん。' }
+    e: { img:'すいすいたま', map:YOUNG,  name:'すいすいたま', desc:'すいすい うごく げんきな わかもの。' },
+    o: { img:'くさたま',     map:YOUNG2, name:'くさたま',     desc:'しぜんが だいすきな おちついた わかもの。' }
   };
-  var ADULTS = {
-    star_e:  { map:ADULT_STAR,   name:'カンムリ', desc:'せわ かんぺき！どうどうとした おとな。' },
-    star_o:  { map:ADULT_STAR2,  name:'テンシ',   desc:'せわ かんぺき！やさしさ あふれる おとな。' },
-    good_e:  { map:ADULT_GOOD,   name:'ニコリ',   desc:'れいぎ ただしい よいこ。みんなに やさしい。' },
-    good_o:  { map:ADULT_GOOD2,  name:'ハナミ',   desc:'おはなが だいすき。のんびりやさん。' },
-    normal_e:{ map:ADULT,        name:'マルオ',   desc:'げんきで すなおな ふつうの子。' },
-    normal_o:{ map:ADULT_NORMAL2,name:'ポヨン',   desc:'おっとり マイペース。たべるの だいすき。' },
-    wild_e:  { map:ADULT_WILD,   name:'トゲオ',   desc:'やんちゃで げんきいっぱい。いたずらっ子。' },
-    wild_o:  { map:ADULT_WILD2,  name:'ツノマル', desc:'まけずぎらいの あばれんぼう。' },
-    devil:   { map:DEVIL, pal:DEVIL_PAL, rare:true, name:'クロネコ', desc:'レア！せわを サボりすぎると あらわれる。' }
+  // アダルトは おせわの せいせきで tier がきまり、その中から ランダムで しんかする
+  var ADULT_TIERS = {
+    star:   ['おひさま','みらたま','にんじゃ','ぴこぴこ'],
+    good:   ['どきどき','はがた','かぶら','うらら','ねむね'],
+    normal: ['はんば','もぐもぐ','げーむ','たまぱ','めっこ'],
+    wild:   ['めらめら','ちゃめ','がくがく','くちぱ','ぴねむ','ばぶたま'],
+    devil:  ['くろだま','おばけ']
   };
+  var ADULT_DESC = {
+    'おひさま':'せわ かんぺき！みんなを てらす たいようの子。',
+    'みらたま':'せわ かんぺき！みらいから きた ロボの子。',
+    'にんじゃ':'せわ かんぺき！しゅぎょうを つんだ にんじゃ。',
+    'ぴこぴこ':'せわ かんぺき！げんきに うごく ロボの子。',
+    'どきどき':'やさしさ いっぱい。みんなが だいすき。',
+    'はがた':'れいぎ ただしい しっかりや。',
+    'かぶら':'のんびりやさん。しぜんが だいすき。',
+    'うらら':'ほんわか おっとり マイペース。',
+    'ねむね':'ものしずかで かんがえぶかい まほうつかい。',
+    'はんば':'たべるの だいすき。げんきな ふつうの子。',
+    'もぐもぐ':'おっとり マイペース。たべるの だいすき。',
+    'げーむ':'あそぶの だいすき。すなおな ふつうの子。',
+    'たまぱ':'マイペースで のんびりやの ふつうの子。',
+    'めっこ':'げんきで すなおな ふつうの子。',
+    'めらめら':'やんちゃで ねっけつ。あばれんぼう。',
+    'ちゃめ':'いたずら だいすきな やんちゃっ子。',
+    'がくがく':'おちつきの ない げんきいっぱいっ子。',
+    'くちぱ':'まけずぎらいの つよがり。',
+    'ぴねむ':'いたずら まほうの わんぱくっ子。',
+    'ばぶたま':'すこし わがままな あばれんぼう。',
+    'くろだま':'レア！せわを サボりすぎると あらわれる くろねこ。',
+    'おばけ':'レア！よなかに そっと あらわれる おばけ。'
+  };
+  var ADULTS = (function(){ var o={}; Object.keys(ADULT_TIERS).forEach(function(t){ ADULT_TIERS[t].forEach(function(id){ o[id]={ img:id, name:id, desc:ADULT_DESC[id]||'', tier:t, rare:(t==='devil') }; }); }); return o; })();
+  // きゅうバージョンの セーブ（tier_parity / devil）との ごかんマップ
+  var LEGACY_ADULT = { star_e:'おひさま',star_o:'みらたま',good_e:'どきどき',good_o:'はがた',normal_e:'はんば',normal_o:'もぐもぐ',wild_e:'めらめら',wild_o:'ちゃめ',devil:'くろだま' };
+  function normAdult(id){ return ADULTS[id]?id:(LEGACY_ADULT[id]||id); }
+  var imgCache={};
+  function imgSrc(n){ return 'characters/'+encodeURIComponent(n)+'.png'; }
+  function getImg(n){ if(!imgCache[n]){ var im=new Image(); im.src=imgSrc(n); imgCache[n]=im; } return imgCache[n]; }
   function babyInfo()  { return BABIES[state.babyType]  || BABIES.e; }
   function childInfo() { return CHILDREN[state.childType] || CHILDREN.e_g; }
   function youngInfo() { return YOUNGS[state.youngType] || YOUNGS.e; }
-  function adultInfo() { var k=state.adultType; if(ADULTS[k]) return ADULTS[k]; if(k&&ADULTS[k+'_e']) return ADULTS[k+'_e']; return ADULTS.normal_e; }
+  function adultById(id){ return ADULTS[id] || (id&&LEGACY_ADULT[id]&&ADULTS[LEGACY_ADULT[id]]) || ADULTS[ADULT_TIERS.normal[0]]; }
+  function adultInfo() { return adultById(state.adultType); }
   function adultMap()  { return adultInfo().map; }
-  function predictedAdultKey(){
+  function predictedTier(){
     var ms=state.maxStreak||0, met=(state.metDates||[]).length, miss=state.careMiss+state.disciplineMiss;
-    var parity=(state.learned%2===0)?'e':'o';
     if(miss>=8) return 'devil';
-    var tier=(ms>=7&&met>=10)?'star':(ms>=3||met>=5)?'good':(met>=2)?'normal':'wild';
-    return tier+'_'+parity;
+    return (ms>=7&&met>=10)?'star':(ms>=3||met>=5)?'good':(met>=2)?'normal':'wild';
   }
-  function petMap(){ if(state.lv>=5) return adultMap(); if(state.lv>=4) return youngInfo().map; if(state.lv>=3) return childInfo().map; if(state.lv>=2) return babyInfo().map; return EGG; }
+  function predictedAdultKey(){ return ADULT_TIERS[predictedTier()][0]; }
+  function pickAdult(tier){ var pool=ADULT_TIERS[tier]||ADULT_TIERS.normal; return pool[(Math.random()*pool.length)|0]; }
+  function petInfo(){ if(state.lv>=5) return adultInfo(); if(state.lv>=4) return youngInfo(); if(state.lv>=3) return childInfo(); if(state.lv>=2) return babyInfo(); return {map:EGG}; }
+  function petMap(){ var i=petInfo(); return i.map||EGG; }
   function drawPet(){
+    var info=petInfo();
     var petSvg=document.getElementById('pet');
-    var map=petMap(), ps=8, BOX=120;
+    var petImg=document.getElementById('petImg');
+    if(info.img){
+      if(petImg){ petImg.src=imgSrc(info.img); petImg.style.display='block'; }
+      if(petSvg){ petSvg.style.display='none'; petSvg.innerHTML=''; }
+      applyBg(); return;
+    }
+    if(petImg) petImg.style.display='none';
+    if(petSvg) petSvg.style.display='block';
+    var map=info.map||EGG, ps=8, BOX=120;
     var cols=Math.max.apply(null,map.map(function(r){ return r.length; })), rows=map.length;
     var ox=Math.round((BOX-cols*ps)/2), oy=Math.round((BOX-rows*ps)/2);
     var P=currentPAL();
-    if(state.lv>=5&&adultInfo().pal) P=adultInfo().pal;
     var s='';
     for(var y=0;y<map.length;y++) for(var x=0;x<map[y].length;x++){
       var c=map[y][x]; if(P[c]) s+='<rect x="'+(ox+x*ps)+'" y="'+(oy+y*ps)+'" width="'+ps+'" height="'+ps+'" fill="'+P[c]+'"/>';
@@ -242,8 +280,8 @@ window._eigoPetInit = function() {
       else if(state.lv===3&&!state.childType){ state.childType=(state.babyType||'e')+'_'+(met>=2?'g':'b'); }
       else if(state.lv===4&&!state.youngType){ state.youngType=parity; }
       else if(state.lv===5&&!state.adultType){
-        if(miss>=8){ state.adultType='devil'; }
-        else { var tier=(ms>=7&&met>=10)?'star':(ms>=3||met>=5)?'good':(met>=2)?'normal':'wild'; state.adultType=tier+'_'+parity; }
+        var tier=(miss>=8)?'devil':(ms>=7&&met>=10)?'star':(ms>=3||met>=5)?'good':(met>=2)?'normal':'wild';
+        state.adultType=pickAdult(tier);
       }
       bubble(stageName()+"になった！"); sfx('fanfare'); save();
       if(typeof render==='function') render();
@@ -276,7 +314,7 @@ window._eigoPetInit = function() {
   }
   function showFarewell(ai){
     var el=document.getElementById('farewell'); if(!el){ rebirth(); return; }
-    var sp=document.getElementById('fwSprite'); if(sp) sp.innerHTML=spriteSVG(ai.map,4,ai.pal);
+    var sp=document.getElementById('fwSprite'); if(sp) sp.innerHTML=spriteHTML(ai,4);
     var nm=document.getElementById('fwName'); if(nm) nm.textContent=state.name+'（'+ai.name+'）';
     var ms=document.getElementById('fwMsg'); if(ms) ms.innerHTML=Math.max(1,Math.round(ageDays()))+'日 いっしょに がんばったね。<br>たくさんの えいごを おぼえる おてつだいを ありがとう！';
     el.style.display='flex';
@@ -337,8 +375,8 @@ window._eigoPetInit = function() {
     document.querySelectorAll('#sndset .optbtn').forEach(function(b){ b.classList.toggle('sel',(b.dataset.v==='1')===!!state.sound); });
     var fc=document.getElementById('fcSprite');
     if(fc){
-      if(state.lv>=5){ var ai=adultInfo(); fc.innerHTML=spriteSVG(ai.map,3,ai.pal); document.getElementById('fcTitle').textContent='そだった アダルト'; document.getElementById('fcName').textContent=ai.name; document.getElementById('fcMsg').textContent='りっぱに そだったね！'; }
-      else { var key2=predictedAdultKey(), pa=ADULTS[key2]; fc.innerHTML=spriteSVG(pa.map,3,pa.pal); document.getElementById('fcTitle').textContent='いまの ペースだと…'; document.getElementById('fcName').textContent=pa.name; var ms2=state.maxStreak||0, met3=(state.metDates||[]).length; var ns=Math.max(0,7-ms2), nm=Math.max(0,10-met3); document.getElementById('fcMsg').textContent=(key2.indexOf('star')===0)?'さいこうの おとな コース！この ちょうしで！':(key2==='devil')?'サボりすぎ… べんきょう・おせわを しよう':('さいこうを めざすなら：れんぞく あと'+ns+'日 ／ たっせい あと'+nm+'日！'); }
+      if(state.lv>=5){ var ai=adultInfo(); fc.innerHTML=spriteHTML(ai,3); document.getElementById('fcTitle').textContent='そだった アダルト'; document.getElementById('fcName').textContent=ai.name; document.getElementById('fcMsg').textContent='りっぱに そだったね！'; }
+      else { var tier2=predictedTier(), pa=ADULTS[predictedAdultKey()]; fc.innerHTML=spriteHTML(pa,3); document.getElementById('fcTitle').textContent='いまの ペースだと…'; document.getElementById('fcName').textContent=(tier2==='devil')?'？？？':(pa.name+' など'); var ms2=state.maxStreak||0, met3=(state.metDates||[]).length; var ns=Math.max(0,7-ms2), nm=Math.max(0,10-met3); document.getElementById('fcMsg').textContent=(tier2==='star')?'さいこうの おとな コース！この ちょうしで！':(tier2==='devil')?'サボりすぎ… べんきょう・おせわを しよう':('さいこうを めざすなら：れんぞく あと'+ns+'日 ／ たっせい あと'+nm+'日！'); }
     }
     var nd=document.getElementById('nudge');
     if(nd){ if(done>=goal){ nd.style.display='none'; } else { nd.style.display='block'; nd.textContent=done>0?('きょうは あと '+(goal-done)+'こ！ がくしゅうしよう →'):('きょうの べんきょうを はじめよう！ →'); } }
@@ -366,25 +404,25 @@ window._eigoPetInit = function() {
 
   /* ---- admin ---- */
   function spriteSVG(map,cell,pal){ var P=pal||PAL; var cols=Math.max.apply(null,map.map(function(r){ return r.length; })), rows=map.length; var s=''; for(var y=0;y<map.length;y++) for(var x=0;x<map[y].length;x++){ var c=map[y][x]; if(P[c]) s+='<rect x="'+(x*cell)+'" y="'+(y*cell)+'" width="'+cell+'" height="'+cell+'" fill="'+P[c]+'"/>'; } return '<svg width="'+(cols*cell)+'" height="'+(rows*cell)+'" viewBox="0 0 '+(cols*cell)+' '+(rows*cell)+'" shape-rendering="crispEdges">'+s+'</svg>'; }
-  function tnode(map,label,small,pal){ return '<div class="tnode'+(small?' small':'')+'"><div class="tsprite">'+spriteSVG(map,small?3:4,pal)+'</div><div class="tlabel">'+label+'</div></div>'; }
-  function gcardHTML(m,n,d,pal){ return '<div class="gcard"><div class="gsprite">'+spriteSVG(m,5,pal)+'</div><div class="gname">'+n+'</div><div class="gdesc">'+d+'</div></div>'; }
-  function gridHTML(list){ return '<div class="ggrid">'+list.map(function(c){ return gcardHTML(c.map,c.name,c.desc,c.pal); }).join('')+'</div>'; }
-  function collectedAdults(){ var set={}; (state.memories||[]).forEach(function(m){ if(m.adultType) set[m.adultType]=true; }); if(state.lv>=5&&state.adultType) set[state.adultType]=true; return set; }
+  function spriteHTML(info,cell,pal){ if(info&&info.img){ var sz=Math.round(cell*13); return '<img src="'+imgSrc(info.img)+'" width="'+sz+'" height="'+sz+'" style="image-rendering:pixelated;display:block;" alt="">'; } return spriteSVG(info.map,cell,(info&&info.pal)||pal); }
+  function tnode(info,label,small,pal){ return '<div class="tnode'+(small?' small':'')+'"><div class="tsprite">'+spriteHTML(info,small?3:4,pal)+'</div><div class="tlabel">'+label+'</div></div>'; }
+  function gcardHTML(info){ return '<div class="gcard"><div class="gsprite">'+spriteHTML(info,5)+'</div><div class="gname">'+info.name+'</div><div class="gdesc">'+info.desc+'</div></div>'; }
+  function gridHTML(list){ return '<div class="ggrid">'+list.map(function(c){ return gcardHTML(c); }).join('')+'</div>'; }
+  function collectedAdults(){ var set={}; (state.memories||[]).forEach(function(m){ if(m.adultType) set[normAdult(m.adultType)]=true; }); if(state.lv>=5&&state.adultType) set[normAdult(state.adultType)]=true; return set; }
   function renderAdmin(){
     var col=collectedAdults(), ak=Object.keys(ADULTS), got=ak.filter(function(k){return col[k];}).length;
-    var adultHTML='<div class="gstage">アダルト ずかん（'+got+'/'+ak.length+'）</div><div class="ggrid">'+ak.map(function(k){ var a=ADULTS[k], has=col[k]; return '<div class="gcard"'+(has?'':' style="opacity:.4;"')+'><div class="gsprite">'+spriteSVG(a.map,5,a.pal)+'</div><div class="gname">'+(has?a.name:'？？？')+'</div><div class="gdesc">'+(has?a.desc:'まだ そだてていない')+'</div></div>'; }).join('')+'</div>';
+    var adultHTML='<div class="gstage">アダルト ずかん（'+got+'/'+ak.length+'）</div><div class="ggrid">'+ak.map(function(k){ var a=ADULTS[k], has=col[k]; return '<div class="gcard"'+(has?'':' style="opacity:.4;"')+'><div class="gsprite">'+(has?spriteHTML(a,5):'<div style="height:65px;display:flex;align-items:center;justify-content:center;font-size:28px;color:var(--mut);">？</div>')+'</div><div class="gname">'+(has?a.name:'？？？')+'</div><div class="gdesc">'+(has?a.desc:'まだ そだてていない')+'</div></div>'; }).join('')+'</div>';
     document.getElementById('adminGallery').innerHTML='<div class="gstage">タマゴ</div>'+gridHTML([{map:EGG,name:'タマゴ',desc:'もうすぐ うまれるよ。'}])+'<div class="gstage">ベビー</div>'+gridHTML(Object.values(BABIES))+'<div class="gstage">キッズ</div>'+gridHTML(Object.values(CHILDREN))+'<div class="gstage">ヤング</div>'+gridHTML(Object.values(YOUNGS))+adultHTML;
-    var tree=tnode(EGG,'タマゴ')+'<div class="tarrow">↓</div><div class="eohead"><span>EVEN</span><span>ODD</span></div>';
-    tree+='<div class="trow">'+tnode(BABIES.e.map,BABIES.e.name,true)+tnode(BABIES.o.map,BABIES.o.name,true)+'</div><div class="tarrow">↓</div>';
-    tree+='<div class="trow">'+tnode(CHILDREN.e_g.map,CHILDREN.e_g.name,true)+tnode(CHILDREN.o_g.map,CHILDREN.o_g.name,true)+'</div>';
-    tree+='<div class="trow">'+tnode(CHILDREN.e_b.map,CHILDREN.e_b.name,true)+tnode(CHILDREN.o_b.map,CHILDREN.o_b.name,true)+'</div><div class="tarrow">↓</div>';
-    tree+='<div class="tiertag">ヤング</div><div class="trow">'+tnode(YOUNGS.e.map,YOUNGS.e.name,true)+tnode(YOUNGS.o.map,YOUNGS.o.name,true)+'</div><div class="tarrow">↓</div>';
-    var tiers=[['star','⭐さいこう'],['good','◎よいこ'],['normal','○ふつう'],['wild','△わんぱく']];
-    for(var ti=0;ti<tiers.length;ti++){ var tl=tiers[ti]; tree+='<div class="tiertag">'+tl[1]+'</div><div class="trow">'+tnode(ADULTS[tl[0]+'_e'].map,ADULTS[tl[0]+'_e'].name,true)+tnode(ADULTS[tl[0]+'_o'].map,ADULTS[tl[0]+'_o'].name,true)+'</div>'; }
-    tree+='<div class="tiertag">★レア</div><div class="trow">'+tnode(ADULTS.devil.map,ADULTS.devil.name,true,ADULTS.devil.pal)+'</div>';
+    var tree=tnode({map:EGG},'タマゴ')+'<div class="tarrow">↓</div><div class="eohead"><span>EVEN</span><span>ODD</span></div>';
+    tree+='<div class="trow">'+tnode(BABIES.e,BABIES.e.name,true)+tnode(BABIES.o,BABIES.o.name,true)+'</div><div class="tarrow">↓</div>';
+    tree+='<div class="trow">'+tnode(CHILDREN.e_g,CHILDREN.e_g.name,true)+tnode(CHILDREN.o_g,CHILDREN.o_g.name,true)+'</div>';
+    tree+='<div class="trow">'+tnode(CHILDREN.e_b,CHILDREN.e_b.name,true)+tnode(CHILDREN.o_b,CHILDREN.o_b.name,true)+'</div><div class="tarrow">↓</div>';
+    tree+='<div class="tiertag">ヤング</div><div class="trow">'+tnode(YOUNGS.e,YOUNGS.e.name,true)+tnode(YOUNGS.o,YOUNGS.o.name,true)+'</div><div class="tarrow">↓</div>';
+    var tiers=[['star','⭐さいこう'],['good','◎よいこ'],['normal','○ふつう'],['wild','△わんぱく'],['devil','★レア']];
+    for(var ti=0;ti<tiers.length;ti++){ var tl=tiers[ti]; tree+='<div class="tiertag">'+tl[1]+'</div><div class="trow">'+ADULT_TIERS[tl[0]].map(function(id){ return tnode(ADULTS[id],ADULTS[id].name,true); }).join('')+'</div>'; }
     if((state.memories||[]).length){
       var mh='<div class="gstage">おもいで（これまでの子）</div>';
-      state.memories.forEach(function(m){ var ai=ADULTS[m.adultType]||ADULTS.normal_e; mh+='<div class="gcard" style="display:flex;gap:12px;align-items:center;text-align:left;margin-bottom:8px;"><div style="flex:none;">'+spriteSVG(ai.map,3,ai.pal)+'</div><div><div class="gname">'+m.name+'（'+(m.adultName||ai.name)+'）</div><div class="gdesc">'+m.days+'日 いっしょ ／ '+m.died+' たびだち ／ おぼえた '+m.learned+'こ</div></div></div>'; });
+      state.memories.forEach(function(m){ var ai=adultById(m.adultType); mh+='<div class="gcard" style="display:flex;gap:12px;align-items:center;text-align:left;margin-bottom:8px;"><div style="flex:none;">'+spriteHTML(ai,3)+'</div><div><div class="gname">'+m.name+'（'+(m.adultName||ai.name)+'）</div><div class="gdesc">'+m.days+'日 いっしょ ／ '+m.died+' たびだち ／ おぼえた '+m.learned+'こ</div></div></div>'; });
       tree=mh+'<div class="gstage">しんかの けいふ</div>'+tree;
     }
     document.getElementById('adminTree').innerHTML=tree;
@@ -433,14 +471,15 @@ window._eigoPetInit = function() {
   /* ---- games ---- */
   var game=null;
   function drawPetCanvas(ctx,map,ox,oy,cell){ for(var y=0;y<map.length;y++) for(var x=0;x<map[y].length;x++){ var c=map[y][x]; if(PAL[c]){ ctx.fillStyle=PAL[c]; ctx.fillRect(ox+x*cell,oy+y*cell,cell,cell); } } }
-  function gameSetup(title,instr,btn){ show('game'); document.getElementById('gover').style.display='none'; document.getElementById('gTitle').textContent=title; document.getElementById('gInstr').textContent=instr; document.getElementById('gJump').textContent=btn; var cv=document.getElementById('gcanvas'); return { cv:cv,ctx:cv.getContext('2d'),W:cv.width,H:cv.height,map:petMap(),cell:3 }; }
-  function startGame(){ var s=gameSetup('ジャンプゲーム','タップで ジャンプ！ しょうがいぶつを よけよう','ジャンプ'); var groundY=s.H-26,petW=Math.max.apply(null,s.map.map(function(r){ return r.length; }))*s.cell,petH=s.map.length*s.cell; if(game) cancelAnimationFrame(game.raf); game={ mode:'jump',ctx:s.ctx,W:s.W,H:s.H,groundY:groundY,map:s.map,cell:s.cell,petW:petW,petH:petH,px:34,py:groundY-petH,vy:0,onGround:true,jumps:0,obs:[],speed:2.4,t:0,score:0,over:false,raf:0 }; loopGame(); }
+  function drawPetSprite(ctx,g,ox,oy){ if(g.img&&g.img.complete&&g.img.naturalWidth){ ctx.imageSmoothingEnabled=false; ctx.drawImage(g.img,ox,oy,g.petW,g.petH); } else if(g.map){ drawPetCanvas(ctx,g.map,ox,oy,g.cell); } }
+  function gameSetup(title,instr,btn){ show('game'); document.getElementById('gover').style.display='none'; document.getElementById('gTitle').textContent=title; document.getElementById('gInstr').textContent=instr; document.getElementById('gJump').textContent=btn; var cv=document.getElementById('gcanvas'); var info=petInfo(); var img=info.img?getImg(info.img):null; var map=petMap(),cell=3; var pw=img?40:Math.max.apply(null,map.map(function(r){ return r.length; }))*cell, ph=img?40:map.length*cell; return { cv:cv,ctx:cv.getContext('2d'),W:cv.width,H:cv.height,map:map,cell:cell,img:img,petW:pw,petH:ph }; }
+  function startGame(){ var s=gameSetup('ジャンプゲーム','タップで ジャンプ！ しょうがいぶつを よけよう','ジャンプ'); var groundY=s.H-26,petW=s.petW,petH=s.petH; if(game) cancelAnimationFrame(game.raf); game={ mode:'jump',ctx:s.ctx,W:s.W,H:s.H,groundY:groundY,map:s.map,cell:s.cell,img:s.img,petW:petW,petH:petH,px:34,py:groundY-petH,vy:0,onGround:true,jumps:0,obs:[],speed:2.4,t:0,score:0,over:false,raf:0 }; loopGame(); }
   function jump(){ if(game&&!game.over&&game.jumps<2){ game.vy=-9.6; game.jumps++; game.onGround=false; } }
-  function startSeaGame(){ var s=gameSetup('うみゲーム','タップで うく！ いわの あいだを とおろう','うく'); var petW=Math.max.apply(null,s.map.map(function(r){ return r.length; }))*s.cell,petH=s.map.length*s.cell; if(game) cancelAnimationFrame(game.raf); game={ mode:'sea',ctx:s.ctx,W:s.W,H:s.H,map:s.map,cell:s.cell,petW:petW,petH:petH,px:40,py:Math.round(s.H/2-petH/2),vy:0,obs:[],gap:Math.round(petH*2.6),speed:2.2,t:0,score:0,over:false,raf:0 }; loopSea(); }
+  function startSeaGame(){ var s=gameSetup('うみゲーム','タップで うく！ いわの あいだを とおろう','うく'); var petW=s.petW,petH=s.petH; if(game) cancelAnimationFrame(game.raf); game={ mode:'sea',ctx:s.ctx,W:s.W,H:s.H,map:s.map,cell:s.cell,img:s.img,petW:petW,petH:petH,px:40,py:Math.round(s.H/2-petH/2),vy:0,obs:[],gap:Math.round(petH*2.6),speed:2.2,t:0,score:0,over:false,raf:0 }; loopSea(); }
   function floatUp(){ if(game&&!game.over&&game.mode==='sea'){ game.vy=-5.6; } }
-  function loopSea(){ var g=game; if(!g||g.over) return; g.t++; g.speed+=0.0008; if(g.obs.length===0||(g.W-g.obs[g.obs.length-1].x)>(150+Math.random()*70)){ var gw=16+Math.floor(Math.random()*6),gy=24+Math.floor(Math.random()*(g.H-g.gap-48)); g.obs.push({x:g.W,w:gw,gy:gy}); } g.obs.forEach(function(o){ o.x-=g.speed; }); g.obs=g.obs.filter(function(o){ return o.x+o.w>-4; }); g.score=Math.floor(g.t/6); g.vy+=0.4; g.py+=g.vy; if(g.py<0||g.py+g.petH>g.H){ endGame(); return; } var pl=g.px+5,pr=g.px+g.petW-5,pt=g.py+3,pb=g.py+g.petH-3; for(var oi=0;oi<g.obs.length;oi++){ var o=g.obs[oi]; if(pl<o.x+o.w&&pr>o.x){ if(pt<o.gy||pb>o.gy+g.gap){ endGame(); return; } } } var ctx=g.ctx; ctx.fillStyle='#5fb0e8'; ctx.fillRect(0,0,g.W,g.H); ctx.fillStyle='#bfe3f7'; ctx.fillRect(8,14,16,3); ctx.fillRect(g.W-60,28,16,3); ctx.fillRect(g.W-120,10,16,3); g.obs.forEach(function(o){ ctx.fillStyle='#3b8a5a'; ctx.fillRect(o.x,0,o.w,o.gy); ctx.fillRect(o.x,o.gy+g.gap,o.w,g.H-(o.gy+g.gap)); ctx.fillStyle='#2e6e47'; ctx.fillRect(o.x,o.gy-3,o.w,3); ctx.fillRect(o.x,o.gy+g.gap,o.w,3); }); drawPetCanvas(ctx,g.map,g.px,Math.round(g.py),g.cell); document.getElementById('gscore').textContent=g.score; g.raf=requestAnimationFrame(loopSea); }
+  function loopSea(){ var g=game; if(!g||g.over) return; g.t++; g.speed+=0.0008; if(g.obs.length===0||(g.W-g.obs[g.obs.length-1].x)>(150+Math.random()*70)){ var gw=16+Math.floor(Math.random()*6),gy=24+Math.floor(Math.random()*(g.H-g.gap-48)); g.obs.push({x:g.W,w:gw,gy:gy}); } g.obs.forEach(function(o){ o.x-=g.speed; }); g.obs=g.obs.filter(function(o){ return o.x+o.w>-4; }); g.score=Math.floor(g.t/6); g.vy+=0.4; g.py+=g.vy; if(g.py<0||g.py+g.petH>g.H){ endGame(); return; } var pl=g.px+5,pr=g.px+g.petW-5,pt=g.py+3,pb=g.py+g.petH-3; for(var oi=0;oi<g.obs.length;oi++){ var o=g.obs[oi]; if(pl<o.x+o.w&&pr>o.x){ if(pt<o.gy||pb>o.gy+g.gap){ endGame(); return; } } } var ctx=g.ctx; ctx.fillStyle='#5fb0e8'; ctx.fillRect(0,0,g.W,g.H); ctx.fillStyle='#bfe3f7'; ctx.fillRect(8,14,16,3); ctx.fillRect(g.W-60,28,16,3); ctx.fillRect(g.W-120,10,16,3); g.obs.forEach(function(o){ ctx.fillStyle='#3b8a5a'; ctx.fillRect(o.x,0,o.w,o.gy); ctx.fillRect(o.x,o.gy+g.gap,o.w,g.H-(o.gy+g.gap)); ctx.fillStyle='#2e6e47'; ctx.fillRect(o.x,o.gy-3,o.w,3); ctx.fillRect(o.x,o.gy+g.gap,o.w,3); }); drawPetSprite(ctx,g,g.px,Math.round(g.py)); document.getElementById('gscore').textContent=g.score; g.raf=requestAnimationFrame(loopSea); }
   function gameInput(){ if(!game||game.over) return; if(game.mode==='sea') floatUp(); else jump(); }
-  function loopGame(){ var g=game; if(!g||g.over) return; g.t++; g.speed+=0.0009; if(g.obs.length===0||(g.W-g.obs[g.obs.length-1].x)>(150+Math.random()*130)){ g.obs.push({x:g.W,w:14+Math.floor(Math.random()*8),h:18+Math.floor(Math.random()*22)}); } g.obs.forEach(function(o){ o.x-=g.speed; }); g.obs=g.obs.filter(function(o){ return o.x+o.w>-4; }); g.score=Math.floor(g.t/6); var prevFeet=g.py+g.petH; g.vy+=0.55; g.py+=g.vy; g.onGround=false; if(g.py>=g.groundY-g.petH){ g.py=g.groundY-g.petH; g.vy=0; g.onGround=true; g.jumps=0; } var pl=g.px+5,pr=g.px+g.petW-5; for(var oi=0;oi<g.obs.length;oi++){ var o=g.obs[oi]; var ol=o.x,orr=o.x+o.w,top=g.groundY-o.h; if(pl<orr&&pr>ol){ if(g.vy>=0&&prevFeet<=top+6&&g.py+g.petH>=top){ g.py=top-g.petH; g.vy=0; g.onGround=true; g.jumps=0; } else if(g.py+g.petH>top){ endGame(); return; } } } var ctx=g.ctx; ctx.clearRect(0,0,g.W,g.H); ctx.fillStyle='#e0d3b0'; ctx.fillRect(0,g.groundY,g.W,g.H-g.groundY); ctx.fillStyle='#4a3526'; ctx.fillRect(0,g.groundY,g.W,2); g.obs.forEach(function(o){ ctx.fillStyle='#7a5a2a'; ctx.fillRect(o.x,g.groundY-o.h,o.w,o.h); ctx.fillStyle='#4a3526'; ctx.fillRect(o.x,g.groundY-o.h,o.w,2); }); drawPetCanvas(ctx,g.map,g.px,Math.round(g.py),g.cell); document.getElementById('gscore').textContent=g.score; g.raf=requestAnimationFrame(loopGame); }
+  function loopGame(){ var g=game; if(!g||g.over) return; g.t++; g.speed+=0.0009; if(g.obs.length===0||(g.W-g.obs[g.obs.length-1].x)>(150+Math.random()*130)){ g.obs.push({x:g.W,w:14+Math.floor(Math.random()*8),h:18+Math.floor(Math.random()*22)}); } g.obs.forEach(function(o){ o.x-=g.speed; }); g.obs=g.obs.filter(function(o){ return o.x+o.w>-4; }); g.score=Math.floor(g.t/6); var prevFeet=g.py+g.petH; g.vy+=0.55; g.py+=g.vy; g.onGround=false; if(g.py>=g.groundY-g.petH){ g.py=g.groundY-g.petH; g.vy=0; g.onGround=true; g.jumps=0; } var pl=g.px+5,pr=g.px+g.petW-5; for(var oi=0;oi<g.obs.length;oi++){ var o=g.obs[oi]; var ol=o.x,orr=o.x+o.w,top=g.groundY-o.h; if(pl<orr&&pr>ol){ if(g.vy>=0&&prevFeet<=top+6&&g.py+g.petH>=top){ g.py=top-g.petH; g.vy=0; g.onGround=true; g.jumps=0; } else if(g.py+g.petH>top){ endGame(); return; } } } var ctx=g.ctx; ctx.clearRect(0,0,g.W,g.H); ctx.fillStyle='#e0d3b0'; ctx.fillRect(0,g.groundY,g.W,g.H-g.groundY); ctx.fillStyle='#4a3526'; ctx.fillRect(0,g.groundY,g.W,2); g.obs.forEach(function(o){ ctx.fillStyle='#7a5a2a'; ctx.fillRect(o.x,g.groundY-o.h,o.w,o.h); ctx.fillStyle='#4a3526'; ctx.fillRect(o.x,g.groundY-o.h,o.w,2); }); drawPetSprite(ctx,g,g.px,Math.round(g.py)); document.getElementById('gscore').textContent=g.score; g.raf=requestAnimationFrame(loopGame); }
   function endGame(){ var g=game; g.over=true; cancelAnimationFrame(g.raf); var sc=g.score; var happyGain=Math.min(30,6+Math.floor(sc/4)); state.happy=Math.min(100,state.happy+happyGain); var eBonus=sc>=40?2:sc>=20?1:0; state.food+=eBonus; addXp(5); if(sc>(state.gameHi||0)) state.gameHi=sc; save(); document.getElementById('goverScore').textContent='スコア '+sc+'（さいこう '+state.gameHi+'）'; document.getElementById('goverReward').textContent='ごきげん +'+happyGain+(eBonus?' ／ えさ +'+eBonus:''); document.getElementById('gover').style.display='flex'; }
   function leaveGame(){ if(game){ game.over=true; cancelAnimationFrame(game.raf); } show('home'); render(); }
   (function(){ var cv=document.getElementById('gcanvas'); cv.addEventListener('pointerdown',function(e){ e.preventDefault(); gameInput(); }); document.getElementById('gJump').onclick=gameInput; document.getElementById('gRetry').onclick=function(){ if(state.food<=0){ leaveGame(); bubble('えさが なくなった！べんきょうで あつめよう'); return; } consumePlay(); if(game&&game.mode==='sea') startSeaGame(); else startGame(); }; document.getElementById('gHome').onclick=leaveGame; document.getElementById('backGame').onclick=leaveGame; })();
