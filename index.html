@@ -25,6 +25,10 @@
     .screen{max-width:440px;margin:0 auto;padding:16px 16px 28px;display:none;}
     .screen.on{display:block;}
     body.hastab .screen.on{padding-bottom:96px;}
+    /* ホームは1画面に収める：やど(飼育エリア)が余白を吸収して伸縮 */
+    body.hastab #home.on{display:flex;flex-direction:column;height:calc(100dvh - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));}
+    #home.on>*{flex:0 0 auto;}
+    #home.on .yard{flex:1 1 auto;min-height:150px;max-height:260px;}
     #tabbar{position:fixed;left:0;right:0;bottom:0;z-index:50;display:none;background:rgba(255,255,255,.97);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-top:2px solid var(--bdr);padding:8px 16px calc(8px + env(safe-area-inset-bottom));}
     #tabbar.on{display:flex;justify-content:center;}
     .tabrow{display:flex;gap:6px;width:100%;max-width:360px;}
@@ -39,7 +43,9 @@
     .ground{position:absolute;left:0;right:0;bottom:0;height:46px;background:#e7dcbf;}
     #scene{position:absolute;inset:0;opacity:.55;pointer-events:none;}
     #scene svg{display:block;}
-    #petWrap{position:absolute;bottom:40px;left:50%;transform:translateX(-50%);animation:bob 1.6s steps(2) infinite;}
+    #petWrap{position:absolute;bottom:30px;left:50%;transform:translateX(-50%);animation:bob 1.6s steps(2) infinite;}
+    #pet{display:block;width:auto;height:clamp(84px,13.5dvh,120px);}
+    #petImg{height:clamp(84px,13.5dvh,120px)!important;width:auto!important;}
     #petWrap.happy{animation:hop .6s 2;}
     #bubble{position:absolute;top:14px;left:50%;transform:translateX(-50%);background:#fff;border:2px solid var(--bdr);border-radius:8px;padding:5px 18px;font-size:14px;font-weight:800;color:var(--g);opacity:0;transition:opacity .2s;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,.08);}
     #poop{position:absolute;bottom:40px;left:30px;display:none;image-rendering:pixelated;}
@@ -140,7 +146,7 @@
     </div>
   </div>
 
-  <div class="yard" style="height:244px;">
+  <div class="yard">
     <div class="dots"></div>
     <div class="ground"></div>
     <div id="scene"></div>
