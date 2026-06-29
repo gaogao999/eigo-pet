@@ -261,7 +261,14 @@
 
   <button id="goStudy" style="width:100%;border:none;border-radius:10px;padding:18px;font-size:18px;font-weight:900;background:linear-gradient(135deg,#29a65e,#5cde94);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;font-family:inherit;box-shadow:0 3px 12px rgba(41,166,94,.35);">えいごの べんきょう</button>
 
-  <button id="goReview" style="width:100%;border:2px solid var(--bdr);border-radius:10px;padding:14px;font-size:15px;font-weight:800;background:var(--card);color:var(--g);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;font-family:inherit;margin-top:10px;">ふくしゅう（まちがえた <span id="wrongCount">0</span>こ）</button>
+  <div id="progCard" style="border:2px solid var(--bdr);border-radius:12px;padding:14px 16px;background:var(--card);margin-top:12px;box-shadow:0 2px 10px rgba(41,166,94,.06);">
+    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;">
+      <span style="font-size:14px;font-weight:900;color:var(--ink);">おぼえた しんちょく</span>
+      <span style="font-size:13px;font-weight:800;color:var(--g);"><span id="masterN">0</span> / <span id="gradeTotal">0</span>ご</span>
+    </div>
+    <div style="height:14px;background:#e3efe8;border-radius:7px;overflow:hidden;"><div id="masterBar" style="height:100%;width:0;background:linear-gradient(90deg,#29a65e,#5cde94);border-radius:7px;transition:width .4s;"></div></div>
+    <div style="margin-top:8px;font-size:12px;font-weight:700;color:var(--mut);"><span style="color:#d97706;">🔁 ふくしゅうまち <span id="reviewN">0</span>ご</span>　— まちがえた単語は でやすく、2かい れんぞくせいかいで「おぼえた」</div>
+  </div>
 
   <div style="text-align:center;margin-top:16px;font-size:13px;color:var(--mut);font-weight:700;" id="goalset">1にちの もくひょう：<strong style="color:var(--g);font-size:15px;">30こ</strong></div>
   <div style="text-align:center;margin-top:10px;font-size:12px;color:var(--mut);font-weight:700;">ごほうびタイム：<strong style="color:var(--g);">15〜17時</strong>（えさ・けいけんち 2ばい）</div>
