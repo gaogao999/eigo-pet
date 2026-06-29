@@ -145,7 +145,12 @@ window._eigoPetInit = function() {
     var petSvg=document.getElementById('pet');
     var petImg=document.getElementById('petImg');
     if(info.img){
-      if(petImg){ petImg.src=imgSrc(info.img); petImg.style.display='block'; }
+      if(petImg){
+        var sleepy=(typeof asleep!=='undefined')&&asleep;
+        petImg.onerror=sleepy?function(){ petImg.onerror=null; petImg.src=imgSrc(info.img); }:null; // _sleep が無ければ つうじょう絵で代用
+        petImg.src=sleepy?imgSrc(info.img+'_sleep'):imgSrc(info.img);
+        petImg.style.display='block';
+      }
       if(petSvg){ petSvg.style.display='none'; petSvg.innerHTML=''; }
       applyBg(); return;
     }
@@ -606,8 +611,8 @@ window._eigoPetInit = function() {
   var asleep=false, walkTimer=null, behaveT=null;
   function petWrapEl(){ return document.getElementById('petWrap'); }
   function isNightTime(){ var b=curBg(); if(b&&b.id==='night') return true; try{ var h=new Date().getHours(); return h>=22||h<6; }catch(e){ return false; } }
-  function wakePet(){ if(!asleep) return; asleep=false; var w=petWrapEl(); if(w) w.classList.remove('asleep'); var z=document.getElementById('zzz'); if(z) z.classList.remove('on'); }
-  function sleepPet(){ if(asleep) return; asleep=true; var w=petWrapEl(); if(w){ w.classList.remove('walking'); w.classList.add('asleep'); } var z=document.getElementById('zzz'); if(z) z.classList.add('on'); }
+  function wakePet(){ if(!asleep) return; asleep=false; var w=petWrapEl(); if(w) w.classList.remove('asleep'); var z=document.getElementById('zzz'); if(z) z.classList.remove('on'); if(typeof drawPet==='function') drawPet(); }
+  function sleepPet(){ if(asleep) return; asleep=true; var w=petWrapEl(); if(w){ w.classList.remove('walking'); w.classList.add('asleep'); } var z=document.getElementById('zzz'); if(z) z.classList.add('on'); if(typeof drawPet==='function') drawPet(); }
   function walkTo(){
     var w=petWrapEl(); if(!w) return;
     var cur=parseFloat(w.dataset.lx||'50');

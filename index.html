@@ -51,9 +51,9 @@ if(window.caches){caches.keys().then(function(ks){ks.forEach(function(k){caches.
     #petWrap.flip #pet,#petWrap.flip #petImg{transform:scaleX(-1);}
     #petWrap.walking #pet,#petWrap.walking #petImg{animation:waddle .42s ease-in-out infinite;}
     #petWrap.flip.walking #pet,#petWrap.flip.walking #petImg{animation:waddleL .42s ease-in-out infinite;}
-    #petWrap.asleep{animation:none;}
-    #petWrap.asleep #pet,#petWrap.asleep #petImg{transform:rotate(9deg);}
-    #petWrap.asleep.flip #pet,#petWrap.asleep.flip #petImg{transform:scaleX(-1) rotate(9deg);}
+    #petWrap.asleep{animation:snooze 3.4s ease-in-out infinite;}
+    #petWrap.asleep #pet,#petWrap.asleep #petImg{transform:none;}
+    @keyframes snooze{0%,100%{transform:translateX(-50%) translateY(0)} 50%{transform:translateX(-50%) translateY(-2px)}}
     @keyframes waddle{0%,100%{transform:rotate(-5deg)} 50%{transform:rotate(5deg)}}
     @keyframes waddleL{0%,100%{transform:scaleX(-1) rotate(-5deg)} 50%{transform:scaleX(-1) rotate(5deg)}}
     #zzz{position:absolute;top:6px;right:-2px;display:none;font-family:'DotGothic16',sans-serif;font-weight:900;color:#8b5cf6;line-height:1;pointer-events:none;}
