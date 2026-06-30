@@ -586,7 +586,7 @@ window._eigoPetInit = function() {
     el.addEventListener('mouseleave',cancel);
   }
   function updateStudyProg(){ var fill=document.getElementById('studyProgFill'); if(fill) fill.style.width=((qIdx/(qList?qList.length:1))*100)+'%'; }
-  function pickQMode(){ var r=Math.random(); return r<0.5?'meaning':(r<0.75?'listen':'reverse'); } // 1/2 いみ・1/4 リスニング・1/4 ぎゃくびき
+  function pickQMode(){ var r=Math.random(); return r<0.5?'meaning':(r<0.75?'spell':'reverse'); } // 1/2 いみ・1/4 スペル入力(リスニング)・1/4 ぎゃくびき
   function nextQ(){
     document.getElementById('easyHint').style.display='none';
     if(qIdx>=qList.length){ finishStudy(); return; }
@@ -598,6 +598,8 @@ window._eigoPetInit = function() {
     document.getElementById('reward').textContent='';
     var qw=document.getElementById('qword'), prompt=document.getElementById('qPrompt'), hint=document.getElementById('qHint');
     var box=document.getElementById('choices'); box.innerHTML=''; box.style.pointerEvents='';
+    var spellArea=document.getElementById('spellArea'); var isSpell=(qMode==='spell');
+    box.style.display=isSpell?'none':''; if(spellArea) spellArea.style.display=isSpell?'block':'none';
     var mkBtn=function(o,html){ var b=document.createElement('button'); b.className='ch'; b.innerHTML=html; if(o===correct) b._isCorrect=true; b.onclick=function(){ if(b._lp){ b._lp=false; return; } answer(b,o===correct,en); }; attachLongPress(b,function(){ showEasy(o); }); box.appendChild(b); };
     var speakBtn=document.getElementById('speak'); if(speakBtn) speakBtn.style.display=(qMode==='reverse')?'none':''; // 逆引きは 答え(英語)を読み上げないよう きくボタンを隠す
     if(qMode==='reverse'){
@@ -609,21 +611,51 @@ window._eigoPetInit = function() {
       if(hint) hint.textContent='ながおしすると いみ';
       var poolR=currentWords().filter(function(w){ return w[0]!==en&&w[1]!==correct[1]; });
       shuffle([correct].concat(shuffle(poolR).slice(0,3))).forEach(function(o){ mkBtn(o,'<span class="base'+((o[0]||'').length>9?' long':'')+'">'+escJa(o[0])+'</span>'); });
+    } else if(isSpell){
+      // おとを きいて＋いみを みて 英語スペルを にゅうりょく
+      prompt.textContent='きいて スペルを かこう';
+      var kanjiS=correct[1]||'', yomS=correct[2]||'';
+      qw.innerHTML='<div style="font-size:30px;">🔊</div>'+(yomS?'<div class="qyomi">'+brJoin(yomS)+'</div>':'')+'<div class="qmean">'+brJoin(kanjiS)+'</div>';
+      qw.classList.add('long');
+      if(hint) hint.textContent='おとを きいて えいごを かいてね';
+      var sinp=document.getElementById('spellInput'), ssub=document.getElementById('spellSubmit');
+      if(sinp){ sinp.disabled=false; sinp.value=''; } if(ssub) ssub.disabled=false;
+      setTimeout(function(){ try{ sinp&&sinp.focus(); }catch(e){} },60);
+      speak(en);
     } else {
-      var listen=(qMode==='listen');
-      prompt.textContent=listen?'きいて いみを えらぼう':'この えいごの いみは？';
-      qw.textContent=listen?'🔊':en; qw.classList.toggle('long', !listen&&en.length>12);
+      prompt.textContent='この えいごの いみは？';
+      qw.textContent=en; qw.classList.toggle('long', en.length>12);
       if(hint) hint.textContent='ながおしすると やさしいいみ';
       var pool=currentWords().filter(function(w){ return w[0]!==en&&w[1]!==correct[1]; });
       shuffle([correct].concat(shuffle(pool).slice(0,3))).forEach(function(o){ mkBtn(o,choiceHtml(o)); });
       speak(en);
     }
   }
+  function submitSpell(){
+    if(!curWord||qMode!=='spell') return;
+    var inp=document.getElementById('spellInput'); if(!inp||inp.disabled) return;
+    var val=(inp.value||'').trim().toLowerCase().replace(/\s+/g,'');
+    if(!val) return;
+    var target=(curWord[0]||'').toLowerCase().replace(/\s+/g,'');
+    if(val===target){ inp.disabled=true; var sb=document.getElementById('spellSubmit'); if(sb) sb.disabled=true; speak(curWord[0]); awardCorrect(curWord[0]); }
+    else { session.combo=0; onAnswer(curWord[0],false); save(); sfx('wrong'); document.getElementById('reward').textContent='おしい！もういちど'; try{ inp.focus(); inp.select(); }catch(e){} }
+  }
   function recordLearned(en){ if(state.todayDate!==today()){ state.todayDate=today(); state.todayWords=[]; } var k=en.toLowerCase(), already=state.todayWords.indexOf(k)>=0; if(!already) state.todayWords.push(k); if(!already&&state.todayWords.length===state.dailyGoal){ onGoalReached(); } }
   function streakOnGoal(){ if(state.lastGoalDate===today()) return; if(state.lastGoalDate===yesterday()){ state.streak++; } else if(state.lastGoalDate){ var gap=Math.round((new Date(today())-new Date(state.lastGoalDate))/86400000)-1; if(gap>0&&state.freezeTickets>=gap){ state.freezeTickets-=gap; state.streak++; bubble('おやすみ券で れんぞく キープ！'); } else state.streak=1; } else state.streak=1; state.lastGoalDate=today(); if(state.streak>(state.maxStreak||0)) state.maxStreak=state.streak; if(state.metDates.indexOf(today())<0) state.metDates.push(today()); if(state.metDates.length>60) state.metDates=state.metDates.slice(-60); }
   function onGoalReached(){ streakOnGoal(); state.food+=5; state.happy=100; gainGP(20); gainGP(Math.min(state.streak,15)); checkTitles(); setTimeout(showGoalCelebration,850); }
   function checkUnlock(prevLearned){ var items=BGS.filter(function(it){ return it.need>prevLearned&&it.need<=state.learned; }); if(items.length){ bubble('あたらしい はいけい アンロック！'); sfx('unlock'); } }
-  function answer(btn,ok,en){ var _cb0=document.getElementById('choices'); if(_cb0&&_cb0.style.pointerEvents==='none') return; /* 正解/回答済みなら無効 */ if(btn.classList.contains('ok')||btn.classList.contains('ng')) return; if(qMode==='listen'){ var _qw=document.getElementById('qword'); _qw.textContent=en; _qw.classList.toggle('long',en.length>12); } if(ok){ if(qMode==='reverse') speak(en); btn.classList.add('ok'); var _cbox=document.getElementById('choices'); if(_cbox) _cbox.style.pointerEvents='none'; /* 正解後は他のボタンを押せないように */ var prev=state.learned, kL=en.toLowerCase(), wasM=!!(state.learn[kL]&&state.learn[kL].m); session.combo=(session.combo||0)+1; if(session.combo>(session.maxCombo||0)) session.maxCombo=session.combo; var mult=session.combo>=6?3:session.combo>=3?2:1; var rt=isRewardTime()?2:1; var gain=mult*rt; session.correct++; state.food+=gain; state.learned++; gainGP((reviewMode?10:8)*gain); onAnswer(en,true); if(!wasM&&state.learn[kL]&&state.learn[kL].m) session.newMastered=(session.newMastered||0)+1; recordLearned(en); checkUnlock(prev); checkTickets(); checkTitles(); sfx(session.combo>=3?'combo':'correct'); var msg2='せいかい！'; if(mult>1) msg2+=' コンボ×'+mult; if(rt>1) msg2+=' ⏰2ばい'; msg2+=reviewMode?' おぼえたね':(' えさ+'+gain); document.getElementById('reward').textContent=msg2; save(); checkEvolve(); setTimeout(function(){ qIdx++; nextQ(); },800); } else { btn.classList.add('ng'); session.combo=0; onAnswer(en,false); save(); sfx('wrong'); document.getElementById('reward').textContent='もういちど！'; } }
+  function awardCorrect(en){
+    var prev=state.learned, kL=en.toLowerCase(), wasM=!!(state.learn[kL]&&state.learn[kL].m);
+    session.combo=(session.combo||0)+1; if(session.combo>(session.maxCombo||0)) session.maxCombo=session.combo;
+    var mult=session.combo>=6?3:session.combo>=3?2:1; var rt=isRewardTime()?2:1; var gain=mult*rt;
+    session.correct++; state.food+=gain; state.learned++; gainGP((reviewMode?10:8)*gain); onAnswer(en,true);
+    if(!wasM&&state.learn[kL]&&state.learn[kL].m) session.newMastered=(session.newMastered||0)+1;
+    recordLearned(en); checkUnlock(prev); checkTickets(); checkTitles(); sfx(session.combo>=3?'combo':'correct');
+    var msg2='せいかい！'; if(mult>1) msg2+=' コンボ×'+mult; if(rt>1) msg2+=' ⏰2ばい'; msg2+=reviewMode?' おぼえたね':(' えさ+'+gain);
+    document.getElementById('reward').textContent=msg2; save(); checkEvolve();
+    setTimeout(function(){ qIdx++; nextQ(); },800);
+  }
+  function answer(btn,ok,en){ var _cb0=document.getElementById('choices'); if(_cb0&&_cb0.style.pointerEvents==='none') return; /* 正解/回答済みなら無効 */ if(btn.classList.contains('ok')||btn.classList.contains('ng')) return; if(ok){ if(qMode==='reverse') speak(en); btn.classList.add('ok'); if(_cb0) _cb0.style.pointerEvents='none'; /* 正解後は他のボタンを押せないように */ awardCorrect(en); } else { btn.classList.add('ng'); session.combo=0; onAnswer(en,false); save(); sfx('wrong'); document.getElementById('reward').textContent='もういちど！'; } }
   function finishStudy(){ updateStudyProg();
     var sc=document.getElementById('sdCorrect'); if(sc) sc.textContent=(session.correct||0)+' / '+(session.total||qList.length);
     var sm=document.getElementById('sdMastered'); if(sm) sm.textContent=session.newMastered||0;
@@ -637,14 +669,15 @@ window._eigoPetInit = function() {
   if(window.speechSynthesis){ speechSynthesis.onvoiceschanged=function(){ enVoice=pickVoice(); }; ensureVoice(); }
   function speak(en){ try{ if(!window.speechSynthesis) return; var u=new SpeechSynthesisUtterance(en); var v=ensureVoice(); if(v){ u.voice=v; u.lang=v.lang; } else { u.lang='en-US'; } u.rate=0.8; u.pitch=1.0; speechSynthesis.cancel(); speechSynthesis.speak(u); }catch(e){} }
   document.getElementById('speak').onclick=function(){ speak(curWord?curWord[0]:document.getElementById('qword').textContent); };
+  (function(){ var sb=document.getElementById('spellSubmit'); if(sb) sb.onclick=submitSpell; var si=document.getElementById('spellInput'); if(si) si.addEventListener('keydown',function(e){ if(e.key==='Enter'){ e.preventDefault(); submitSpell(); } }); })();
   document.getElementById('dontKnow').onclick=function(){
     if(!curWord) return;
+    if(qMode==='spell'){ var inp=document.getElementById('spellInput'); if(inp&&inp.disabled) return; if(inp) inp.disabled=true; var sb2=document.getElementById('spellSubmit'); if(sb2) sb2.disabled=true; onAnswer(curWord[0],false); save(); document.getElementById('reward').textContent='こたえ：'+curWord[0]; showEasy(curWord); setTimeout(function(){ qIdx++; nextQ(); },2200); return; }
     var box=document.getElementById('choices');
     if(box.style.pointerEvents==='none') return; // すでに回答済み
     box.style.pointerEvents='none';
     var btns=box.querySelectorAll('.ch'); for(var i=0;i<btns.length;i++){ if(btns[i]._isCorrect) btns[i].classList.add('ok'); }
     onAnswer(curWord[0],false); save(); // わからない＝復習まちへ
-    if(qMode==='listen'){ var _qw=document.getElementById('qword'); _qw.textContent=curWord[0]; _qw.classList.toggle('long',curWord[0].length>12); }
     document.getElementById('reward').textContent='こたえ：'+(qMode==='reverse'?curWord[0]:curWord[1]);
     showEasy(curWord);
     setTimeout(function(){ qIdx++; nextQ(); },2000);

@@ -341,6 +341,12 @@ if(window.caches){caches.keys().then(function(ks){ks.forEach(function(k){caches.
     <div id="qHint" style="font-size:11px;color:var(--mut);margin-top:10px;font-weight:700;">ながおしすると やさしいいみ</div>
   </div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:18px;" id="choices"></div>
+  <div id="spellArea" style="display:none;margin-top:18px;">
+    <div style="display:flex;gap:8px;">
+      <input id="spellInput" type="text" inputmode="latin" autocapitalize="none" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="えいごを かこう" style="flex:1;min-width:0;padding:14px 16px;border:2px solid var(--bdr);border-radius:10px;font-size:20px;font-weight:800;font-family:inherit;background:var(--card);color:var(--ink);outline:none;text-align:center;">
+      <button id="spellSubmit" style="flex-shrink:0;border:none;border-radius:10px;padding:0 18px;font-size:16px;font-weight:900;background:linear-gradient(135deg,#29a65e,#5cde94);color:#fff;cursor:pointer;font-family:inherit;">こたえる</button>
+    </div>
+  </div>
   <button id="dontKnow" style="width:100%;margin-top:12px;padding:13px;font-size:14px;font-weight:800;background:#f1f5f9;color:#64748b;border:2px solid #e2e8f0;border-radius:10px;cursor:pointer;font-family:inherit;">わからない（こたえを みる）</button>
   <div id="reward" style="text-align:center;margin-top:16px;font-size:17px;font-weight:900;color:var(--g);min-height:26px;"></div>
   <div id="easyHint" style="display:none;margin-top:14px;background:#fefce8;border:2px solid #fde68a;border-radius:10px;padding:16px;text-align:center;"></div>
