@@ -196,7 +196,7 @@ window._eigoPetInit = function() {
     var s=null;
     var keys=[KEY, BAKKEY];
     for(var ki=0;ki<keys.length;ki++){ try{ var raw=localStorage.getItem(keys[ki]); if(raw){ s=JSON.parse(raw); break; } }catch(e){} }
-    var def={ name:"ぴよ",lv:1,xp:0,hunger:80,happy:80,food:0,dirty:false,streak:1,learned:0,last:today(),grade:"g3",discipline:50,weight:5,careMiss:0,disciplineMiss:0,wagamama:false,babyType:null,childType:null,adultType:null,customImg:{},gameHi:0,dailyGoal:20,todayDate:today(),todayWords:[],lastGoalDate:null,metDates:[],wrongWords:[],petColor:'brown',bg:'meadow',freezeTickets:0,lastTicketDate:null,rewardHour:null,lastBoxWeek:null,titles:[],sound:true,mastery:{},learn:{},maxStreak:0,sick:false,born:Date.now(),stageSince:Date.now(),lifespanDays:12+Math.floor(Math.random()*3),youngType:null,memories:[],schemaV:2,lastBackupNudge:null,lastTick:Date.now(),keifuHints:0 };
+    var def={ name:"ぴよ",lv:1,xp:0,hunger:80,happy:80,food:0,dirty:false,streak:1,learned:0,last:today(),grade:"g3",discipline:50,weight:5,careMiss:0,disciplineMiss:0,wagamama:false,babyType:null,childType:null,adultType:null,customImg:{},gameHi:0,dailyGoal:20,todayDate:today(),todayWords:[],lastGoalDate:null,metDates:[],wrongWords:[],petColor:'brown',bg:'meadow',freezeTickets:0,lastTicketDate:null,rewardHour:null,lastBoxWeek:null,titles:[],sound:true,mastery:{},learn:{},maxStreak:0,sick:false,born:Date.now(),stageSince:Date.now(),lifespanDays:12+Math.floor(Math.random()*3),youngType:null,memories:[],schemaV:2,lastBackupNudge:null,lastTick:Date.now(),keifuHints:0,keifuRevealed:[] };
     s=Object.assign({},def,s||{});
     s.dailyGoal=20; // 1日の目標は20に固定
     // 単語ごとの学習状況(learn)へ移行：旧mastery(正解数>=2でおぼえた)＋wrongWords(にがて)から復元
@@ -437,18 +437,15 @@ window._eigoPetInit = function() {
     tree+='<div class="trow">'+tnode(CHILDREN.a,CHILDREN.a.name,true)+'</div><div class="tarrow">↓</div>';
     var ytiers=[['star','⭐さいこう'],['good','◎よいこ'],['normal','○ふつう'],['wild','△わんぱく']];
     tree+='<div class="tiertag">ヤング（おせわランクで わかれる）</div><div class="tgrid4">'+ytiers.map(function(t){ return tnode(YOUNGS[t[0]],YOUNGS[t[0]].name,true); }).join('')+'</div><div class="tarrow">↓</div>';
-    // アダルト：入手ずみは無料表示、それ以外は「？」。えさで 1体ずつ ヒント解放
-    var allAdults=[]; Object.keys(ADULT_TIERS).forEach(function(t){ ADULT_TIERS[t].forEach(function(id){ allAdults.push(id); }); });
-    var revealed={}, paidLeft=state.keifuHints||0, totalRev=0;
-    allAdults.forEach(function(id){ if(col[id]){ revealed[id]=true; totalRev++; } else if(paidLeft>0){ revealed[id]=true; paidLeft--; totalRev++; } });
-    var nonCol=allAdults.filter(function(id){ return !col[id]; }).length;
-    var allOpen=(state.keifuHints||0)>=nonCol;
+    // アダルト：入手ずみは無料表示。それ以外は「？」を自分でタップ＋えさ で 1体ずつ ひらける
     var HINT_COST=5;
-    var btn=allOpen?'<button disabled>ぜんぶ ひらいた</button>':('<button id="buyHint">ヒントを ひらく 🍚×'+HINT_COST+'</button>');
-    tree+='<div class="keifuHint"><div style="font-size:12px;font-weight:800;color:var(--ink);line-height:1.5;">そだてかたの ヒント <b>'+totalRev+' / '+allAdults.length+'</b><br><span style="font-size:11px;color:var(--mut);font-weight:700;">えさで すがたを ひらけるよ</span></div>'+btn+'</div>';
+    var allAdults=[]; Object.keys(ADULT_TIERS).forEach(function(t){ ADULT_TIERS[t].forEach(function(id){ allAdults.push(id); }); });
+    var rev=state.keifuRevealed||[], revealed={}, totalRev=0;
+    allAdults.forEach(function(id){ if(col[id]||rev.indexOf(id)>=0){ revealed[id]=true; totalRev++; } });
+    tree+='<div class="keifuHint"><div style="font-size:12px;font-weight:800;color:var(--ink);line-height:1.5;">そだてかたの ヒント <b>'+totalRev+' / '+allAdults.length+'</b><br><span style="font-size:11px;color:var(--mut);font-weight:700;">すきな「？」を タップ＋🍚'+HINT_COST+' で すがたが わかるよ</span></div></div>';
     var tiers=[['star','⭐さいこう'],['good','◎よいこ'],['normal','○ふつう'],['wild','△わんぱく'],['devil','★レア']];
-    var lockNode=function(){ return '<div class="tnode small lock"><div class="tsprite">？</div><div class="tlabel">？？？</div></div>'; };
-    for(var ti=0;ti<tiers.length;ti++){ var tl=tiers[ti]; tree+='<div class="tiertag">アダルト：'+tl[1]+'</div><div class="tgrid">'+ADULT_TIERS[tl[0]].map(function(id){ return revealed[id]?tnode(ADULTS[id],ADULTS[id].name,true):lockNode(); }).join('')+'</div>'; }
+    var lockNode=function(id){ return '<button class="tnode small lock" data-id="'+id+'"><div class="tsprite">？</div><div class="tlabel">🍚×'+HINT_COST+'</div></button>'; };
+    for(var ti=0;ti<tiers.length;ti++){ var tl=tiers[ti]; tree+='<div class="tiertag">アダルト：'+tl[1]+'</div><div class="tgrid">'+ADULT_TIERS[tl[0]].map(function(id){ return revealed[id]?tnode(ADULTS[id],ADULTS[id].name,true):lockNode(id); }).join('')+'</div>'; }
     if((state.memories||[]).length){
       var mh='<div class="gstage">おもいで（これまでの子）</div>';
       state.memories.forEach(function(m){ var ai=adultById(m.adultType); mh+='<div class="gcard" style="display:flex;gap:12px;align-items:center;text-align:left;margin-bottom:8px;"><div style="flex:none;">'+spriteHTML(ai,3)+'</div><div><div class="gname">'+m.name+'（'+(m.adultName||ai.name)+'）</div><div class="gdesc">'+m.days+'日 いっしょ ／ '+m.died+' たびだち ／ おぼえた '+m.learned+'こ</div></div></div>'; });
@@ -491,13 +488,14 @@ window._eigoPetInit = function() {
   document.getElementById('btnDownload').onclick=function(){ var msg=document.getElementById('dataMsg'); try{ var blob=new Blob([JSON.stringify(state)],{type:'application/json'}); var url=URL.createObjectURL(blob); var a=document.createElement('a'); var d=new Date(), ds=d.getFullYear()+('0'+(d.getMonth()+1)).slice(-2)+('0'+d.getDate()).slice(-2); a.href=url; a.download='eigopet_backup_'+ds+'.json'; document.body.appendChild(a); a.click(); document.body.removeChild(a); setTimeout(function(){ URL.revokeObjectURL(url); },1500); msg.style.color='var(--g)'; msg.textContent='ファイルに ほぞんしました！'; }catch(e){ msg.style.color='#9b2222'; msg.textContent='ほぞん できないときは コードを つかってね'; } };
   document.getElementById('fileImport').onchange=function(e){ var f=e.target.files&&e.target.files[0]; var msg=document.getElementById('dataMsg'); if(!f) return; var r=new FileReader(); r.onload=function(){ var obj=null; try{ obj=JSON.parse(r.result); }catch(err){} if(!obj||typeof obj!=='object'||(obj.lv===undefined&&obj.learned===undefined)){ msg.style.color='#9b2222'; msg.textContent='この ファイルは よみこめません'; return; } if(!confirm('いまの データを この バックアップで 上書きします。よろしいですか？')) return; state=Object.assign({},state,obj); if(!WORDBANK[state.grade]) state.grade='jun2'; save(); msg.style.color='var(--g)'; msg.textContent='ふっかつしました！'; renderData(); render(); }; r.readAsText(f); e.target.value=''; };
   document.getElementById('atabs').onclick=function(e){ var b=e.target.closest('.atab'); if(!b) return; setAdminTab(b.dataset.t); };
-  function buyKeifuHint(){
-    var col=collectedAdults(), nonCol=0; Object.keys(ADULT_TIERS).forEach(function(t){ ADULT_TIERS[t].forEach(function(id){ if(!col[id]) nonCol++; }); });
-    if((state.keifuHints||0)>=nonCol){ bubble('ぜんぶ ひらいたよ！'); return; }
+  function buyReveal(id){
+    if(!ADULTS[id]) return;
+    if(!Array.isArray(state.keifuRevealed)) state.keifuRevealed=[];
+    if(state.keifuRevealed.indexOf(id)>=0) return; // すでに開いてる
     var cost=5; if(state.food<cost){ bubble('えさが たりない（'+cost+'こ ひつよう）'); return; }
-    state.food-=cost; state.keifuHints=(state.keifuHints||0)+1; save(); sfx('unlock'); cheer(); renderAdmin(); render();
+    state.food-=cost; state.keifuRevealed.push(id); save(); sfx('unlock'); cheer(); renderAdmin(); render();
   }
-  document.getElementById('adminTree').addEventListener('click',function(e){ if(e.target&&e.target.id==='buyHint') buyKeifuHint(); });
+  document.getElementById('adminTree').addEventListener('click',function(e){ var b=e.target.closest('.tnode.lock'); if(b&&b.dataset.id) buyReveal(b.dataset.id); });
   function cosCard(kind,it,locked,sel){ var swatch; if(kind==='color'){ swatch='<div class="cosswatch" style="background:'+PAL.w+';border:3px solid '+it.o+'"></div>'; } else { var inner=it.scene?sceneWrap(SCENES[it.scene]()):('<div style="height:30%;background:'+(it.ground||'#dfd3b0')+'"></div>'); swatch='<div class="cosswatch" style="background:'+it.bg+'">'+inner+'</div>'; } var lbl=locked?('🔒 '+it.need+'ご'):it.name; return '<button class="coscard'+(sel?' sel':'')+(locked?' locked':'')+'" data-kind="'+kind+'" data-id="'+it.id+'"'+(locked?' disabled':'')+'>'+swatch+'<span>'+lbl+'</span></button>'; }
   function renderCosmetics(){ var bl=document.getElementById('bgList'); if(bl) bl.innerHTML=BGS.map(function(b){ return cosCard('bg',b,state.learned<b.need,state.bg===b.id); }).join(''); }
   function equipCos(kind,id){ if(kind==='color') state.petColor=id; else state.bg=id; save(); render(); renderCosmetics(); }
@@ -570,7 +568,9 @@ window._eigoPetInit = function() {
   function pickWeighted(words,n){ var used={}, chosen=[], wt=words.map(function(w){ var r=state.learn[w[0].toLowerCase()]; return (r&&r.w&&!r.m)?5:(r&&r.m)?0.2:1; }); for(var s=0;s<n;s++){ var total=0,i; for(i=0;i<words.length;i++){ if(!used[i]) total+=wt[i]; } if(total<=0) break; var rnd=Math.random()*total, acc=0, idx=-1; for(i=0;i<words.length;i++){ if(used[i])continue; acc+=wt[i]; if(rnd<=acc){ idx=i; break; } } if(idx<0){ for(i=0;i<words.length;i++){ if(!used[i]){ idx=i; break; } } } if(idx<0) break; used[idx]=true; chosen.push(words[idx]); } return chosen; }
   function startStudy(){ reviewMode=false; qList=pickWeighted(currentWords(),QPER); qIdx=0; session={correct:0,combo:0,maxCombo:0,newMastered:0,total:qList.length}; document.getElementById('qTotal').textContent=qList.length; show('study'); nextQ(); }
   function escJa(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;'); }
-  function choiceHtml(w){ var lng=(w[1]||'').length>9?' long':''; var base='<span class="base'+lng+'">'+escJa(w[1])+'</span>'; var yomi=w[2]?'<span class="yomi">'+escJa(w[2])+'</span>':''; return yomi+base; }
+  function splitSenses(s){ return (s||'').split(/[，、,]/).map(function(x){ return x.trim(); }).filter(Boolean); }
+  function brJoin(s){ return splitSenses(s).map(escJa).join('，<br>'); } // コンマで 行を わける（読みやすく）
+  function choiceHtml(w){ var lng=(w[1]||'').length>9?' long':''; var base='<span class="base'+lng+'">'+brJoin(w[1])+'</span>'; var yomi=w[2]?'<span class="yomi">'+brJoin(w[2])+'</span>':''; return yomi+base; }
   function firstSenseKana(w){ var s=(w[2]||w[1]||''); return s.split(/[\u3001,\uff0c]/)[0].trim(); }
   function easyText(w){ var k=(w[0]||''); var e=(typeof EASY!=='undefined')?(EASY[k]||EASY[k.toLowerCase()]):null; return e||firstSenseKana(w); }
   function showEasy(w){ var box=document.getElementById('easyHint'); box.innerHTML='<div class="ehlabel">やさしいいみ</div><div class="ehmean">'+escJa(easyText(w))+'</div>'; box.style.display='block'; }
@@ -601,10 +601,11 @@ window._eigoPetInit = function() {
     var mkBtn=function(o,html){ var b=document.createElement('button'); b.className='ch'; b.innerHTML=html; if(o===correct) b._isCorrect=true; b.onclick=function(){ if(b._lp){ b._lp=false; return; } answer(b,o===correct,en); }; attachLongPress(b,function(){ showEasy(o); }); box.appendChild(b); };
     var speakBtn=document.getElementById('speak'); if(speakBtn) speakBtn.style.display=(qMode==='reverse')?'none':''; // 逆引きは 答え(英語)を読み上げないよう きくボタンを隠す
     if(qMode==='reverse'){
-      // いみ（ふりがな）→ えいごを えらぶ
-      var ptext=correct[2]||correct[1];
+      // いみ（漢字＋ふりがな）→ えいごを えらぶ
       prompt.textContent='この いみの えいごは？';
-      qw.textContent=ptext; qw.classList.toggle('long', ptext.length>8);
+      var kanji=correct[1]||'', yom=correct[2]||'';
+      qw.innerHTML=(yom?'<div class="qyomi">'+brJoin(yom)+'</div>':'')+'<div>'+brJoin(kanji)+'</div>';
+      qw.classList.toggle('long', kanji.length>6);
       if(hint) hint.textContent='ながおしすると いみ';
       var poolR=currentWords().filter(function(w){ return w[0]!==en&&w[1]!==correct[1]; });
       shuffle([correct].concat(shuffle(poolR).slice(0,3))).forEach(function(o){ mkBtn(o,'<span class="base'+((o[0]||'').length>9?' long':'')+'">'+escJa(o[0])+'</span>'); });
@@ -622,7 +623,7 @@ window._eigoPetInit = function() {
   function streakOnGoal(){ if(state.lastGoalDate===today()) return; if(state.lastGoalDate===yesterday()){ state.streak++; } else if(state.lastGoalDate){ var gap=Math.round((new Date(today())-new Date(state.lastGoalDate))/86400000)-1; if(gap>0&&state.freezeTickets>=gap){ state.freezeTickets-=gap; state.streak++; bubble('おやすみ券で れんぞく キープ！'); } else state.streak=1; } else state.streak=1; state.lastGoalDate=today(); if(state.streak>(state.maxStreak||0)) state.maxStreak=state.streak; if(state.metDates.indexOf(today())<0) state.metDates.push(today()); if(state.metDates.length>60) state.metDates=state.metDates.slice(-60); }
   function onGoalReached(){ streakOnGoal(); state.food+=5; state.happy=100; gainGP(20); gainGP(Math.min(state.streak,15)); checkTitles(); setTimeout(showGoalCelebration,850); }
   function checkUnlock(prevLearned){ var items=BGS.filter(function(it){ return it.need>prevLearned&&it.need<=state.learned; }); if(items.length){ bubble('あたらしい はいけい アンロック！'); sfx('unlock'); } }
-  function answer(btn,ok,en){ if(btn.classList.contains('ok')||btn.classList.contains('ng')) return; if(qMode==='listen'){ var _qw=document.getElementById('qword'); _qw.textContent=en; _qw.classList.toggle('long',en.length>12); } if(ok){ if(qMode==='reverse') speak(en); btn.classList.add('ok'); var prev=state.learned, kL=en.toLowerCase(), wasM=!!(state.learn[kL]&&state.learn[kL].m); session.combo=(session.combo||0)+1; if(session.combo>(session.maxCombo||0)) session.maxCombo=session.combo; var mult=session.combo>=6?3:session.combo>=3?2:1; var rt=isRewardTime()?2:1; var gain=mult*rt; session.correct++; state.food+=gain; state.learned++; gainGP((reviewMode?10:8)*gain); onAnswer(en,true); if(!wasM&&state.learn[kL]&&state.learn[kL].m) session.newMastered=(session.newMastered||0)+1; recordLearned(en); checkUnlock(prev); checkTickets(); checkTitles(); sfx(session.combo>=3?'combo':'correct'); var msg2='せいかい！'; if(mult>1) msg2+=' コンボ×'+mult; if(rt>1) msg2+=' ⏰2ばい'; msg2+=reviewMode?' おぼえたね':(' えさ+'+gain); document.getElementById('reward').textContent=msg2; save(); checkEvolve(); setTimeout(function(){ qIdx++; nextQ(); },800); } else { btn.classList.add('ng'); session.combo=0; onAnswer(en,false); save(); sfx('wrong'); document.getElementById('reward').textContent='もういちど！'; } }
+  function answer(btn,ok,en){ var _cb0=document.getElementById('choices'); if(_cb0&&_cb0.style.pointerEvents==='none') return; /* 正解/回答済みなら無効 */ if(btn.classList.contains('ok')||btn.classList.contains('ng')) return; if(qMode==='listen'){ var _qw=document.getElementById('qword'); _qw.textContent=en; _qw.classList.toggle('long',en.length>12); } if(ok){ if(qMode==='reverse') speak(en); btn.classList.add('ok'); var _cbox=document.getElementById('choices'); if(_cbox) _cbox.style.pointerEvents='none'; /* 正解後は他のボタンを押せないように */ var prev=state.learned, kL=en.toLowerCase(), wasM=!!(state.learn[kL]&&state.learn[kL].m); session.combo=(session.combo||0)+1; if(session.combo>(session.maxCombo||0)) session.maxCombo=session.combo; var mult=session.combo>=6?3:session.combo>=3?2:1; var rt=isRewardTime()?2:1; var gain=mult*rt; session.correct++; state.food+=gain; state.learned++; gainGP((reviewMode?10:8)*gain); onAnswer(en,true); if(!wasM&&state.learn[kL]&&state.learn[kL].m) session.newMastered=(session.newMastered||0)+1; recordLearned(en); checkUnlock(prev); checkTickets(); checkTitles(); sfx(session.combo>=3?'combo':'correct'); var msg2='せいかい！'; if(mult>1) msg2+=' コンボ×'+mult; if(rt>1) msg2+=' ⏰2ばい'; msg2+=reviewMode?' おぼえたね':(' えさ+'+gain); document.getElementById('reward').textContent=msg2; save(); checkEvolve(); setTimeout(function(){ qIdx++; nextQ(); },800); } else { btn.classList.add('ng'); session.combo=0; onAnswer(en,false); save(); sfx('wrong'); document.getElementById('reward').textContent='もういちど！'; } }
   function finishStudy(){ updateStudyProg();
     var sc=document.getElementById('sdCorrect'); if(sc) sc.textContent=(session.correct||0)+' / '+(session.total||qList.length);
     var sm=document.getElementById('sdMastered'); if(sm) sm.textContent=session.newMastered||0;
