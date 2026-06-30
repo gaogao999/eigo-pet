@@ -607,10 +607,10 @@ window._eigoPetInit = function() {
   setInterval(function(){ if(homeVisible()&&!state.wagamama&&Math.random()<0.30) triggerWagamama(); },60000);
 
   /* ---- 躍動感（ホームでの ふるまい：おさんぽ・おひるね） ---- */
-  var asleep=false, walkTimer=null, behaveT=null;
+  var asleep=false, walkTimer=null, behaveT=null, napUntil=0, napCooldown=0;
   function petWrapEl(){ return document.getElementById('petWrap'); }
   function isNightTime(){ var b=curBg(); if(b&&b.id==='night') return true; try{ var h=new Date().getHours(); return h>=22||h<6; }catch(e){ return false; } }
-  function wakePet(){ if(!asleep) return; asleep=false; var w=petWrapEl(); if(w) w.classList.remove('asleep'); document.body.classList.remove('sleeping'); var z=document.getElementById('zzz'); if(z) z.classList.remove('on'); if(typeof drawPet==='function') drawPet(); }
+  function wakePet(){ if(!asleep) return; asleep=false; napUntil=0; napCooldown=Date.now()+(60000+Math.random()*60000); var w=petWrapEl(); if(w) w.classList.remove('asleep'); document.body.classList.remove('sleeping'); var z=document.getElementById('zzz'); if(z) z.classList.remove('on'); if(typeof drawPet==='function') drawPet(); }
   function sleepPet(){ if(asleep) return; asleep=true; var w=petWrapEl(); if(w){ w.classList.remove('walking','flip'); w.style.left='50%'; w.dataset.lx='50'; w.classList.add('asleep'); } document.body.classList.add('sleeping'); var z=document.getElementById('zzz'); if(z) z.classList.add('on'); if(typeof drawPet==='function') drawPet(); }
   function walkTo(){
     var w=petWrapEl(); if(!w) return;
@@ -627,12 +627,22 @@ window._eigoPetInit = function() {
     scheduleBehave();
     if(state._farewell || !homeVisible() || state.wagamama) return;
     if(state.lv<2){ wakePet(); var w0=petWrapEl(); if(w0){ w0.classList.remove('flip','walking'); w0.style.left='50%'; w0.dataset.lx='50'; } return; } // タマゴは うごかない
-    if(asleep){ if(!isNightTime()&&Math.random()<0.4) wakePet(); return; }
-    var sleepChance=isNightTime()?0.55:(state.sick?0.30:(state.happy<25?0.28:0.07));
-    if(Math.random()<sleepChance){ sleepPet(); return; }
-    if(Math.random()<0.78) walkTo();                 // のこりは その場で ひとやすみ
+    var night=isNightTime();
+    if(asleep){
+      // 夜は ずっと ねる（おこすのは おせわ）。ひるねは じかんが きたら おきる
+      if(!night && Date.now()>=napUntil) wakePet();
+      return;
+    }
+    if(night){ sleepPet(); return; }                 // 夜になったら ねる
+    // 昼：たまに みじかい ひるね（連続でチラつかないよう クールダウンつき）
+    if(Date.now()>=napCooldown){
+      var napChance=state.sick?0.16:(state.happy<25?0.12:0.03);
+      if(Math.random()<napChance){ napUntil=Date.now()+(22000+Math.random()*26000); sleepPet(); return; }
+    }
+    if(Math.random()<0.78) walkTo();                 // のこりは うろうろ／ひとやすみ
   }
   function scheduleBehave(){ clearTimeout(behaveT); behaveT=setTimeout(behaveStep, 1700+Math.random()*2400); }
+  napCooldown=Date.now()+30000;   // ひらいた直後 しばらくは ひるねしない（夜は のぞく）
   scheduleBehave();
 
   /* ---- boot ---- */
