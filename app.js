@@ -575,7 +575,7 @@ window._eigoPetInit = function() {
   function choiceHtml(w){ var lng=(w[1]||'').length>9?' long':''; return '<span class="base'+lng+'">'+rubyHTML(w[1],w[2])+'</span>'; }
   function firstSenseKana(w){ var s=(w[2]||w[1]||''); return s.split(/[\u3001,\uff0c]/)[0].trim(); }
   function easyText(w){ var k=(w[0]||''); var e=(typeof EASY!=='undefined')?(EASY[k]||EASY[k.toLowerCase()]):null; return e||firstSenseKana(w); }
-  function showEasy(w){ var box=document.getElementById('easyHint'); box.innerHTML='<div class="ehlabel">やさしいいみ</div><div class="ehmean">'+escJa(easyText(w))+'</div>'; box.style.display='block'; }
+  function showEasy(w){ var box=document.getElementById('easyHint'); box.innerHTML='<div class="ehlabel">やさしいいみ</div><div class="ehmean">'+escJa(easyText(w))+'</div>'; box.style.display='block'; try{ box.scrollIntoView({behavior:'smooth',block:'center'}); }catch(e){ try{ box.scrollIntoView(); }catch(_){} } }
   function attachLongPress(el,cb){
     var t=null, longFired=false, touched=false;
     function start(){ longFired=false; el._lp=false; clearTimeout(t); t=setTimeout(function(){ longFired=true; el._lp=true; cb(); },450); }
@@ -602,7 +602,7 @@ window._eigoPetInit = function() {
     var box=document.getElementById('choices'); box.innerHTML=''; box.style.pointerEvents='';
     var spellArea=document.getElementById('spellArea'); var isSpell=(qMode==='spell');
     box.style.display=isSpell?'none':'grid'; if(spellArea) spellArea.style.display=isSpell?'block':'none';
-    var mkBtn=function(o,html){ var b=document.createElement('button'); b.className='ch'; b.innerHTML=html; if(o===correct) b._isCorrect=true; b.onclick=function(){ if(b._lp){ b._lp=false; return; } answer(b,o===correct,en); }; attachLongPress(b,function(){ showEasy(o); }); box.appendChild(b); };
+    var mkBtn=function(o,html){ var b=document.createElement('button'); b.className='ch'; b.innerHTML=html; if(o===correct) b._isCorrect=true; b.onclick=function(){ if(b._lp){ b._lp=false; return; } answer(b,o===correct,en); }; if(qMode!=='reverse') attachLongPress(b,function(){ showEasy(o); }); box.appendChild(b); }; // 逆引きは 選択肢が英語＝長押しで答えが分かるので 無効
     var speakBtn=document.getElementById('speak'); if(speakBtn) speakBtn.style.display=(qMode==='reverse')?'none':''; // 逆引きは 答え(英語)を読み上げないよう きくボタンを隠す
     if(qMode==='reverse'){
       // いみ（漢字＋ふりがな）→ えいごを えらぶ
@@ -610,7 +610,7 @@ window._eigoPetInit = function() {
       var kanji=correct[1]||'', yom=correct[2]||'';
       qw.innerHTML='<div class="qmain">'+rubyHTML(kanji,yom)+'</div>';
       qw.classList.toggle('long', kanji.length>6);
-      if(hint) hint.textContent='ながおしすると いみ';
+      if(hint) hint.textContent='えいごを えらんでね';
       var poolR=currentWords().filter(function(w){ return w[0]!==en&&w[1]!==correct[1]; });
       shuffle([correct].concat(shuffle(poolR).slice(0,3))).forEach(function(o){ mkBtn(o,'<span class="base'+((o[0]||'').length>9?' long':'')+'">'+escJa(o[0])+'</span>'); });
     } else if(isSpell){
