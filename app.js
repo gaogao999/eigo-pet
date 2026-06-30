@@ -131,18 +131,26 @@ window._eigoPetInit = function() {
   function getImg(n){ if(!imgCache[n]){ var im=new Image(); im.src=imgSrc(n); imgCache[n]=im; } return imgCache[n]; }
   function babyInfo()  { return BABIES[state.babyType]  || BABIES.a; }
   function childInfo() { return CHILDREN[state.childType] || CHILDREN.a; }
-  function youngTierKey(){ var t=predictedTier(); return (t==='devil')?'wild':t; } // ヤングは 4ランク（devilは wild あつかい）
+  var TIER_ORDER=['wild','normal','good','star'];
+  // ランクは「その世代（生まれてから）の もくひょうたっせい日数」で判定（累積でないので 世代ごとに変わり 図鑑が埋まる）
+  function genMetDays(){ try{ var b=dayStr(new Date(state.born||Date.now())); return (state.metDates||[]).filter(function(d){ return d>=b; }).length; }catch(e){ return (state.metDates||[]).length; } }
+  function careTierIndex(){ var gm=genMetDays(); return gm>=3?3:gm>=2?2:gm>=1?1:0; }
+  function youngTierKey(){ if((state.careMiss+state.disciplineMiss)>=8) return 'wild'; return TIER_ORDER[careTierIndex()]; } // ヤングは 4ランク（devilは wild あつかい）
   function youngInfo() { return YOUNGS[state.youngType] || YOUNGS.normal; }
   function adultById(id){ return ADULTS[id] || (id&&LEGACY_ADULT[id]&&ADULTS[LEGACY_ADULT[id]]) || ADULTS[ADULT_TIERS.normal[0]]; }
   function adultInfo() { return adultById(state.adultType); }
   function adultMap()  { return adultInfo().map; }
-  function predictedTier(){
-    var ms=state.maxStreak||0, met=(state.metDates||[]).length, miss=state.careMiss+state.disciplineMiss;
-    if(miss>=8) return 'devil';
-    return (ms>=7&&met>=10)?'star':(ms>=3||met>=5)?'good':(met>=2)?'normal':'wild';
-  }
+  function predictedTier(){ if((state.careMiss+state.disciplineMiss)>=8) return 'devil'; return TIER_ORDER[careTierIndex()]; }
   function predictedAdultKey(){ return ADULT_TIERS[predictedTier()][0]; }
   function pickAdult(tier){ var pool=ADULT_TIERS[tier]||ADULT_TIERS.normal; return pool[(Math.random()*pool.length)|0]; }
+  // アダルト確定：そのランクを中心に、近いランクも確率で出る（続ければ全ランク＝全26種が集まる）
+  function pickAdultType(){
+    if((state.careMiss+state.disciplineMiss)>=8){ var dp=ADULT_TIERS.devil; return dp[(Math.random()*dp.length)|0]; }
+    var t=careTierIndex(), w=[], i; for(i=0;i<4;i++) w[i]=Math.pow(0.5,Math.abs(i-t));
+    var tot=w[0]+w[1]+w[2]+w[3], r=Math.random()*tot, acc=0, ti=t;
+    for(i=0;i<4;i++){ acc+=w[i]; if(r<=acc){ ti=i; break; } }
+    return pickAdult(TIER_ORDER[ti]);
+  }
   function petInfo(){ if(state.lv>=5) return adultInfo(); if(state.lv>=4) return youngInfo(); if(state.lv>=3) return childInfo(); if(state.lv>=2) return babyInfo(); return EGG_INFO; }
   function petMap(){ var i=petInfo(); return i.map||EGG; }
   function drawPet(){
@@ -277,16 +285,11 @@ window._eigoPetInit = function() {
   function checkEvolve(){
     if(state._farewell) return false;
     if(state.lv<5 && stageElapsed()>=STAGE_DUR[state.lv-1] && studiedToday()){
-      var miss=state.careMiss+state.disciplineMiss;
-      var ms=state.maxStreak||0, met=(state.metDates||[]).length;
       state.lv++; state.stageSince=Date.now();
       if(state.lv===2&&!state.babyType){ state.babyType='a'; }
       else if(state.lv===3&&!state.childType){ state.childType='a'; }
       else if(state.lv===4&&!state.youngType){ state.youngType=youngTierKey(); }
-      else if(state.lv===5&&!state.adultType){
-        var tier=(miss>=8)?'devil':(ms>=7&&met>=10)?'star':(ms>=3||met>=5)?'good':(met>=2)?'normal':'wild';
-        state.adultType=pickAdult(tier);
-      }
+      else if(state.lv===5&&!state.adultType){ state.adultType=pickAdultType(); }
       bubble(stageName()+"になった！"); sfx('fanfare'); save();
       if(typeof render==='function') render();
       return true;
@@ -380,7 +383,7 @@ window._eigoPetInit = function() {
     var fc=document.getElementById('fcSprite');
     if(fc){
       if(state.lv>=5){ var ai=adultInfo(); fc.innerHTML=spriteHTML(ai,3); document.getElementById('fcTitle').textContent='そだった アダルト'; document.getElementById('fcName').textContent=ai.name; document.getElementById('fcMsg').textContent='りっぱに そだったね！'; }
-      else { var tier2=predictedTier(), pa=ADULTS[predictedAdultKey()]; fc.innerHTML=spriteHTML(pa,3); document.getElementById('fcTitle').textContent='いまの ペースだと…'; document.getElementById('fcName').textContent=(tier2==='devil')?'？？？':(pa.name+' など'); var ms2=state.maxStreak||0, met3=(state.metDates||[]).length; var ns=Math.max(0,7-ms2), nm=Math.max(0,10-met3); document.getElementById('fcMsg').textContent=(tier2==='star')?'さいこうの おとな コース！この ちょうしで！':(tier2==='devil')?'サボりすぎ… べんきょう・おせわを しよう':('さいこうを めざすなら：れんぞく あと'+ns+'日 ／ たっせい あと'+nm+'日！'); }
+      else { var tier2=predictedTier(), pa=ADULTS[predictedAdultKey()]; fc.innerHTML=spriteHTML(pa,3); document.getElementById('fcTitle').textContent='いまの ペースだと…'; document.getElementById('fcName').textContent=(tier2==='devil')?'？？？':(pa.name+' など'); var needS=Math.max(0,3-genMetDays()); document.getElementById('fcMsg').textContent=(tier2==='star')?'さいこうの おとな コース！この ちょうしで！':(tier2==='devil')?'サボりすぎ… べんきょう・おせわを しよう':('まいにち もくひょうたっせいで さいこうの おとなに！（あと'+needS+'日）'); }
     }
     var nd=document.getElementById('nudge');
     if(nd){ if(done>=goal){ nd.style.display='none'; } else { nd.style.display='block'; nd.textContent=done>0?('きょうは あと '+(goal-done)+'こ！ がくしゅうしよう →'):('きょうの べんきょうを はじめよう！ →'); } }
