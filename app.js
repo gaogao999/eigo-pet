@@ -570,7 +570,9 @@ window._eigoPetInit = function() {
   function escJa(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;'); }
   function splitSenses(s){ return (s||'').split(/[，、,]/).map(function(x){ return x.trim(); }).filter(Boolean); }
   function brJoin(s){ return splitSenses(s).map(escJa).join('，<br>'); } // コンマで 行を わける（読みやすく）
-  function choiceHtml(w){ var lng=(w[1]||'').length>9?' long':''; var base='<span class="base'+lng+'">'+brJoin(w[1])+'</span>'; var yomi=w[2]?'<span class="yomi">'+brJoin(w[2])+'</span>':''; return yomi+base; }
+  // 各いみの ふりがなを その漢字の 真上に（ruby）。コンマで 行を わける
+  function rubyHTML(kanjiStr,yomiStr){ var ks=splitSenses(kanjiStr), ys=splitSenses(yomiStr); return ks.map(function(k,i){ var y=ys[i]; return y?('<ruby>'+escJa(k)+'<rt>'+escJa(y)+'</rt></ruby>'):escJa(k); }).join('，<br>'); }
+  function choiceHtml(w){ var lng=(w[1]||'').length>9?' long':''; return '<span class="base'+lng+'">'+rubyHTML(w[1],w[2])+'</span>'; }
   function firstSenseKana(w){ var s=(w[2]||w[1]||''); return s.split(/[\u3001,\uff0c]/)[0].trim(); }
   function easyText(w){ var k=(w[0]||''); var e=(typeof EASY!=='undefined')?(EASY[k]||EASY[k.toLowerCase()]):null; return e||firstSenseKana(w); }
   function showEasy(w){ var box=document.getElementById('easyHint'); box.innerHTML='<div class="ehlabel">やさしいいみ</div><div class="ehmean">'+escJa(easyText(w))+'</div>'; box.style.display='block'; }
@@ -606,7 +608,7 @@ window._eigoPetInit = function() {
       // いみ（漢字＋ふりがな）→ えいごを えらぶ
       prompt.textContent='この いみの えいごは？';
       var kanji=correct[1]||'', yom=correct[2]||'';
-      qw.innerHTML=(yom?'<div class="qyomi">'+brJoin(yom)+'</div>':'')+'<div>'+brJoin(kanji)+'</div>';
+      qw.innerHTML='<div class="qmain">'+rubyHTML(kanji,yom)+'</div>';
       qw.classList.toggle('long', kanji.length>6);
       if(hint) hint.textContent='ながおしすると いみ';
       var poolR=currentWords().filter(function(w){ return w[0]!==en&&w[1]!==correct[1]; });
@@ -615,7 +617,7 @@ window._eigoPetInit = function() {
       // おとを きいて＋いみを みて 英語スペルを にゅうりょく
       prompt.textContent='きいて スペルを かこう';
       var kanjiS=correct[1]||'', yomS=correct[2]||'';
-      qw.innerHTML='<div style="font-size:30px;">🔊</div>'+(yomS?'<div class="qyomi">'+brJoin(yomS)+'</div>':'')+'<div class="qmean">'+brJoin(kanjiS)+'</div>';
+      qw.innerHTML='<div style="font-size:30px;">🔊</div><div class="qmain">'+rubyHTML(kanjiS,yomS)+'</div>';
       qw.classList.add('long');
       if(hint) hint.textContent='おとを きいて えいごを かいてね';
       var sinp=document.getElementById('spellInput'), ssub=document.getElementById('spellSubmit');
