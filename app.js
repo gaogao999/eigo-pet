@@ -70,21 +70,32 @@ window._eigoPetInit = function() {
   var DEVIL_PAL = { o:'#15131a', k:'#2c2733', Y:'#f6d65e', e:'#15131a', p:'#f3a3bf' };
   var DEVIL=["..o.........o..",".ooo.......ooo.",".okko.....okko.","..ookkkkkkkoo..","...okkkkkkkkko.","okkYYkkkkkYYkko","okkYekkkkkeYkko","okkkkkpkpkkkkko","okkkkkkkkkkkkko",".okkkkkkkkkkko.","..okkkkkkkko.oo","...oo...oo...ok",".............oo"];
 
+  // 表示名マップ（画像ファイル名＝IDは変えず、見せる名前だけ変更）
+  var NAME_MAP = {
+    'ぴよっこ':'ぴよっち','ちびっこ':'ちびっち',
+    'すいすいたま':'すいすいたまっち','しろころ':'しろころっち','くさたま':'くさたまっち',
+    'おひさま':'おひさまっち','みらたま':'みらたまっち','にんじゃ':'にんじゃっち','ぴこぴこ':'ぴこぴこっち',
+    'どきどき':'どきどきっち','はがた':'はがたっち','かぶら':'かぶらっち','うらら':'うららっち','ねむね':'ねむねっち','うさたま':'うさたまっち','ぴよたま':'ぴよたまっち',
+    'はんば':'はんばっち','もぐもぐ':'もぐもぐっち','げーむ':'げーむっち','たまぱ':'たまぱっち','めっこ':'めっこっち','ぷくたま':'ぷくたまっち','ぴな':'ぴーなっち',
+    'めらめら':'めらめらっち','ちゃめ':'ちゃめっち','がくがく':'がくがくっち','くちぱ':'くちぱっち','ぴねむ':'ぴねむっち','ばぶたま':'ばぶたまっち',
+    'くろだま':'くろだまっち','おばけ':'おばけっち'
+  };
+  function dispName(id){ return NAME_MAP[id]||id; }
   var EGG_INFO = { img:'たまご', map:EGG, name:'タマゴ', desc:'もうすぐ うまれるよ。' };
   var BABIES = {
-    a: { img:'ぴよっこ', map:BABY, name:'ぴよっこ', desc:'たまごから かえったばかり。からを かぶった あかちゃん。' }
+    a: { img:'ぴよっこ', map:BABY, name:dispName('ぴよっこ'), desc:'たまごから かえったばかり。からを かぶった あかちゃん。' }
   };
   var CHILDREN = {
-    a: { img:'ちびっこ', map:KID, name:'ちびっこ', desc:'げんきに あるきまわる ちいさな こども。' }
+    a: { img:'ちびっこ', map:KID, name:dispName('ちびっこ'), desc:'げんきに あるきまわる ちいさな こども。' }
   };
   var YOUNG=["...o......o...","...oo....oo...","..oowwwwwwoo..",".owwwwwwwwwwo.","owwwoowwwoowwo","owwwwwwwwwwwwo","owwwwoooooowwo","owwwwwwwwwwwwo","owwwwwwwwwwwwo",".owwwwwwwwwwo.","..owwwwwwwwo..","...oo.oo.oo...",".............."];
   var YOUNG2=[".....oooo.....","....o....o....","..oowwwwwwoo..",".owwwwwwwwwwo.","owwoowwwwoowwo","owwwwwwwwwwwwo","owwwwwwwwwwwwo","owwwoooooowwwo","owwwwwwwwwwwwo",".owwwwwwwwwwo.","..owwwwwwwwo..","...oo.oo.oo...",".............."];
   // ヤングは おせわランク（star/good/normal/wild）に わかれる。この子が どの アダルト系統に そだつかの よこく
   var YOUNGS = {
-    star:   { img:'すいすいたま', map:YOUNG,  name:'すいすいたま', desc:'きらきら かがやく ゆうとうな わかもの。' },
-    good:   { img:'しろころ',     map:YOUNG2, name:'しろころ',     desc:'やさしくて おだやかな わかもの。' },
-    normal: { img:'もふたま',     map:YOUNG,  name:'もふたま',     desc:'マイペースで ふつうの わかもの。' },
-    wild:   { img:'くさたま',     map:YOUNG2, name:'くさたま',     desc:'やんちゃで げんきな わかもの。' }
+    star:   { img:'すいすいたま', map:YOUNG,  name:dispName('すいすいたま'), desc:'きらきら かがやく ゆうとうな わかもの。' },
+    good:   { img:'しろころ',     map:YOUNG2, name:dispName('しろころ'),     desc:'やさしくて おだやかな わかもの。' },
+    normal: { img:'もふたま',     map:YOUNG,  name:dispName('もふたま'),     desc:'マイペースで ふつうの わかもの。' },
+    wild:   { img:'くさたま',     map:YOUNG2, name:dispName('くさたま'),     desc:'やんちゃで げんきな わかもの。' }
   };
   // アダルトは おせわの せいせきで tier がきまり、その中から ランダムで しんかする
   var ADULT_TIERS = {
@@ -122,7 +133,7 @@ window._eigoPetInit = function() {
     'くろだま':'レア！せわを サボりすぎると あらわれる くろねこ。',
     'おばけ':'レア！よなかに そっと あらわれる おばけ。'
   };
-  var ADULTS = (function(){ var o={}; Object.keys(ADULT_TIERS).forEach(function(t){ ADULT_TIERS[t].forEach(function(id){ o[id]={ img:id, name:id, desc:ADULT_DESC[id]||'', tier:t, rare:(t==='devil') }; }); }); return o; })();
+  var ADULTS = (function(){ var o={}; Object.keys(ADULT_TIERS).forEach(function(t){ ADULT_TIERS[t].forEach(function(id){ o[id]={ img:id, name:dispName(id), desc:ADULT_DESC[id]||'', tier:t, rare:(t==='devil') }; }); }); return o; })();
   // きゅうバージョンの セーブ（tier_parity / devil）との ごかんマップ
   var LEGACY_ADULT = { star_e:'おひさま',star_o:'みらたま',good_e:'どきどき',good_o:'はがた',normal_e:'はんば',normal_o:'もぐもぐ',wild_e:'めらめら',wild_o:'ちゃめ',devil:'くろだま' };
   function normAdult(id){ return ADULTS[id]?id:(LEGACY_ADULT[id]||id); }
