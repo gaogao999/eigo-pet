@@ -196,7 +196,7 @@ window._eigoPetInit = function() {
     var s=null;
     var keys=[KEY, BAKKEY];
     for(var ki=0;ki<keys.length;ki++){ try{ var raw=localStorage.getItem(keys[ki]); if(raw){ s=JSON.parse(raw); break; } }catch(e){} }
-    var def={ name:"ぴよ",lv:1,xp:0,hunger:80,happy:80,food:0,dirty:false,streak:1,learned:0,last:today(),grade:"g3",discipline:50,weight:5,careMiss:0,disciplineMiss:0,wagamama:false,babyType:null,childType:null,adultType:null,customImg:{},gameHi:0,dailyGoal:20,todayDate:today(),todayWords:[],lastGoalDate:null,metDates:[],wrongWords:[],petColor:'brown',bg:'meadow',freezeTickets:0,lastTicketDate:null,rewardHour:null,lastBoxWeek:null,titles:[],sound:true,mastery:{},learn:{},maxStreak:0,sick:false,born:Date.now(),stageSince:Date.now(),lifespanDays:12+Math.floor(Math.random()*3),youngType:null,memories:[],schemaV:2,lastBackupNudge:null,lastTick:Date.now() };
+    var def={ name:"ぴよ",lv:1,xp:0,hunger:80,happy:80,food:0,dirty:false,streak:1,learned:0,last:today(),grade:"g3",discipline:50,weight:5,careMiss:0,disciplineMiss:0,wagamama:false,babyType:null,childType:null,adultType:null,customImg:{},gameHi:0,dailyGoal:20,todayDate:today(),todayWords:[],lastGoalDate:null,metDates:[],wrongWords:[],petColor:'brown',bg:'meadow',freezeTickets:0,lastTicketDate:null,rewardHour:null,lastBoxWeek:null,titles:[],sound:true,mastery:{},learn:{},maxStreak:0,sick:false,born:Date.now(),stageSince:Date.now(),lifespanDays:12+Math.floor(Math.random()*3),youngType:null,memories:[],schemaV:2,lastBackupNudge:null,lastTick:Date.now(),keifuHints:0 };
     s=Object.assign({},def,s||{});
     s.dailyGoal=20; // 1日の目標は20に固定
     // 単語ごとの学習状況(learn)へ移行：旧mastery(正解数>=2でおぼえた)＋wrongWords(にがて)から復元
@@ -436,9 +436,19 @@ window._eigoPetInit = function() {
     tree+='<div class="trow">'+tnode(BABIES.a,BABIES.a.name,true)+'</div><div class="tarrow">↓</div>';
     tree+='<div class="trow">'+tnode(CHILDREN.a,CHILDREN.a.name,true)+'</div><div class="tarrow">↓</div>';
     var ytiers=[['star','⭐さいこう'],['good','◎よいこ'],['normal','○ふつう'],['wild','△わんぱく']];
-    tree+='<div class="tiertag">ヤング（おせわランクで わかれる）</div><div class="trow">'+ytiers.map(function(t){ return tnode(YOUNGS[t[0]],YOUNGS[t[0]].name,true); }).join('')+'</div><div class="tarrow">↓</div>';
+    tree+='<div class="tiertag">ヤング（おせわランクで わかれる）</div><div class="tgrid4">'+ytiers.map(function(t){ return tnode(YOUNGS[t[0]],YOUNGS[t[0]].name,true); }).join('')+'</div><div class="tarrow">↓</div>';
+    // アダルト：入手ずみは無料表示、それ以外は「？」。えさで 1体ずつ ヒント解放
+    var allAdults=[]; Object.keys(ADULT_TIERS).forEach(function(t){ ADULT_TIERS[t].forEach(function(id){ allAdults.push(id); }); });
+    var revealed={}, paidLeft=state.keifuHints||0, totalRev=0;
+    allAdults.forEach(function(id){ if(col[id]){ revealed[id]=true; totalRev++; } else if(paidLeft>0){ revealed[id]=true; paidLeft--; totalRev++; } });
+    var nonCol=allAdults.filter(function(id){ return !col[id]; }).length;
+    var allOpen=(state.keifuHints||0)>=nonCol;
+    var HINT_COST=5;
+    var btn=allOpen?'<button disabled>ぜんぶ ひらいた</button>':('<button id="buyHint">ヒントを ひらく 🍚×'+HINT_COST+'</button>');
+    tree+='<div class="keifuHint"><div style="font-size:12px;font-weight:800;color:var(--ink);line-height:1.5;">そだてかたの ヒント <b>'+totalRev+' / '+allAdults.length+'</b><br><span style="font-size:11px;color:var(--mut);font-weight:700;">えさで すがたを ひらけるよ</span></div>'+btn+'</div>';
     var tiers=[['star','⭐さいこう'],['good','◎よいこ'],['normal','○ふつう'],['wild','△わんぱく'],['devil','★レア']];
-    for(var ti=0;ti<tiers.length;ti++){ var tl=tiers[ti]; tree+='<div class="tiertag">アダルト：'+tl[1]+'</div><div class="trow">'+ADULT_TIERS[tl[0]].map(function(id){ return tnode(ADULTS[id],ADULTS[id].name,true); }).join('')+'</div>'; }
+    var lockNode=function(){ return '<div class="tnode small lock"><div class="tsprite">？</div><div class="tlabel">？？？</div></div>'; };
+    for(var ti=0;ti<tiers.length;ti++){ var tl=tiers[ti]; tree+='<div class="tiertag">アダルト：'+tl[1]+'</div><div class="tgrid">'+ADULT_TIERS[tl[0]].map(function(id){ return revealed[id]?tnode(ADULTS[id],ADULTS[id].name,true):lockNode(); }).join('')+'</div>'; }
     if((state.memories||[]).length){
       var mh='<div class="gstage">おもいで（これまでの子）</div>';
       state.memories.forEach(function(m){ var ai=adultById(m.adultType); mh+='<div class="gcard" style="display:flex;gap:12px;align-items:center;text-align:left;margin-bottom:8px;"><div style="flex:none;">'+spriteHTML(ai,3)+'</div><div><div class="gname">'+m.name+'（'+(m.adultName||ai.name)+'）</div><div class="gdesc">'+m.days+'日 いっしょ ／ '+m.died+' たびだち ／ おぼえた '+m.learned+'こ</div></div></div>'; });
@@ -481,6 +491,13 @@ window._eigoPetInit = function() {
   document.getElementById('btnDownload').onclick=function(){ var msg=document.getElementById('dataMsg'); try{ var blob=new Blob([JSON.stringify(state)],{type:'application/json'}); var url=URL.createObjectURL(blob); var a=document.createElement('a'); var d=new Date(), ds=d.getFullYear()+('0'+(d.getMonth()+1)).slice(-2)+('0'+d.getDate()).slice(-2); a.href=url; a.download='eigopet_backup_'+ds+'.json'; document.body.appendChild(a); a.click(); document.body.removeChild(a); setTimeout(function(){ URL.revokeObjectURL(url); },1500); msg.style.color='var(--g)'; msg.textContent='ファイルに ほぞんしました！'; }catch(e){ msg.style.color='#9b2222'; msg.textContent='ほぞん できないときは コードを つかってね'; } };
   document.getElementById('fileImport').onchange=function(e){ var f=e.target.files&&e.target.files[0]; var msg=document.getElementById('dataMsg'); if(!f) return; var r=new FileReader(); r.onload=function(){ var obj=null; try{ obj=JSON.parse(r.result); }catch(err){} if(!obj||typeof obj!=='object'||(obj.lv===undefined&&obj.learned===undefined)){ msg.style.color='#9b2222'; msg.textContent='この ファイルは よみこめません'; return; } if(!confirm('いまの データを この バックアップで 上書きします。よろしいですか？')) return; state=Object.assign({},state,obj); if(!WORDBANK[state.grade]) state.grade='jun2'; save(); msg.style.color='var(--g)'; msg.textContent='ふっかつしました！'; renderData(); render(); }; r.readAsText(f); e.target.value=''; };
   document.getElementById('atabs').onclick=function(e){ var b=e.target.closest('.atab'); if(!b) return; setAdminTab(b.dataset.t); };
+  function buyKeifuHint(){
+    var col=collectedAdults(), nonCol=0; Object.keys(ADULT_TIERS).forEach(function(t){ ADULT_TIERS[t].forEach(function(id){ if(!col[id]) nonCol++; }); });
+    if((state.keifuHints||0)>=nonCol){ bubble('ぜんぶ ひらいたよ！'); return; }
+    var cost=5; if(state.food<cost){ bubble('えさが たりない（'+cost+'こ ひつよう）'); return; }
+    state.food-=cost; state.keifuHints=(state.keifuHints||0)+1; save(); sfx('unlock'); cheer(); renderAdmin(); render();
+  }
+  document.getElementById('adminTree').addEventListener('click',function(e){ if(e.target&&e.target.id==='buyHint') buyKeifuHint(); });
   function cosCard(kind,it,locked,sel){ var swatch; if(kind==='color'){ swatch='<div class="cosswatch" style="background:'+PAL.w+';border:3px solid '+it.o+'"></div>'; } else { var inner=it.scene?sceneWrap(SCENES[it.scene]()):('<div style="height:30%;background:'+(it.ground||'#dfd3b0')+'"></div>'); swatch='<div class="cosswatch" style="background:'+it.bg+'">'+inner+'</div>'; } var lbl=locked?('🔒 '+it.need+'ご'):it.name; return '<button class="coscard'+(sel?' sel':'')+(locked?' locked':'')+'" data-kind="'+kind+'" data-id="'+it.id+'"'+(locked?' disabled':'')+'>'+swatch+'<span>'+lbl+'</span></button>'; }
   function renderCosmetics(){ var bl=document.getElementById('bgList'); if(bl) bl.innerHTML=BGS.map(function(b){ return cosCard('bg',b,state.learned<b.need,state.bg===b.id); }).join(''); }
   function equipCos(kind,id){ if(kind==='color') state.petColor=id; else state.bg=id; save(); render(); renderCosmetics(); }
