@@ -91,6 +91,9 @@ if(window.caches){caches.keys().then(function(ks){ks.forEach(function(k){caches.
     #qword{font-size:42px;font-weight:900;letter-spacing:.5px;color:var(--ink);word-break:break-word;line-height:1.15;margin:6px 0 2px;}
     #qword.long{font-size:26px;}
     #qword .qyomi{font-size:15px;color:var(--mut);font-weight:800;line-height:1.25;margin-bottom:2px;}
+    .sbar{display:inline-block;width:18px;height:5px;border-radius:3px;background:#d4ddd7;margin:4px 3px 0;transition:background .15s;}
+    .sbar.on{background:var(--g);}
+    .sgap{display:inline-block;width:14px;}
     .ehlabel{font-size:12px;font-weight:800;color:#92400e;}
     .ehmean{font-size:20px;font-weight:900;color:#15803d;margin-top:4px;line-height:1.4;}
     .gbtn{border:2px solid var(--bdr);background:var(--card);border-radius:8px;padding:13px 0;font-size:14px;font-weight:800;color:var(--mut);cursor:pointer;font-family:inherit;transition:.15s;}
@@ -342,6 +345,7 @@ if(window.caches){caches.keys().then(function(ks){ks.forEach(function(k){caches.
   </div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:18px;" id="choices"></div>
   <div id="spellArea" style="display:none;margin-top:18px;">
+    <div id="spellBars" style="display:flex;flex-wrap:wrap;justify-content:center;align-items:flex-end;gap:0;margin-bottom:12px;min-height:10px;"></div>
     <div style="display:flex;gap:8px;">
       <input id="spellInput" type="text" inputmode="latin" autocapitalize="none" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="えいごを かこう" style="flex:1;min-width:0;padding:14px 16px;border:2px solid var(--bdr);border-radius:10px;font-size:20px;font-weight:800;font-family:inherit;background:var(--card);color:var(--ink);outline:none;text-align:center;">
       <button id="spellSubmit" style="flex-shrink:0;border:none;border-radius:10px;padding:0 18px;font-size:16px;font-weight:900;background:linear-gradient(135deg,#29a65e,#5cde94);color:#fff;cursor:pointer;font-family:inherit;">こたえる</button>

@@ -620,6 +620,8 @@ window._eigoPetInit = function() {
       if(hint) hint.textContent='おとを きいて えいごを かいてね';
       var sinp=document.getElementById('spellInput'), ssub=document.getElementById('spellSubmit');
       if(sinp){ sinp.disabled=false; sinp.value=''; } if(ssub) ssub.disabled=false;
+      var bars=document.getElementById('spellBars'); if(bars){ var bh=''; for(var ci=0;ci<en.length;ci++){ bh+=(en.charAt(ci)===' ')?'<span class="sgap"></span>':'<span class="sbar"></span>'; } bars.innerHTML=bh; }
+      updateSpellBars();
       setTimeout(function(){ try{ sinp&&sinp.focus(); }catch(e){} },60);
       speak(en);
     } else {
@@ -630,6 +632,13 @@ window._eigoPetInit = function() {
       shuffle([correct].concat(shuffle(pool).slice(0,3))).forEach(function(o){ mkBtn(o,choiceHtml(o)); });
       speak(en);
     }
+  }
+  function updateSpellBars(){
+    var inp=document.getElementById('spellInput'), bars=document.getElementById('spellBars');
+    if(!inp||!bars) return;
+    var typed=(inp.value||'').replace(/\s+/g,'').length;
+    var sb=bars.querySelectorAll('.sbar');
+    for(var i=0;i<sb.length;i++){ sb[i].classList.toggle('on', i<typed); }
   }
   function submitSpell(){
     if(!curWord||qMode!=='spell') return;
@@ -669,7 +678,7 @@ window._eigoPetInit = function() {
   if(window.speechSynthesis){ speechSynthesis.onvoiceschanged=function(){ enVoice=pickVoice(); }; ensureVoice(); }
   function speak(en){ try{ if(!window.speechSynthesis) return; var u=new SpeechSynthesisUtterance(en); var v=ensureVoice(); if(v){ u.voice=v; u.lang=v.lang; } else { u.lang='en-US'; } u.rate=0.8; u.pitch=1.0; speechSynthesis.cancel(); speechSynthesis.speak(u); }catch(e){} }
   document.getElementById('speak').onclick=function(){ speak(curWord?curWord[0]:document.getElementById('qword').textContent); };
-  (function(){ var sb=document.getElementById('spellSubmit'); if(sb) sb.onclick=submitSpell; var si=document.getElementById('spellInput'); if(si) si.addEventListener('keydown',function(e){ if(e.key==='Enter'){ e.preventDefault(); submitSpell(); } }); })();
+  (function(){ var sb=document.getElementById('spellSubmit'); if(sb) sb.onclick=submitSpell; var si=document.getElementById('spellInput'); if(si){ si.addEventListener('keydown',function(e){ if(e.key==='Enter'){ e.preventDefault(); submitSpell(); } }); si.addEventListener('input',updateSpellBars); } })();
   document.getElementById('dontKnow').onclick=function(){
     if(!curWord) return;
     if(qMode==='spell'){ var inp=document.getElementById('spellInput'); if(inp&&inp.disabled) return; if(inp) inp.disabled=true; var sb2=document.getElementById('spellSubmit'); if(sb2) sb2.disabled=true; onAnswer(curWord[0],false); save(); document.getElementById('reward').textContent='こたえ：'+curWord[0]; showEasy(curWord); setTimeout(function(){ qIdx++; nextQ(); },2200); return; }
