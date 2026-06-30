@@ -599,7 +599,7 @@ window._eigoPetInit = function() {
     var qw=document.getElementById('qword'), prompt=document.getElementById('qPrompt'), hint=document.getElementById('qHint');
     var box=document.getElementById('choices'); box.innerHTML=''; box.style.pointerEvents='';
     var spellArea=document.getElementById('spellArea'); var isSpell=(qMode==='spell');
-    box.style.display=isSpell?'none':''; if(spellArea) spellArea.style.display=isSpell?'block':'none';
+    box.style.display=isSpell?'none':'grid'; if(spellArea) spellArea.style.display=isSpell?'block':'none';
     var mkBtn=function(o,html){ var b=document.createElement('button'); b.className='ch'; b.innerHTML=html; if(o===correct) b._isCorrect=true; b.onclick=function(){ if(b._lp){ b._lp=false; return; } answer(b,o===correct,en); }; attachLongPress(b,function(){ showEasy(o); }); box.appendChild(b); };
     var speakBtn=document.getElementById('speak'); if(speakBtn) speakBtn.style.display=(qMode==='reverse')?'none':''; // 逆引きは 答え(英語)を読み上げないよう きくボタンを隠す
     if(qMode==='reverse'){
