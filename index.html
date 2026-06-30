@@ -320,13 +320,13 @@ if(window.caches){caches.keys().then(function(ks){ks.forEach(function(k){caches.
     <div style="width:48px;"></div>
   </div>
   <div style="background:var(--card);border:2px solid var(--bdr);border-radius:16px;padding:28px 20px;text-align:center;box-shadow:0 2px 12px rgba(41,166,94,.08);">
-    <div style="font-size:13px;color:var(--mut);font-weight:800;margin-bottom:12px;">この えいごの いみは？</div>
+    <div id="qPrompt" style="font-size:13px;color:var(--mut);font-weight:800;margin-bottom:12px;">この えいごの いみは？</div>
     <div id="qword">apple</div>
     <button id="speak" style="background:var(--gl);border:2px solid var(--bdr);border-radius:8px;padding:8px 20px;font-size:14px;font-weight:800;color:var(--g);cursor:pointer;margin-top:12px;font-family:inherit;display:inline-flex;align-items:center;gap:8px;">
       <svg width="16" height="14" viewBox="0 0 16 14" shape-rendering="crispEdges"><rect x="0" y="4" width="4" height="6" fill="currentColor"/><rect x="4" y="2" width="2" height="10" fill="currentColor"/><rect x="6" y="0" width="2" height="14" fill="currentColor"/><rect x="10" y="4" width="2" height="6" fill="currentColor"/><rect x="14" y="2" width="2" height="10" fill="currentColor"/></svg>
       きく
     </button>
-    <div style="font-size:11px;color:var(--mut);margin-top:10px;font-weight:700;">ながおしすると やさしいいみ</div>
+    <div id="qHint" style="font-size:11px;color:var(--mut);margin-top:10px;font-weight:700;">ながおしすると やさしいいみ</div>
   </div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:18px;" id="choices"></div>
   <button id="dontKnow" style="width:100%;margin-top:12px;padding:13px;font-size:14px;font-weight:800;background:#f1f5f9;color:#64748b;border:2px solid #e2e8f0;border-radius:10px;cursor:pointer;font-family:inherit;">わからない（こたえを みる）</button>

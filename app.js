@@ -531,7 +531,7 @@ window._eigoPetInit = function() {
   document.getElementById('goStudy').onclick=startStudy;
   document.getElementById('back').onclick=function(){ show('learn'); render(); };
   function shuffle(a){ a=a.slice(); for(var i=a.length-1;i>0;i--){ var j=(Math.random()*(i+1))|0; var tmp=a[i]; a[i]=a[j]; a[j]=tmp; } return a; }
-  var curWord=null, reviewMode=false;
+  var curWord=null, reviewMode=false, qMode='meaning';
   function addWrong(w){ if(!w) return; if(!state.wrongWords.some(function(x){ return x[0]===w[0]; })){ state.wrongWords.push([w[0],w[1],w[2]||'',w[3]||'']); if(state.wrongWords.length>200) state.wrongWords=state.wrongWords.slice(-200); } }
   function clearWrong(en){ state.wrongWords=state.wrongWords.filter(function(x){ return x[0]!==en; }); }
   // まちがえた単語(復習まち)を出やすくする重み付き抽選。覚えた=低確率で再確認
@@ -554,27 +554,43 @@ window._eigoPetInit = function() {
     el.addEventListener('mouseleave',cancel);
   }
   function updateStudyProg(){ var fill=document.getElementById('studyProgFill'); if(fill) fill.style.width=((qIdx/(qList?qList.length:1))*100)+'%'; }
+  function pickQMode(){ var r=Math.random(); return r<0.5?'meaning':(r<0.75?'listen':'reverse'); } // 1/2 いみ・1/4 リスニング・1/4 ぎゃくびき
   function nextQ(){
     document.getElementById('easyHint').style.display='none';
     if(qIdx>=qList.length){ finishStudy(); return; }
     updateStudyProg();
     var correct=qList[qIdx]; curWord=correct;
     var en=correct[0];
+    qMode=pickQMode();
     document.getElementById('qNo').textContent=qIdx+1;
-    var qw=document.getElementById('qword');
-    qw.textContent=en; qw.classList.toggle('long',en.length>12);
     document.getElementById('reward').textContent='';
-    var pool=currentWords().filter(function(w){ return w[0]!==en&&w[1]!==correct[1]; });
-    var opts=shuffle([correct].concat(shuffle(pool).slice(0,3)));
+    var qw=document.getElementById('qword'), prompt=document.getElementById('qPrompt'), hint=document.getElementById('qHint');
     var box=document.getElementById('choices'); box.innerHTML=''; box.style.pointerEvents='';
-    opts.forEach(function(o){ var b=document.createElement('button'); b.className='ch'; b.innerHTML=choiceHtml(o); if(o===correct) b._isCorrect=true; b.onclick=function(){ if(b._lp){ b._lp=false; return; } answer(b,o===correct,en); }; attachLongPress(b,function(){ showEasy(o); }); box.appendChild(b); });
-    speak(en);
+    var mkBtn=function(o,html){ var b=document.createElement('button'); b.className='ch'; b.innerHTML=html; if(o===correct) b._isCorrect=true; b.onclick=function(){ if(b._lp){ b._lp=false; return; } answer(b,o===correct,en); }; attachLongPress(b,function(){ showEasy(o); }); box.appendChild(b); };
+    var speakBtn=document.getElementById('speak'); if(speakBtn) speakBtn.style.display=(qMode==='reverse')?'none':''; // 逆引きは 答え(英語)を読み上げないよう きくボタンを隠す
+    if(qMode==='reverse'){
+      // いみ（ふりがな）→ えいごを えらぶ
+      var ptext=correct[2]||correct[1];
+      prompt.textContent='この いみの えいごは？';
+      qw.textContent=ptext; qw.classList.toggle('long', ptext.length>8);
+      if(hint) hint.textContent='ながおしすると いみ';
+      var poolR=currentWords().filter(function(w){ return w[0]!==en&&w[1]!==correct[1]; });
+      shuffle([correct].concat(shuffle(poolR).slice(0,3))).forEach(function(o){ mkBtn(o,'<span class="base'+((o[0]||'').length>9?' long':'')+'">'+escJa(o[0])+'</span>'); });
+    } else {
+      var listen=(qMode==='listen');
+      prompt.textContent=listen?'きいて いみを えらぼう':'この えいごの いみは？';
+      qw.textContent=listen?'🔊':en; qw.classList.toggle('long', !listen&&en.length>12);
+      if(hint) hint.textContent='ながおしすると やさしいいみ';
+      var pool=currentWords().filter(function(w){ return w[0]!==en&&w[1]!==correct[1]; });
+      shuffle([correct].concat(shuffle(pool).slice(0,3))).forEach(function(o){ mkBtn(o,choiceHtml(o)); });
+      speak(en);
+    }
   }
   function recordLearned(en){ if(state.todayDate!==today()){ state.todayDate=today(); state.todayWords=[]; } var k=en.toLowerCase(), already=state.todayWords.indexOf(k)>=0; if(!already) state.todayWords.push(k); if(!already&&state.todayWords.length===state.dailyGoal){ onGoalReached(); } }
   function streakOnGoal(){ if(state.lastGoalDate===today()) return; if(state.lastGoalDate===yesterday()){ state.streak++; } else if(state.lastGoalDate){ var gap=Math.round((new Date(today())-new Date(state.lastGoalDate))/86400000)-1; if(gap>0&&state.freezeTickets>=gap){ state.freezeTickets-=gap; state.streak++; bubble('おやすみ券で れんぞく キープ！'); } else state.streak=1; } else state.streak=1; state.lastGoalDate=today(); if(state.streak>(state.maxStreak||0)) state.maxStreak=state.streak; if(state.metDates.indexOf(today())<0) state.metDates.push(today()); if(state.metDates.length>60) state.metDates=state.metDates.slice(-60); }
   function onGoalReached(){ streakOnGoal(); state.food+=5; state.happy=100; gainGP(20); gainGP(Math.min(state.streak,15)); checkTitles(); setTimeout(showGoalCelebration,850); }
   function checkUnlock(prevLearned){ var items=BGS.filter(function(it){ return it.need>prevLearned&&it.need<=state.learned; }); if(items.length){ bubble('あたらしい はいけい アンロック！'); sfx('unlock'); } }
-  function answer(btn,ok,en){ if(btn.classList.contains('ok')||btn.classList.contains('ng')) return; if(ok){ btn.classList.add('ok'); var prev=state.learned, kL=en.toLowerCase(), wasM=!!(state.learn[kL]&&state.learn[kL].m); session.combo=(session.combo||0)+1; if(session.combo>(session.maxCombo||0)) session.maxCombo=session.combo; var mult=session.combo>=6?3:session.combo>=3?2:1; var rt=isRewardTime()?2:1; var gain=mult*rt; session.correct++; state.food+=gain; state.learned++; gainGP((reviewMode?10:8)*gain); onAnswer(en,true); if(!wasM&&state.learn[kL]&&state.learn[kL].m) session.newMastered=(session.newMastered||0)+1; recordLearned(en); checkUnlock(prev); checkTickets(); checkTitles(); sfx(session.combo>=3?'combo':'correct'); var msg2='せいかい！'; if(mult>1) msg2+=' コンボ×'+mult; if(rt>1) msg2+=' ⏰2ばい'; msg2+=reviewMode?' おぼえたね':(' えさ+'+gain); document.getElementById('reward').textContent=msg2; save(); checkEvolve(); setTimeout(function(){ qIdx++; nextQ(); },800); } else { btn.classList.add('ng'); session.combo=0; onAnswer(en,false); save(); sfx('wrong'); document.getElementById('reward').textContent='もういちど！'; } }
+  function answer(btn,ok,en){ if(btn.classList.contains('ok')||btn.classList.contains('ng')) return; if(qMode==='listen'){ var _qw=document.getElementById('qword'); _qw.textContent=en; _qw.classList.toggle('long',en.length>12); } if(ok){ if(qMode==='reverse') speak(en); btn.classList.add('ok'); var prev=state.learned, kL=en.toLowerCase(), wasM=!!(state.learn[kL]&&state.learn[kL].m); session.combo=(session.combo||0)+1; if(session.combo>(session.maxCombo||0)) session.maxCombo=session.combo; var mult=session.combo>=6?3:session.combo>=3?2:1; var rt=isRewardTime()?2:1; var gain=mult*rt; session.correct++; state.food+=gain; state.learned++; gainGP((reviewMode?10:8)*gain); onAnswer(en,true); if(!wasM&&state.learn[kL]&&state.learn[kL].m) session.newMastered=(session.newMastered||0)+1; recordLearned(en); checkUnlock(prev); checkTickets(); checkTitles(); sfx(session.combo>=3?'combo':'correct'); var msg2='せいかい！'; if(mult>1) msg2+=' コンボ×'+mult; if(rt>1) msg2+=' ⏰2ばい'; msg2+=reviewMode?' おぼえたね':(' えさ+'+gain); document.getElementById('reward').textContent=msg2; save(); checkEvolve(); setTimeout(function(){ qIdx++; nextQ(); },800); } else { btn.classList.add('ng'); session.combo=0; onAnswer(en,false); save(); sfx('wrong'); document.getElementById('reward').textContent='もういちど！'; } }
   function finishStudy(){ updateStudyProg();
     var sc=document.getElementById('sdCorrect'); if(sc) sc.textContent=(session.correct||0)+' / '+(session.total||qList.length);
     var sm=document.getElementById('sdMastered'); if(sm) sm.textContent=session.newMastered||0;
@@ -587,7 +603,7 @@ window._eigoPetInit = function() {
   function ensureVoice(){ if(!enVoice) enVoice=pickVoice(); return enVoice; }
   if(window.speechSynthesis){ speechSynthesis.onvoiceschanged=function(){ enVoice=pickVoice(); }; ensureVoice(); }
   function speak(en){ try{ if(!window.speechSynthesis) return; var u=new SpeechSynthesisUtterance(en); var v=ensureVoice(); if(v){ u.voice=v; u.lang=v.lang; } else { u.lang='en-US'; } u.rate=0.8; u.pitch=1.0; speechSynthesis.cancel(); speechSynthesis.speak(u); }catch(e){} }
-  document.getElementById('speak').onclick=function(){ speak(document.getElementById('qword').textContent); };
+  document.getElementById('speak').onclick=function(){ speak(curWord?curWord[0]:document.getElementById('qword').textContent); };
   document.getElementById('dontKnow').onclick=function(){
     if(!curWord) return;
     var box=document.getElementById('choices');
@@ -595,7 +611,8 @@ window._eigoPetInit = function() {
     box.style.pointerEvents='none';
     var btns=box.querySelectorAll('.ch'); for(var i=0;i<btns.length;i++){ if(btns[i]._isCorrect) btns[i].classList.add('ok'); }
     onAnswer(curWord[0],false); save(); // わからない＝復習まちへ
-    document.getElementById('reward').textContent='こたえ：'+curWord[1];
+    if(qMode==='listen'){ var _qw=document.getElementById('qword'); _qw.textContent=curWord[0]; _qw.classList.toggle('long',curWord[0].length>12); }
+    document.getElementById('reward').textContent='こたえ：'+(qMode==='reverse'?curWord[0]:curWord[1]);
     showEasy(curWord);
     setTimeout(function(){ qIdx++; nextQ(); },2000);
   };
