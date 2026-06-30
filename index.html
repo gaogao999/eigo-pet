@@ -3,6 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- React/ReactDOM をローカル同梱（CDN非依存・低速/障害時でも確実に起動）。support.js は window.React があれば外部を読みません -->
+<script src="./vendor/react.production.min.js"></script>
+<script src="./vendor/react-dom.production.min.js"></script>
 <script src="./support.js"></script>
 <script>/* 以前のService Workerを解除しキャッシュを削除（更新が確実に届くように） */
 if('serviceWorker' in navigator){navigator.serviceWorker.getRegistrations().then(function(rs){rs.forEach(function(r){r.unregister();});}).catch(function(){});}
