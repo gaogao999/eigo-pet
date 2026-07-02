@@ -209,6 +209,8 @@ window._eigoPetInit = function() {
     if(s.grade==='g3') s.grade='jun2';
     // ライフサイクル改修(schemaV2)への移行：旧アダルト(lv4)→新アダルト(lv5)
     if(!s.schemaV || s.schemaV<2){ if(s.lv>=4) s.lv=5; if(typeof s.born!=='number') s.born=Date.now(); if(typeof s.stageSince!=='number') s.stageSince=Date.now(); if(typeof s.lifespanDays!=='number') s.lifespanDays=12; if(!Array.isArray(s.memories)) s.memories=[]; s.schemaV=2; }
+    // 旧「ヒントまとめ買い」(keifuHints)は タップ式に変更ずみ → 払ったえさを 返金して精算
+    if(s.keifuHints>0){ s.food=(s.food||0)+s.keifuHints*5; s.keifuHints=0; }
     return s;
   })();
   function save(){ try{ var js=JSON.stringify(state); localStorage.setItem(KEY,js); localStorage.setItem(BAKKEY,js); }catch(e){} }
@@ -235,7 +237,6 @@ window._eigoPetInit = function() {
   }
 
   /* ---- titles ---- */
-  function learnRec(k){ return state.learn[k]||{c:0,w:false,m:false}; }
   function onAnswer(en,ok){ var k=(en||'').toLowerCase(); var r=state.learn[k]||{c:0,w:false,m:false}; if(ok){ r.c=(r.c||0)+1; if(r.c>=(r.w?2:1)) r.m=true; } else { r.c=0; r.w=true; r.m=false; } state.learn[k]=r; }
   function isReviewWord(k){ var r=state.learn[k]; return !!(r&&r.w&&!r.m); }
   function masteredCount(){ var n=0; for(var k in state.learn){ if(state.learn[k].m) n++; } return n; }
@@ -349,7 +350,10 @@ window._eigoPetInit = function() {
     document.getElementById('hungerBar').style.width=pct(state.hunger);
     document.getElementById('happyBar').style.width=pct(state.happy);
     document.getElementById('discBar').style.width=pct(state.discipline);
-    document.getElementById('xpBar').style.width=pct(state.lv>=5?100:Math.min(100,stageElapsed()/STAGE_DUR[state.lv-1]*100));
+    // アダルトは「いのち残り」、それまでは「つぎの姿への成長」をバーで表示
+    var isAdult=state.lv>=5;
+    document.getElementById('xpBar').style.width=pct(isAdult?Math.max(0,(state.lifespanDays-ageDays())/(state.lifespanDays||12)*100):Math.min(100,stageElapsed()/STAGE_DUR[state.lv-1]*100));
+    var xl=document.getElementById('xpLabel'); if(xl) xl.textContent=isAdult?'いのち':'せいちょう';
     document.getElementById('foodCnt').textContent='えさ '+state.food;
     document.getElementById('cleanCnt').textContent=state.dirty?'よごれてる':'きれい';
     document.getElementById('scoldCnt').textContent=state.wagamama?'いまだ！':'わがまま時';
@@ -479,7 +483,7 @@ window._eigoPetInit = function() {
   document.getElementById('wlSearch').oninput=function(){ renderWordList(); };
   document.getElementById('wlWrongBtn').onclick=function(){ wlWrongOnly=!wlWrongOnly; renderWordList(); };
   var curAdminTab='zukan';
-  function setAdminTab(t){ curAdminTab=t; ['zukan','kisekae','keifu','tango','data'].forEach(function(k){ document.getElementById('tab-'+k).style.display=(k===t)?'block':'none'; }); document.querySelectorAll('#atabs .atab').forEach(function(b){ b.classList.toggle('sel',b.dataset.t===t); }); if(t==='kisekae') renderCosmetics(); if(t==='data') renderData(); window.scrollTo(0,0); }
+  function setAdminTab(t){ curAdminTab=t; ['zukan','kisekae','keifu','tango','data'].forEach(function(k){ document.getElementById('tab-'+k).style.display=(k===t)?'block':'none'; }); document.querySelectorAll('#atabs .atab').forEach(function(b){ b.classList.toggle('sel',b.dataset.t===t); }); if(t==='kisekae') renderCosmetics(); if(t==='tango') renderWordList(); if(t==='data') renderData(); window.scrollTo(0,0); }
   function renderData(){ document.getElementById('dataStat').textContent='なまえ：'+state.name+' ／ レベル '+state.lv+' ／ おぼえた '+state.learned+'こ ／ 🔥'+displayStreak()+'にち'; document.getElementById('exportBox').style.display='none'; document.getElementById('btnCopy').style.display='none'; document.getElementById('importBox').value=''; document.getElementById('dataMsg').textContent=''; }
   function encodeState(){ return btoa(unescape(encodeURIComponent(JSON.stringify(state)))); }
   document.getElementById('btnExport').onclick=function(){ var box=document.getElementById('exportBox'); box.value=encodeState(); box.style.display='block'; document.getElementById('btnCopy').style.display='block'; };
@@ -522,7 +526,7 @@ window._eigoPetInit = function() {
   var session, qIdx, qList;
   var MAIN_TABS=['home','learn','shop','admin'];
   function show(id){ document.querySelectorAll('.screen').forEach(function(s){ s.classList.remove('on'); }); document.getElementById(id).classList.add('on'); var tb=document.getElementById('tabbar'); if(MAIN_TABS.indexOf(id)>=0){ tb.classList.add('on'); document.querySelectorAll('#tabbar .tab').forEach(function(b){ b.classList.toggle('sel',b.dataset.s===id); }); } else { tb.classList.remove('on'); } window.scrollTo(0,0); }
-  function gotoTab(s){ if(s==='admin'){ renderAdmin(); wlGrade=state.grade; renderWordList(); setAdminTab('zukan'); } if(s==='shop'){ renderShop(); } show(s); render(); }
+  function gotoTab(s){ if(s==='admin'){ renderAdmin(); wlGrade=state.grade; setAdminTab('zukan'); } if(s==='shop'){ renderShop(); } show(s); render(); } // 単語一覧(最大2258行)は たんごタブを開いたときだけ描画
   /* ---- ショップ（エサの使い道） ---- */
   var SHOP=[
     {id:'ticket', icon:'🎫', name:'おやすみ券', desc:'れんぞく記録を 1日 まもれる', cost:25, max:function(){ return state.freezeTickets>=9; }, buy:function(){ state.freezeTickets=Math.min(9,state.freezeTickets+1); }},
@@ -562,8 +566,6 @@ window._eigoPetInit = function() {
   document.getElementById('back').onclick=function(){ show('learn'); render(); };
   function shuffle(a){ a=a.slice(); for(var i=a.length-1;i>0;i--){ var j=(Math.random()*(i+1))|0; var tmp=a[i]; a[i]=a[j]; a[j]=tmp; } return a; }
   var curWord=null, reviewMode=false, qMode='meaning';
-  function addWrong(w){ if(!w) return; if(!state.wrongWords.some(function(x){ return x[0]===w[0]; })){ state.wrongWords.push([w[0],w[1],w[2]||'',w[3]||'']); if(state.wrongWords.length>200) state.wrongWords=state.wrongWords.slice(-200); } }
-  function clearWrong(en){ state.wrongWords=state.wrongWords.filter(function(x){ return x[0]!==en; }); }
   // まちがえた単語(復習まち)を出やすくする重み付き抽選。覚えた=低確率で再確認
   function pickWeighted(words,n){ var used={}, chosen=[], wt=words.map(function(w){ var r=state.learn[w[0].toLowerCase()]; return (r&&r.w&&!r.m)?5:(r&&r.m)?0.2:1; }); for(var s=0;s<n;s++){ var total=0,i; for(i=0;i<words.length;i++){ if(!used[i]) total+=wt[i]; } if(total<=0) break; var rnd=Math.random()*total, acc=0, idx=-1; for(i=0;i<words.length;i++){ if(used[i])continue; acc+=wt[i]; if(rnd<=acc){ idx=i; break; } } if(idx<0){ for(i=0;i<words.length;i++){ if(!used[i]){ idx=i; break; } } } if(idx<0) break; used[idx]=true; chosen.push(words[idx]); } return chosen; }
   function startStudy(){ reviewMode=false; qList=pickWeighted(currentWords(),QPER); qIdx=0; session={correct:0,combo:0,maxCombo:0,newMastered:0,total:qList.length}; document.getElementById('qTotal').textContent=qList.length; show('study'); nextQ(); }
