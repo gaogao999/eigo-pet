@@ -596,6 +596,7 @@ window._eigoPetInit = function() {
     var correct=qList[qIdx]; curWord=correct;
     var en=correct[0];
     qMode=pickQMode();
+    if(qMode==='spell'&&spellLetters(en).length>12) qMode='meaning'; // 長い単語・熟語のスペル入力は むずかしすぎるので 4択に
     document.getElementById('qNo').textContent=qIdx+1;
     document.getElementById('reward').textContent='';
     var qw=document.getElementById('qword'), prompt=document.getElementById('qPrompt'), hint=document.getElementById('qHint');
@@ -603,7 +604,7 @@ window._eigoPetInit = function() {
     var spellArea=document.getElementById('spellArea'); var isSpell=(qMode==='spell');
     box.style.display=isSpell?'none':'grid'; if(spellArea) spellArea.style.display=isSpell?'block':'none';
     var mkBtn=function(o,html){ var b=document.createElement('button'); b.className='ch'; b.innerHTML=html; if(o===correct) b._isCorrect=true; b.onclick=function(){ if(b._lp){ b._lp=false; return; } answer(b,o===correct,en); }; if(qMode!=='reverse') attachLongPress(b,function(){ showEasy(o); }); box.appendChild(b); }; // 逆引きは 選択肢が英語＝長押しで答えが分かるので 無効
-    var speakBtn=document.getElementById('speak'); if(speakBtn) speakBtn.style.display=(qMode==='reverse')?'none':''; // 逆引きは 答え(英語)を読み上げないよう きくボタンを隠す
+    var speakBtn=document.getElementById('speak'); if(speakBtn) speakBtn.style.display=(qMode==='reverse')?'none':'inline-flex'; // 逆引きは 答え(英語)を読み上げないよう きくボタンを隠す
     if(qMode==='reverse'){
       // いみ（漢字＋ふりがな）→ えいごを えらぶ
       prompt.textContent='この いみの えいごは？';
@@ -622,7 +623,7 @@ window._eigoPetInit = function() {
       if(hint) hint.textContent='おとを きいて えいごを かいてね';
       var sinp=document.getElementById('spellInput'), ssub=document.getElementById('spellSubmit');
       if(sinp){ sinp.disabled=false; sinp.value=''; } if(ssub) ssub.disabled=false;
-      var bars=document.getElementById('spellBars'); if(bars){ var bh=''; for(var ci=0;ci<en.length;ci++){ bh+=(en.charAt(ci)===' ')?'<span class="sgap"></span>':'<span class="sbar"></span>'; } bars.innerHTML=bh; }
+      var bars=document.getElementById('spellBars'); if(bars){ var bh=''; for(var ci=0;ci<en.length;ci++){ bh+=/[A-Za-z]/.test(en.charAt(ci))?'<span class="sbar"></span>':'<span class="sgap"></span>'; } bars.innerHTML=bh; } // 文字だけバー。スペース・ハイフン等は すきま
       updateSpellBars();
       setTimeout(function(){ try{ sinp&&sinp.focus(); }catch(e){} },60);
       speak(en);
@@ -635,19 +636,20 @@ window._eigoPetInit = function() {
       speak(en);
     }
   }
+  function spellLetters(s){ return (s||'').replace(/[^A-Za-z]/g,'').toLowerCase(); } // 判定は 文字だけ（ハイフン・スペースは 打たなくていい）
   function updateSpellBars(){
     var inp=document.getElementById('spellInput'), bars=document.getElementById('spellBars');
     if(!inp||!bars) return;
-    var typed=(inp.value||'').replace(/\s+/g,'').length;
+    var typed=spellLetters(inp.value).length;
     var sb=bars.querySelectorAll('.sbar');
     for(var i=0;i<sb.length;i++){ sb[i].classList.toggle('on', i<typed); }
   }
   function submitSpell(){
     if(!curWord||qMode!=='spell') return;
     var inp=document.getElementById('spellInput'); if(!inp||inp.disabled) return;
-    var val=(inp.value||'').trim().toLowerCase().replace(/\s+/g,'');
+    var val=spellLetters(inp.value);
     if(!val) return;
-    var target=(curWord[0]||'').toLowerCase().replace(/\s+/g,'');
+    var target=spellLetters(curWord[0]);
     if(val===target){ inp.disabled=true; var sb=document.getElementById('spellSubmit'); if(sb) sb.disabled=true; speak(curWord[0]); awardCorrect(curWord[0]); }
     else { session.combo=0; onAnswer(curWord[0],false); save(); sfx('wrong'); document.getElementById('reward').textContent='おしい！もういちど'; try{ inp.focus(); inp.select(); }catch(e){} }
   }
