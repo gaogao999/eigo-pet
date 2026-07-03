@@ -708,7 +708,13 @@ window._eigoPetInit = function() {
   /* ---- 躍動感（ホームでの ふるまい：おさんぽ・おひるね） ---- */
   var asleep=false, walkTimer=null, behaveT=null, napUntil=0, napCooldown=0;
   function petWrapEl(){ return document.getElementById('petWrap'); }
-  function isNightTime(){ var b=curBg(); if(b&&b.id==='night') return true; try{ var h=new Date().getHours(); return h>=22||h<6; }catch(e){ return false; } }
+  function sleepProfile(){ // 成長段階ごとの ねむり：あかちゃんほど よくねる・おとなは よふかし
+    if(state.lv<=2) return {start:21,end:7, nap:0.10, napMin:30000,napMax:70000}; // ベビー
+    if(state.lv===3) return {start:22,end:7, nap:0.06, napMin:25000,napMax:55000}; // キッズ
+    if(state.lv===4) return {start:22,end:6, nap:0.04, napMin:22000,napMax:48000}; // ヤング
+    return {start:23,end:6, nap:0.03, napMin:20000,napMax:40000};                  // アダルト
+  }
+  function isNightTime(){ var b=curBg(); if(b&&b.id==='night') return true; try{ var pr=sleepProfile(), h=new Date().getHours(); return h>=pr.start||h<pr.end; }catch(e){ return false; } }
   function wakePet(){ if(!asleep) return; asleep=false; napUntil=0; napCooldown=Date.now()+(60000+Math.random()*60000); var w=petWrapEl(); if(w) w.classList.remove('asleep'); document.body.classList.remove('sleeping'); var z=document.getElementById('zzz'); if(z) z.classList.remove('on'); if(typeof drawPet==='function') drawPet(); }
   function sleepPet(){ if(asleep) return; asleep=true; var w=petWrapEl(); if(w){ w.classList.remove('walking','flip'); w.style.left='50%'; w.dataset.lx='50'; w.classList.add('asleep'); } document.body.classList.add('sleeping'); var z=document.getElementById('zzz'); if(z) z.classList.add('on'); if(typeof drawPet==='function') drawPet(); }
   function walkTo(){
@@ -735,8 +741,9 @@ window._eigoPetInit = function() {
     if(night){ sleepPet(); return; }                 // 夜になったら ねる
     // 昼：たまに みじかい ひるね（連続でチラつかないよう クールダウンつき）
     if(Date.now()>=napCooldown){
-      var napChance=state.sick?0.16:(state.happy<25?0.12:0.03);
-      if(Math.random()<napChance){ napUntil=Date.now()+(22000+Math.random()*26000); sleepPet(); return; }
+      var pr=sleepProfile();
+      var napChance=state.sick?0.16:(state.happy<25?0.12:pr.nap);
+      if(Math.random()<napChance){ napUntil=Date.now()+(pr.napMin+Math.random()*(pr.napMax-pr.napMin)); sleepPet(); return; }
     }
     if(Math.random()<0.78) walkTo();                 // のこりは うろうろ／ひとやすみ
   }
