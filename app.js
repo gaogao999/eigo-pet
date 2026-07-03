@@ -132,21 +132,28 @@ window._eigoPetInit = function() {
     'くろだま':'レア！ よなかに そっと あらわれる ふしぎな くろねこ。',
     'おばけ':'レア！ ふわふわ そらを ただよう やさしい おばけ。'
   };
-  // 育て方の こだわり（相性）：体重・あそび・しつけ 等で なりやすい子が かわる＝進化への 重みづけ
+  // 育て方の こだわり（相性）：体重・あそび・べんきょう・ねむり・しつけ 等で なりやすい子が かわる＝進化への 重みづけ
   var TRAITS = {
-    heavy: { label:'おもい子',  hint:'ごはん・おかしを たくさん たべて おもく なると なりやすい', test:function(s){ return s.weight>=25; } },
-    light: { label:'かるい子',  hint:'ミニゲームで うんどうして かるく なると なりやすい',      test:function(s){ return s.weight<=12; } },
-    play:  { label:'あそびずき', hint:'ミニゲームで たくさん あそぶと なりやすい',              test:function(s){ return (s.gamesPlayed||0)>=4; } },
-    disc:  { label:'おぎょうぎ◎', hint:'しつけを きちんと（ミス0）すると なりやすい',           test:function(s){ return (s.disciplineMiss||0)===0 && s.discipline>=60; } },
-    wild:  { label:'やんちゃ',   hint:'わがままを ほうっておくと なりやすい',                  test:function(s){ return (s.disciplineMiss||0)>=3; } },
-    happy: { label:'ごきげん屋', hint:'ごきげんを たかく たもつと なりやすい',                 test:function(s){ return s.happy>=80; } }
+    heavy: { label:'おもい子',   hint:'ごはん・おかしで おもく（たいじゅう25+）すると なりやすい', test:function(s){ return s.weight>=25; } },
+    light: { label:'かるい子',   hint:'ミニゲームで かるく（たいじゅう12-）すると なりやすい',      test:function(s){ return s.weight<=12; } },
+    play:  { label:'あそびずき',  hint:'ミニゲームで 100かい あそぶと なりやすい',                 test:function(s){ return (s.gamesPlayed||0)>=100; } },
+    study: { label:'べんきょうか', hint:'この子で 200もん せいかいすると なりやすい',              test:function(s){ return (s.genCorrect||0)>=200; } },
+    sleep: { label:'ねぼすけ',    hint:'よく ねかせる（20かい すいみん）と なりやすい',            test:function(s){ return (s.sleepCount||0)>=20; } },
+    disc:  { label:'おぎょうぎ◎',  hint:'しつけを きちんと（ミス0）すると なりやすい',              test:function(s){ return (s.disciplineMiss||0)===0 && s.discipline>=60; } },
+    wild:  { label:'やんちゃ',    hint:'わがままを ほうっておく（しつけミス3+）と なりやすい',       test:function(s){ return (s.disciplineMiss||0)>=3; } },
+    happy: { label:'ごきげん屋',  hint:'ごきげんを たかく（80+）たもつと なりやすい',              test:function(s){ return s.happy>=80; } },
+    streak:{ label:'まいにちさん', hint:'7日 れんぞくで もくひょうたっせいすると なりやすい',        test:function(s){ return (s.streak||0)>=7; } }
   };
   var AFFINITY = {
-    'みらたま':'disc','ぴこぴこ':'heavy','にんじゃ':'disc','ぷくたま':'happy','ぴねむ':'light','げーむ':'play',
-    'はがた':'disc','ばぶたま':'heavy','うらら':'happy','おひさま':'happy','ねむね':'light','がくがく':'wild',
-    'うさたま':'light','どきどき':'happy','たまぱ':'play','めっこ':'disc','もぐもぐ':'heavy','ちゃめ':'play',
-    'かぶら':'light','ぴよたま':'happy','くちぱ':'heavy','はんば':'heavy','ぴな':'play','めらめら':'wild',
-    'おばけ':'light','くろだま':'wild'
+    'ぴこぴこ':'heavy','もぐもぐ':'heavy','くちぱ':'heavy','はんば':'heavy',
+    'おばけ':'light','ぴな':'light','はがた':'light','うさたま':'light',
+    'げーむ':'play','たまぱ':'play',
+    'がくがく':'study','みらたま':'study',
+    'ぴねむ':'sleep','ねむね':'sleep','ばぶたま':'sleep',
+    'にんじゃ':'disc','めっこ':'disc',
+    'めらめら':'wild','ちゃめ':'wild','くろだま':'wild',
+    'どきどき':'happy','うらら':'happy','ぷくたま':'happy','かぶら':'happy',
+    'おひさま':'streak','ぴよたま':'streak'
   };
   var AFF_BOOST=4;
   function affinityWeight(id){ var a=AFFINITY[id]; if(!a) return 1; var t=TRAITS[a]; return (t&&t.test(state))?AFF_BOOST:1; }
@@ -217,7 +224,7 @@ window._eigoPetInit = function() {
     var s=null;
     var keys=[KEY, BAKKEY];
     for(var ki=0;ki<keys.length;ki++){ try{ var raw=localStorage.getItem(keys[ki]); if(raw){ s=JSON.parse(raw); break; } }catch(e){} }
-    var def={ name:"ぴよ",lv:1,xp:0,hunger:80,happy:80,food:0,dirty:false,streak:1,learned:0,last:today(),grade:"g3",discipline:50,weight:5,careMiss:0,disciplineMiss:0,wagamama:false,babyType:null,childType:null,adultType:null,customImg:{},gameHi:0,dailyGoal:20,todayDate:today(),todayWords:[],lastGoalDate:null,metDates:[],wrongWords:[],petColor:'brown',bg:'meadow',freezeTickets:0,lastTicketDate:null,rewardHour:null,lastBoxWeek:null,titles:[],sound:true,mastery:{},learn:{},maxStreak:0,sick:false,sickSince:null,starveSince:null,gamesPlayed:0,born:Date.now(),stageSince:Date.now(),lifespanDays:12+Math.floor(Math.random()*3),youngType:null,memories:[],schemaV:2,lastBackupNudge:null,lastTick:Date.now(),keifuHints:0,keifuRevealed:[],money:0,moneyRate:5,moneyCapPerPet:200,moneyLog:[],parentPin:'' };
+    var def={ name:"ぴよ",lv:1,xp:0,hunger:80,happy:80,food:0,dirty:false,streak:1,learned:0,last:today(),grade:"g3",discipline:50,weight:5,careMiss:0,disciplineMiss:0,wagamama:false,babyType:null,childType:null,adultType:null,customImg:{},gameHi:0,dailyGoal:20,todayDate:today(),todayWords:[],lastGoalDate:null,metDates:[],wrongWords:[],petColor:'brown',bg:'meadow',freezeTickets:0,lastTicketDate:null,rewardHour:null,lastBoxWeek:null,titles:[],sound:true,mastery:{},learn:{},maxStreak:0,sick:false,sickSince:null,starveSince:null,gamesPlayed:0,genCorrect:0,sleepCount:0,born:Date.now(),stageSince:Date.now(),lifespanDays:12+Math.floor(Math.random()*3),youngType:null,memories:[],schemaV:2,lastBackupNudge:null,lastTick:Date.now(),keifuHints:0,keifuRevealed:[],money:0,moneyRate:5,moneyCapPerPet:200,moneyLog:[],parentPin:'' };
     s=Object.assign({},def,s||{});
     s.dailyGoal=20; // 1日の目標は20に固定
     // おこづかい機能の初期化（家庭内でえさを買い取ってお金に）
@@ -407,7 +414,7 @@ window._eigoPetInit = function() {
     state._farewell=false;
     state.lv=1; state.xp=0; state.born=Date.now(); state.stageSince=Date.now();
     state.hunger=80; state.happy=80; state.dirty=false; state.weight=5;
-    state.careMiss=0; state.disciplineMiss=0; state.wagamama=false; state.gamesPlayed=0;
+    state.careMiss=0; state.disciplineMiss=0; state.wagamama=false; state.gamesPlayed=0; state.genCorrect=0; state.sleepCount=0;
     state.babyType=null; state.childType=null; state.youngType=null; state.adultType=null;
     state.sick=false; state.sickSince=null; state.starveSince=null; state._deathCause=null; state.lifespanDays=12+Math.floor(Math.random()*3);
     var fw=document.getElementById('farewell'); if(fw) fw.style.display='none';
@@ -814,6 +821,7 @@ window._eigoPetInit = function() {
   function checkUnlock(prevLearned){ var items=BGS.filter(function(it){ return it.need>prevLearned&&it.need<=state.learned; }); if(items.length){ bubble('あたらしい はいけい アンロック！'); sfx('unlock'); } }
   function awardCorrect(en){
     var prev=state.learned, kL=en.toLowerCase(), wasM=!!(state.learn[kL]&&state.learn[kL].m);
+    state.genCorrect=(state.genCorrect||0)+1; // この世代の せいかい数（べんきょうか 相性用）
     session.combo=(session.combo||0)+1; if(session.combo>(session.maxCombo||0)) session.maxCombo=session.combo;
     var mult=session.combo>=6?3:session.combo>=3?2:1; var rt=isRewardTime()?2:1; var dd=isDoubleDay()?2:1; var gain=mult*rt*dd;
     session.correct++; state.food+=gain; state.learned++; gainGP((reviewMode?10:8)*gain); onAnswer(en,true);
@@ -871,7 +879,7 @@ window._eigoPetInit = function() {
   function setLights(off){ lightsOff=off; document.body.classList.toggle('lights-off',off); var b=document.getElementById('bLight'); if(b) b.textContent=off?'でんきを つける':'でんきを けす'; }
   (function(){ var b=document.getElementById('bLight'); if(b) b.onclick=function(){ setLights(!lightsOff); }; })();
   function wakePet(){ if(!asleep) return; asleep=false; napUntil=0; var pr=sleepProfile(); napCooldown=Date.now()+(pr.cdMin+Math.random()*(pr.cdMax-pr.cdMin)); setLights(false); var w=petWrapEl(); if(w) w.classList.remove('asleep'); document.body.classList.remove('sleeping'); var z=document.getElementById('zzz'); if(z) z.classList.remove('on'); if(typeof drawPet==='function') drawPet(); }
-  function sleepPet(){ if(asleep) return; asleep=true; var w=petWrapEl(); if(w){ w.classList.remove('walking','flip'); w.style.left='50%'; w.dataset.lx='50'; w.classList.add('asleep'); } document.body.classList.add('sleeping'); var z=document.getElementById('zzz'); if(z) z.classList.add('on'); if(typeof drawPet==='function') drawPet(); }
+  function sleepPet(){ if(asleep) return; asleep=true; state.sleepCount=(state.sleepCount||0)+1; /* ねぼすけ相性用 */ var w=petWrapEl(); if(w){ w.classList.remove('walking','flip'); w.style.left='50%'; w.dataset.lx='50'; w.classList.add('asleep'); } document.body.classList.add('sleeping'); var z=document.getElementById('zzz'); if(z) z.classList.add('on'); if(typeof drawPet==='function') drawPet(); }
   function walkTo(){
     var w=petWrapEl(); if(!w) return;
     var cur=parseFloat(w.dataset.lx||'50');
