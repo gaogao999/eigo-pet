@@ -410,7 +410,7 @@ window._eigoPetInit = function() {
   function cheer(){ var w=document.getElementById('petWrap'); if(!w) return; wakePet(); w.classList.add('happy'); setTimeout(function(){ w.classList.remove('happy'); },1200); }
 
   /* ---- care ---- */
-  document.getElementById('bFeed').onclick=function(){ if(state.food<=0){ bubble("べんきょうして えさをあつめよう"); return; } state.food--; state.hunger=Math.min(100,state.hunger+25); state.happy=Math.min(100,state.happy+5); state.weight+=1; addXp(5); if(Math.random()<0.45) state.dirty=true; bubble("もぐもぐ"); cheer(); save(); render(); };
+  document.getElementById('bFeed').onclick=function(){ if(state.lv<2){ bubble("タマゴは まだ たべられないよ"); return; } if(state.hunger>=99){ bubble("おなか いっぱい！"); return; } if(state.food<=0){ bubble("べんきょうして えさをあつめよう"); return; } state.food--; state.hunger=Math.min(100,state.hunger+25); state.happy=Math.min(100,state.happy+5); state.weight+=1; addXp(5); if(Math.random()<0.45) state.dirty=true; bubble("もぐもぐ"); cheer(); save(); render(); };
   document.getElementById('bSnack').onclick=function(){ state.happy=Math.min(100,state.happy+14); state.weight+=3; if(Math.random()<0.35) state.dirty=true; bubble("おいしい！でも たいじゅう+"); cheer(); save(); render(); };
   document.getElementById('bPlay').onclick=function(){ if(state.food<=0){ bubble("べんきょうして えさを あつめよう"); return; } show('gameSelect'); };
   function consumePlay(){ state.food--; state.weight=Math.max(5,state.weight-1); save(); }
@@ -580,11 +580,12 @@ window._eigoPetInit = function() {
   function showEasy(w){ var box=document.getElementById('easyHint'); box.innerHTML='<div class="ehlabel">やさしいいみ</div><div class="ehmean">'+escJa(easyText(w))+'</div>'; box.style.display='block'; try{ box.scrollIntoView({behavior:'smooth',block:'center'}); }catch(e){ try{ box.scrollIntoView(); }catch(_){} } }
   function attachLongPress(el,cb){
     var t=null, longFired=false, touched=false;
-    function start(){ longFired=false; el._lp=false; clearTimeout(t); t=setTimeout(function(){ longFired=true; el._lp=true; cb(); },450); }
+    function start(){ longFired=false; el._lp=false; clearTimeout(t); t=setTimeout(function(){ longFired=true; el._lp=true; el._lpAt=Date.now(); cb(); },500); }
     function cancel(){ if(t){ clearTimeout(t); t=null; } }
     el.addEventListener('touchstart',function(){ touched=true; start(); },{passive:true});
     el.addEventListener('touchend',function(e){ cancel(); if(longFired){ try{ e.preventDefault(); }catch(_){} } }); // 長押し後の擬似クリックを抑止
     el.addEventListener('touchmove',cancel);
+    el.addEventListener('touchcancel',cancel); // スクロール・通知等でタッチ中断 → タイマー解除（誤発火防止）
     el.addEventListener('mousedown',function(){ if(touched){ touched=false; return; } start(); }); // タッチ由来の擬似mousedownは無視(=_lpを消さない)
     el.addEventListener('mouseup',cancel);
     el.addEventListener('mouseleave',cancel);
@@ -605,7 +606,7 @@ window._eigoPetInit = function() {
     var box=document.getElementById('choices'); box.innerHTML=''; box.style.pointerEvents='';
     var spellArea=document.getElementById('spellArea'); var isSpell=(qMode==='spell');
     box.style.display=isSpell?'none':'grid'; if(spellArea) spellArea.style.display=isSpell?'block':'none';
-    var mkBtn=function(o,html){ var b=document.createElement('button'); b.className='ch'; b.innerHTML=html; if(o===correct) b._isCorrect=true; b.onclick=function(){ if(b._lp){ b._lp=false; return; } answer(b,o===correct,en); }; if(qMode!=='reverse') attachLongPress(b,function(){ showEasy(o); }); box.appendChild(b); }; // 逆引きは 選択肢が英語＝長押しで答えが分かるので 無効
+    var mkBtn=function(o,html){ var b=document.createElement('button'); b.className='ch'; b.innerHTML=html; if(o===correct) b._isCorrect=true; b.onclick=function(){ /* 長押し直後(700ms)のクリックだけ無視。古いフラグ残りでタップが押せなくなるのを防ぐ */ if(b._lp){ b._lp=false; if(Date.now()-(b._lpAt||0)<700) return; } answer(b,o===correct,en); }; if(qMode!=='reverse') attachLongPress(b,function(){ showEasy(o); }); box.appendChild(b); }; // 逆引きは 選択肢が英語＝長押しで答えが分かるので 無効
     var speakBtn=document.getElementById('speak'); if(speakBtn) speakBtn.style.display=(qMode==='reverse')?'none':'inline-flex'; // 逆引きは 答え(英語)を読み上げないよう きくボタンを隠す
     if(qMode==='reverse'){
       // いみ（漢字＋ふりがな）→ えいごを えらぶ
