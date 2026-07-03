@@ -196,7 +196,7 @@ window._eigoPetInit = function() {
     var s=null;
     var keys=[KEY, BAKKEY];
     for(var ki=0;ki<keys.length;ki++){ try{ var raw=localStorage.getItem(keys[ki]); if(raw){ s=JSON.parse(raw); break; } }catch(e){} }
-    var def={ name:"ぴよ",lv:1,xp:0,hunger:80,happy:80,food:0,dirty:false,streak:1,learned:0,last:today(),grade:"g3",discipline:50,weight:5,careMiss:0,disciplineMiss:0,wagamama:false,babyType:null,childType:null,adultType:null,customImg:{},gameHi:0,dailyGoal:20,todayDate:today(),todayWords:[],lastGoalDate:null,metDates:[],wrongWords:[],petColor:'brown',bg:'meadow',freezeTickets:0,lastTicketDate:null,rewardHour:null,lastBoxWeek:null,titles:[],sound:true,mastery:{},learn:{},maxStreak:0,sick:false,born:Date.now(),stageSince:Date.now(),lifespanDays:12+Math.floor(Math.random()*3),youngType:null,memories:[],schemaV:2,lastBackupNudge:null,lastTick:Date.now(),keifuHints:0,keifuRevealed:[],money:0,moneyRate:5,moneyCapPerPet:200,moneyLog:[] };
+    var def={ name:"ぴよ",lv:1,xp:0,hunger:80,happy:80,food:0,dirty:false,streak:1,learned:0,last:today(),grade:"g3",discipline:50,weight:5,careMiss:0,disciplineMiss:0,wagamama:false,babyType:null,childType:null,adultType:null,customImg:{},gameHi:0,dailyGoal:20,todayDate:today(),todayWords:[],lastGoalDate:null,metDates:[],wrongWords:[],petColor:'brown',bg:'meadow',freezeTickets:0,lastTicketDate:null,rewardHour:null,lastBoxWeek:null,titles:[],sound:true,mastery:{},learn:{},maxStreak:0,sick:false,born:Date.now(),stageSince:Date.now(),lifespanDays:12+Math.floor(Math.random()*3),youngType:null,memories:[],schemaV:2,lastBackupNudge:null,lastTick:Date.now(),keifuHints:0,keifuRevealed:[],money:0,moneyRate:5,moneyCapPerPet:200,moneyLog:[],parentPin:'' };
     s=Object.assign({},def,s||{});
     s.dailyGoal=20; // 1日の目標は20に固定
     // おこづかい機能の初期化（家庭内でえさを買い取ってお金に）
@@ -204,6 +204,7 @@ window._eigoPetInit = function() {
     if(typeof s.moneyRate!=='number'||s.moneyRate<1) s.moneyRate=5;   // えさ何個で1バーツか
     if(typeof s.moneyCapPerPet!=='number'||s.moneyCapPerPet<0) s.moneyCapPerPet=200; // 1匹あたりの上限バーツ
     if(!Array.isArray(s.moneyLog)) s.moneyLog=[];
+    if(typeof s.parentPin!=='string') s.parentPin=''; // おうちのひとコード（未設定は空）
     // 単語ごとの学習状況(learn)へ移行：旧mastery(正解数>=2でおぼえた)＋wrongWords(にがて)から復元
     if(!s.learn || typeof s.learn!=='object'){ s.learn={}; }
     if(Object.keys(s.learn).length===0 && ((s.mastery&&Object.keys(s.mastery).length)||(s.wrongWords&&s.wrongWords.length))){
@@ -322,16 +323,16 @@ window._eigoPetInit = function() {
   function buyoutFood(){
     // お別れ時に 余ったえさを お金(バーツ)に買い取り。1匹あたり上限つき、払った分だけ えさを消費
     var rate=Math.max(1,state.moneyRate||5), cap=Math.max(0,state.moneyCapPerPet||0);
-    var baht=Math.floor((state.food||0)/rate);
+    var had=state.food||0;
+    var baht=Math.floor(had/rate);
     if(cap>0) baht=Math.min(baht,cap);
-    if(baht<=0) return {baht:0, food:0};
-    var used=baht*rate;
-    state.food=Math.max(0,(state.food||0)-used);
+    state.food=0; // えさは繰り越さない（お別れでリセット）
+    if(baht<=0) return {baht:0, food:had};
     state.money=(state.money||0)+baht;
     state.moneyLog=state.moneyLog||[];
-    state.moneyLog.unshift({ date:today(), baht:baht, food:used, name:state.name });
+    state.moneyLog.unshift({ date:today(), baht:baht, food:had, name:state.name });
     if(state.moneyLog.length>60) state.moneyLog.length=60;
-    return {baht:baht, food:used};
+    return {baht:baht, food:had};
   }
   function farewell(){
     state._farewell=true;
@@ -509,7 +510,10 @@ window._eigoPetInit = function() {
   document.getElementById('wlWrongBtn').onclick=function(){ wlWrongOnly=!wlWrongOnly; renderWordList(); };
   var curAdminTab='zukan';
   function setAdminTab(t){ curAdminTab=t; ['zukan','kisekae','keifu','okane','tango','data'].forEach(function(k){ document.getElementById('tab-'+k).style.display=(k===t)?'block':'none'; }); document.querySelectorAll('#atabs .atab').forEach(function(b){ b.classList.toggle('sel',b.dataset.t===t); }); if(t==='kisekae') renderCosmetics(); if(t==='tango') renderWordList(); if(t==='data') renderData(); if(t==='okane') renderMoney(); window.scrollTo(0,0); }
+  function lockParent(){ var pp=document.getElementById('okParent'); if(pp) pp.style.display='none'; var lk=document.getElementById('okLock'); if(lk) lk.style.display='block'; }
+  function unlockParent(){ var pp=document.getElementById('okParent'); if(pp) pp.style.display='block'; var lk=document.getElementById('okLock'); if(lk) lk.style.display='none'; }
   function renderMoney(){
+    lockParent(); // タブを開くたび おうち設定は かくす（子供に見えないように）
     var z=document.getElementById('okZandaka'); if(z) z.textContent='฿'+(state.money||0);
     var f=document.getElementById('okFood'); if(f) f.textContent=(state.food||0);
     var r=document.getElementById('okRate'); if(r) r.value=state.moneyRate||5;
@@ -522,6 +526,29 @@ window._eigoPetInit = function() {
     }
   }
   (function(){
+    var lk=document.getElementById('okLock'); if(lk) lk.onclick=function(){
+      if(!state.parentPin){ // 初回：コードをつくる
+        var np=prompt('おうちのひとコードを つくってね（4けたの すうじ）');
+        if(np===null) return; np=(np||'').replace(/\D/g,'');
+        if(np.length!==4){ bubble('4けたの すうじで つくってね'); return; }
+        var cf=prompt('もういちど おなじ コードを いれてね');
+        if(cf===null) return;
+        if((cf||'').replace(/\D/g,'')!==np){ bubble('コードが ちがいます'); return; }
+        state.parentPin=np; save(); unlockParent(); bubble('コードを せっていしたよ');
+      } else {
+        var en=prompt('おうちのひとコードを いれてね');
+        if(en===null) return;
+        if((en||'').replace(/\D/g,'')===state.parentPin) unlockParent();
+        else bubble('コードが ちがいます');
+      }
+    };
+    var rl=document.getElementById('okRelock'); if(rl) rl.onclick=lockParent;
+    var pc=document.getElementById('okPinChange'); if(pc) pc.onclick=function(){
+      var np=prompt('あたらしい コードを いれてね（4けたの すうじ）');
+      if(np===null) return; np=(np||'').replace(/\D/g,'');
+      if(np.length!==4){ bubble('4けたの すうじで いれてね'); return; }
+      state.parentPin=np; save(); bubble('コードを へんこうしたよ');
+    };
     var sv=document.getElementById('okSave'); if(sv) sv.onclick=function(){
       var r=parseInt(document.getElementById('okRate').value,10), c=parseInt(document.getElementById('okCap').value,10);
       if(!(r>=1)) r=5; if(!(c>=0)) c=0;

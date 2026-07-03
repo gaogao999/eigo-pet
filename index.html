@@ -397,14 +397,18 @@ if(window.caches){caches.keys().then(function(ks){ks.forEach(function(k){caches.
       <div style="font-size:11px;color:var(--mut);font-weight:700;">いまの えさ：<span id="okFood">0</span>こ</div>
     </div>
     <p style="font-size:12px;color:var(--mut);margin:0 0 12px;font-weight:700;line-height:1.7;">キャラと おわかれする とき、のこった えさを おうちの お金（バーツ）に かいとります。あそびながら えいごを つづけると おこづかいが たまります。</p>
-    <div style="background:var(--card);border:2px solid var(--bdr);border-radius:12px;padding:14px;margin-bottom:14px;">
-      <div style="font-size:13px;font-weight:900;color:var(--ink);margin-bottom:10px;">👨‍👩‍👧 おうちのひと せってい</div>
-      <label style="display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:13px;font-weight:700;color:var(--ink);margin-bottom:10px;">えさ <input id="okRate" type="number" min="1" max="9999" style="width:70px;padding:8px;border:2px solid var(--bdr);border-radius:8px;font-size:14px;font-family:inherit;text-align:center;background:var(--card);color:var(--ink);"> こ ＝ ฿1</label>
-      <label style="display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:13px;font-weight:700;color:var(--ink);margin-bottom:12px;">1匹あたりの じょうげん ฿<input id="okCap" type="number" min="0" max="99999" style="width:80px;padding:8px;border:2px solid var(--bdr);border-radius:8px;font-size:14px;font-family:inherit;text-align:center;background:var(--card);color:var(--ink);"></label>
-      <button id="okSave" style="width:100%;padding:11px;border:none;border-radius:9px;background:#2563eb;color:#fff;font-size:14px;font-weight:800;font-family:inherit;cursor:pointer;">せってい を ほぞん</button>
-      <div id="okRateHint" style="font-size:11px;color:var(--mut);font-weight:700;margin-top:8px;text-align:center;"></div>
+    <button id="okLock" style="width:100%;padding:13px;border:2px solid var(--bdr);border-radius:10px;background:var(--card);color:var(--mut);font-size:14px;font-weight:800;font-family:inherit;cursor:pointer;margin-bottom:14px;">🔒 おうちのひと せってい</button>
+    <div id="okParent" style="display:none;">
+      <div style="background:var(--card);border:2px solid var(--bdr);border-radius:12px;padding:14px;margin-bottom:14px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;"><div style="font-size:13px;font-weight:900;color:var(--ink);">👨‍👩‍👧 おうちのひと せってい</div><button id="okRelock" style="font-size:11px;font-weight:800;color:var(--mut);background:none;border:none;cursor:pointer;font-family:inherit;">🔒 とじる</button></div>
+        <label style="display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:13px;font-weight:700;color:var(--ink);margin-bottom:10px;">えさ <input id="okRate" type="number" min="1" max="9999" style="width:70px;padding:8px;border:2px solid var(--bdr);border-radius:8px;font-size:14px;font-family:inherit;text-align:center;background:var(--card);color:var(--ink);"> こ ＝ ฿1</label>
+        <label style="display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:13px;font-weight:700;color:var(--ink);margin-bottom:12px;">1匹あたりの じょうげん ฿<input id="okCap" type="number" min="0" max="99999" style="width:80px;padding:8px;border:2px solid var(--bdr);border-radius:8px;font-size:14px;font-family:inherit;text-align:center;background:var(--card);color:var(--ink);"></label>
+        <button id="okSave" style="width:100%;padding:11px;border:none;border-radius:9px;background:#2563eb;color:#fff;font-size:14px;font-weight:800;font-family:inherit;cursor:pointer;">せってい を ほぞん</button>
+        <div id="okRateHint" style="font-size:11px;color:var(--mut);font-weight:700;margin-top:8px;text-align:center;"></div>
+        <button id="okPinChange" style="width:100%;padding:9px;border:none;border-radius:8px;background:none;color:var(--mut);font-size:11px;font-weight:700;font-family:inherit;cursor:pointer;margin-top:6px;">コードを へんこう する</button>
+      </div>
+      <button id="okPaid" style="width:100%;padding:13px;border:2px solid #fecaca;border-radius:10px;background:#fef2f2;color:#dc2626;font-size:14px;font-weight:800;font-family:inherit;cursor:pointer;margin-bottom:14px;">おこづかいを しはらった（ざんだかを ０に）</button>
     </div>
-    <button id="okPaid" style="width:100%;padding:13px;border:2px solid #fecaca;border-radius:10px;background:#fef2f2;color:#dc2626;font-size:14px;font-weight:800;font-family:inherit;cursor:pointer;margin-bottom:14px;">おこづかいを しはらった（ざんだかを ０に）</button>
     <div style="font-size:13px;font-weight:900;color:var(--ink);margin-bottom:8px;">りれき</div>
     <div id="okLog"></div>
   </div>
