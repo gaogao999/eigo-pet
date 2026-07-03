@@ -717,7 +717,7 @@ window._eigoPetInit = function() {
   document.getElementById('goStudy').onclick=startStudy;
   document.getElementById('back').onclick=function(){ show('learn'); render(); };
   function shuffle(a){ a=a.slice(); for(var i=a.length-1;i>0;i--){ var j=(Math.random()*(i+1))|0; var tmp=a[i]; a[i]=a[j]; a[j]=tmp; } return a; }
-  var curWord=null, reviewMode=false, qMode='meaning';
+  var curWord=null, reviewMode=false, qMode='meaning', qMissed=false; // qMissed: この問題で一度でも まちがえたか（総当たり防止）
   // まちがえた単語(復習まち)を出やすくする重み付き抽選。覚えた=低確率で再確認
   // 出題の優先度：1)にがて と 4)新出 を最優先、2)間違えて覚えた は中、3)一発正解 は最低
   function qWeight(w){ var r=state.learn[w[0].toLowerCase()];
@@ -755,7 +755,7 @@ window._eigoPetInit = function() {
     document.getElementById('easyHint').style.display='none';
     if(qIdx>=qList.length){ finishStudy(); return; }
     updateStudyProg();
-    var correct=qList[qIdx]; curWord=correct;
+    var correct=qList[qIdx]; curWord=correct; qMissed=false;
     var en=correct[0];
     qMode=pickQMode();
     if(qMode==='spell'&&spellLetters(en).length>12) qMode='meaning'; // 長い単語・熟語のスペル入力は むずかしすぎるので 4択に
@@ -812,8 +812,10 @@ window._eigoPetInit = function() {
     var val=spellLetters(inp.value);
     if(!val) return;
     var target=spellLetters(curWord[0]);
-    if(val===target){ inp.disabled=true; var sb=document.getElementById('spellSubmit'); if(sb) sb.disabled=true; speak(curWord[0]); awardCorrect(curWord[0]); }
-    else { session.combo=0; onAnswer(curWord[0],false); save(); sfx('wrong'); document.getElementById('reward').textContent='おしい！もういちど'; try{ inp.focus(); inp.select(); }catch(e){} }
+    if(val===target){ inp.disabled=true; var sb=document.getElementById('spellSubmit'); if(sb) sb.disabled=true; speak(curWord[0]);
+      if(qMissed){ document.getElementById('reward').textContent='かけたね！つぎは いちどで せいかい しよう'; save(); setTimeout(function(){ qIdx++; nextQ(); },1400); return; } // まちがえてからの正解は ごほうびなし
+      awardCorrect(curWord[0]); }
+    else { qMissed=true; session.combo=0; onAnswer(curWord[0],false); save(); sfx('wrong'); document.getElementById('reward').textContent='おしい！もういちど'; try{ inp.focus(); inp.select(); }catch(e){} }
   }
   function recordLearned(en){ if(state.todayDate!==today()){ state.todayDate=today(); state.todayWords=[]; } var k=en.toLowerCase(), already=state.todayWords.indexOf(k)>=0; if(!already) state.todayWords.push(k); if(!already&&state.todayWords.length===state.dailyGoal){ onGoalReached(); } }
   function streakOnGoal(){ if(state.lastGoalDate===today()) return; if(state.lastGoalDate===yesterday()){ state.streak++; } else if(state.lastGoalDate){ var gap=Math.round((new Date(today())-new Date(state.lastGoalDate))/86400000)-1; if(gap>0&&state.freezeTickets>=gap){ state.freezeTickets-=gap; state.streak++; bubble('おやすみ券で れんぞく キープ！'); } else state.streak=1; } else state.streak=1; state.lastGoalDate=today(); if(state.streak>(state.maxStreak||0)) state.maxStreak=state.streak; if(state.metDates.indexOf(today())<0) state.metDates.push(today()); if(state.metDates.length>60) state.metDates=state.metDates.slice(-60); }
@@ -831,7 +833,16 @@ window._eigoPetInit = function() {
     document.getElementById('reward').textContent=msg2; save(); checkEvolve();
     setTimeout(function(){ qIdx++; nextQ(); },800);
   }
-  function answer(btn,ok,en){ var _cb0=document.getElementById('choices'); if(_cb0&&_cb0.style.pointerEvents==='none') return; /* 正解/回答済みなら無効 */ if(btn.classList.contains('ok')||btn.classList.contains('ng')) return; if(ok){ if(qMode==='reverse') speak(en); btn.classList.add('ok'); if(_cb0) _cb0.style.pointerEvents='none'; /* 正解後は他のボタンを押せないように */ awardCorrect(en); } else { btn.classList.add('ng'); session.combo=0; onAnswer(en,false); save(); sfx('wrong'); document.getElementById('reward').textContent='もういちど！'; } }
+  function answer(btn,ok,en){ var _cb0=document.getElementById('choices'); if(_cb0&&_cb0.style.pointerEvents==='none') return; /* 正解/回答済みなら無効 */ if(btn.classList.contains('ok')||btn.classList.contains('ng')) return;
+    if(ok){
+      if(qMode==='reverse') speak(en);
+      btn.classList.add('ok'); if(_cb0) _cb0.style.pointerEvents='none'; /* 正解後は他のボタンを押せないように */
+      if(qMissed){ // まちがえてから 当てても ごほうびは なし（総当たり防止）。復習には 登録ずみ
+        document.getElementById('reward').textContent='こたえは これ！つぎは いちどで せいかい しよう';
+        save(); setTimeout(function(){ qIdx++; nextQ(); },1400); return;
+      }
+      awardCorrect(en);
+    } else { qMissed=true; btn.classList.add('ng'); session.combo=0; onAnswer(en,false); save(); sfx('wrong'); document.getElementById('reward').textContent='もういちど！'; } }
   function finishStudy(){ updateStudyProg();
     var sc=document.getElementById('sdCorrect'); if(sc) sc.textContent=(session.correct||0)+' / '+(session.total||qList.length);
     var sm=document.getElementById('sdMastered'); if(sm) sm.textContent=session.newMastered||0;
