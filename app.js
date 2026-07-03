@@ -686,7 +686,7 @@ window._eigoPetInit = function() {
   function drawPetSprite(ctx,g,ox,oy){ if(g.img&&g.img.complete&&g.img.naturalWidth){ ctx.imageSmoothingEnabled=false; ctx.drawImage(g.img,ox,oy,g.petW,g.petH); } else if(g.map){ drawPetCanvas(ctx,g.map,ox,oy,g.cell); } }
   function gameSetup(title,instr,btn){ show('game'); document.getElementById('gover').style.display='none'; document.getElementById('gTitle').textContent=title; document.getElementById('gInstr').textContent=instr; document.getElementById('gJump').textContent=btn; var cv=document.getElementById('gcanvas'); var info=petInfo(); var img=info.img?getImg(info.img):null; var map=petMap(),cell=3; var pw=img?40:Math.max.apply(null,map.map(function(r){ return r.length; }))*cell, ph=img?40:map.length*cell; return { cv:cv,ctx:cv.getContext('2d'),W:cv.width,H:cv.height,map:map,cell:cell,img:img,petW:pw,petH:ph }; }
   function startGame(){ var s=gameSetup('ジャンプゲーム','タップで ジャンプ！ しょうがいぶつを よけよう','ジャンプ'); var groundY=s.H-26,petW=s.petW,petH=s.petH; if(game) cancelAnimationFrame(game.raf); game={ mode:'jump',ctx:s.ctx,W:s.W,H:s.H,groundY:groundY,map:s.map,cell:s.cell,img:s.img,petW:petW,petH:petH,px:34,py:groundY-petH,vy:0,onGround:true,jumps:0,obs:[],speed:2.6,t:0,score:0,over:false,raf:0 }; loopGame(); }
-  function jump(){ if(game&&!game.over&&game.jumps<2){ game.vy=-9.6; game.jumps++; game.onGround=false; } }
+  function jump(){ if(game&&!game.over&&game.jumps<2){ game.vy=-10.4; game.jumps++; game.onGround=false; } } // 重力アップに合わせて 跳ぶ力も キビキビ
   function startSeaGame(){ var s=gameSetup('うみゲーム','タップで うく！ いわの あいだを とおろう','うく'); var petW=s.petW,petH=s.petH; if(game) cancelAnimationFrame(game.raf); game={ mode:'sea',ctx:s.ctx,W:s.W,H:s.H,map:s.map,cell:s.cell,img:s.img,petW:petW,petH:petH,px:40,py:Math.round(s.H/2-petH/2),vy:0,obs:[],gap:Math.round(petH*2.8),speed:2.2,t:0,score:0,over:false,raf:0 }; loopSea(); }
   function floatUp(){ if(game&&!game.over&&game.mode==='sea'){ game.vy=-3.6; } }
   // りんごキャッチ：タップで むきを かえて、りんごを あつめる。いわに あたったら おわり
@@ -731,21 +731,34 @@ window._eigoPetInit = function() {
     drawPetSprite(ctx,g,g.px,Math.round(g.py)); document.getElementById('gscore').textContent=g.score; g.raf=requestAnimationFrame(loopSea); }
   function gameInput(){ if(!game||game.over) return; if(game.mode==='sea') floatUp(); else if(game.mode==='catch') turnPet(); else jump(); }
   function loopGame(){ var g=game; if(!g||g.over) return; g.t++; g.speed+=0.0018; // だんだん はやく
+    g.score=Math.floor(g.t/6);
+    if(g.score>0 && g.score%100===0 && g.mile!==g.score){ g.mile=g.score; g.speed+=0.25; sfx('unlock'); } // 100点ごとに スピードアップ（恐竜ゲーム風の節目）
     if(g.obs.length===0||(g.W-g.obs[g.obs.length-1].x)>(Math.max(100,150-g.t*0.02)+Math.random()*110)){ // かんかくも だんだん せまく
-      var fly=(g.t>250 && Math.random()<0.3);
+      var fly=(g.t>250 && Math.random()<0.28);
       if(fly){ g.obs.push({x:g.W,w:16,h:12,fly:true}); } // とりは あたまの うえ：ジャンプすると あぶない
-      else { g.obs.push({x:g.W,w:14+Math.floor(Math.random()*8),h:18+Math.floor(Math.random()*(22+Math.min(16,g.t/240)))}); } // だんだん たかく
+      else {
+        g.obs.push({x:g.W,w:14+Math.floor(Math.random()*8),h:18+Math.floor(Math.random()*(22+Math.min(16,g.t/240)))}); // だんだん たかく
+        if(g.t>400 && Math.random()<0.3){ g.obs.push({x:g.W+22+Math.random()*10,w:12+Math.floor(Math.random()*6),h:16+Math.floor(Math.random()*14)}); } // サボテンの むれ（恐竜ゲーム風）
+      }
     }
-    g.obs.forEach(function(o){ o.x-=g.speed; }); g.obs=g.obs.filter(function(o){ return o.x+o.w>-4; }); g.score=Math.floor(g.t/6);
-    var prevFeet=g.py+g.petH; g.vy+=0.55; g.py+=g.vy; g.onGround=false;
+    g.obs.forEach(function(o){ o.x-=g.speed; }); g.obs=g.obs.filter(function(o){ return o.x+o.w>-4; });
+    var prevFeet=g.py+g.petH; g.vy+=0.7; g.py+=g.vy; g.onGround=false; // キビキビした重力（ふわふわ滞空を短く）
     if(g.py>=g.groundY-g.petH){ g.py=g.groundY-g.petH; g.vy=0; g.onGround=true; g.jumps=0; }
     var pl=g.px+5,pr=g.px+g.petW-5;
     for(var oi=0;oi<g.obs.length;oi++){ var o=g.obs[oi]; var ol=o.x,orr=o.x+o.w;
       if(o.fly){ var fb=g.groundY-g.petH-8, ft=fb-o.h; if(pl<orr&&pr>ol && g.py<fb && g.py+g.petH>ft && g.py+4<fb){ endGame(); return; } continue; } // ジャンプ中だけ あたる
       var top=g.groundY-o.h;
       if(pl<orr&&pr>ol){ if(g.vy>=0&&prevFeet<=top+6&&g.py+g.petH>=top){ g.py=top-g.petH; g.vy=0; g.onGround=true; g.jumps=0; } else if(g.py+g.petH>top){ endGame(); return; } } }
-    var ctx=g.ctx; ctx.clearRect(0,0,g.W,g.H); ctx.fillStyle='#e0d3b0'; ctx.fillRect(0,g.groundY,g.W,g.H-g.groundY); ctx.fillStyle='#4a3526'; ctx.fillRect(0,g.groundY,g.W,2);
-    g.obs.forEach(function(o){ if(o.fly){ var fb=g.groundY-g.petH-8, ft=fb-o.h; ctx.fillStyle='#5b6470'; ctx.fillRect(o.x,ft,o.w,o.h); ctx.fillStyle='#2f3640'; ctx.fillRect(o.x+2,ft-3,5,3); ctx.fillRect(o.x+9,ft-3,5,3); } else { ctx.fillStyle='#7a5a2a'; ctx.fillRect(o.x,g.groundY-o.h,o.w,o.h); ctx.fillStyle='#4a3526'; ctx.fillRect(o.x,g.groundY-o.h,o.w,2); } });
+    var ctx=g.ctx; ctx.clearRect(0,0,g.W,g.H);
+    // くも（うしろで ゆっくり ながれる）と 地面の こいし で スピード感
+    if(!g.deco){ g.deco={cl:[],st:[]}; }
+    if(g.t%140===0) g.deco.cl.push({x:g.W+10,y:8+Math.random()*50});
+    if(g.t%30===0) g.deco.st.push({x:g.W,y:g.groundY+6+Math.random()*12});
+    ctx.fillStyle='#efe7d3'; g.deco.cl.forEach(function(c){ c.x-=g.speed*0.35; ctx.fillRect(c.x,c.y,26,7); ctx.fillRect(c.x+5,c.y-4,14,5); }); g.deco.cl=g.deco.cl.filter(function(c){ return c.x>-30; });
+    ctx.fillStyle='#e0d3b0'; ctx.fillRect(0,g.groundY,g.W,g.H-g.groundY); ctx.fillStyle='#4a3526'; ctx.fillRect(0,g.groundY,g.W,2);
+    ctx.fillStyle='#c8b790'; g.deco.st.forEach(function(s2){ s2.x-=g.speed; ctx.fillRect(s2.x,s2.y,5,2); }); g.deco.st=g.deco.st.filter(function(s2){ return s2.x>-6; });
+    g.obs.forEach(function(o){ if(o.fly){ var fb=g.groundY-g.petH-8, ft=fb-o.h; ctx.fillStyle='#5b6470'; ctx.fillRect(o.x,ft,o.w,o.h); var wing=(Math.floor(g.t/12)%2===0); ctx.fillStyle='#2f3640'; if(wing){ ctx.fillRect(o.x+2,ft-4,5,4); ctx.fillRect(o.x+9,ft-4,5,4); } else { ctx.fillRect(o.x+2,ft+o.h,5,4); ctx.fillRect(o.x+9,ft+o.h,5,4); } } // はばたく とり
+      else { ctx.fillStyle='#2f7d4f'; ctx.fillRect(o.x,g.groundY-o.h,o.w,o.h); ctx.fillStyle='#1e5e3a'; ctx.fillRect(o.x,g.groundY-o.h,o.w,2); ctx.fillStyle='#3f9a64'; ctx.fillRect(o.x+2,g.groundY-o.h+3,2,Math.max(2,o.h-6)); } }); // サボテン風
     drawPetSprite(ctx,g,g.px,Math.round(g.py)); document.getElementById('gscore').textContent=g.score; g.raf=requestAnimationFrame(loopGame); }
   function endGame(){ var g=game; g.over=true; cancelAnimationFrame(g.raf); var sc=g.score; var happyGain=Math.min(30,6+Math.floor(sc/4)); state.happy=Math.min(100,state.happy+happyGain); addXp(5); if(sc>(state.gameHi||0)) state.gameHi=sc; save(); document.getElementById('goverScore').textContent='スコア '+sc+'（さいこう '+state.gameHi+'）'; document.getElementById('goverReward').textContent='ごきげん +'+happyGain+' ／ うんどうした！'; document.getElementById('gover').style.display='flex'; } // えさ報酬なし（えさは べんきょうで）
   function leaveGame(){ if(game){ game.over=true; cancelAnimationFrame(game.raf); } show('home'); render(); }
