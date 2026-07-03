@@ -471,7 +471,7 @@ window._eigoPetInit = function() {
     document.getElementById('foodCnt').textContent='えさ '+state.food;
     document.getElementById('cleanCnt').textContent=state.dirty?'よごれてる':'きれい';
     document.getElementById('scoldCnt').textContent=state.wagamama?'いまだ！':'わがまま時';
-    document.getElementById('learned').textContent=state.learned;
+    document.getElementById('learned').textContent=gradeProgress().mastered; // 下の進捗バーと同じ「おぼえた単語の実数」に統一
     document.getElementById('weight').textContent=Math.round(state.weight);
     var gl=document.getElementById('growthLine');
     if(gl){
@@ -647,7 +647,7 @@ window._eigoPetInit = function() {
       state.moneyTiers=readTiers(); save(); renderMoney(); bubble('せってい を ほぞんしたよ');
     };
   })();
-  function renderData(){ document.getElementById('dataStat').textContent='なまえ：'+state.name+' ／ レベル '+state.lv+' ／ おぼえた '+state.learned+'こ ／ 🔥'+displayStreak()+'にち'; document.getElementById('exportBox').style.display='none'; document.getElementById('btnCopy').style.display='none'; document.getElementById('importBox').value=''; document.getElementById('dataMsg').textContent=''; }
+  function renderData(){ document.getElementById('dataStat').textContent='なまえ：'+state.name+' ／ レベル '+state.lv+' ／ おぼえた '+masteredCount()+'こ ／ 🔥'+displayStreak()+'にち'; document.getElementById('exportBox').style.display='none'; document.getElementById('btnCopy').style.display='none'; document.getElementById('importBox').value=''; document.getElementById('dataMsg').textContent=''; }
   function encodeState(){ return btoa(unescape(encodeURIComponent(JSON.stringify(state)))); }
   document.getElementById('btnExport').onclick=function(){ var box=document.getElementById('exportBox'); box.value=encodeState(); box.style.display='block'; document.getElementById('btnCopy').style.display='block'; };
   document.getElementById('btnCopy').onclick=function(){ var box=document.getElementById('exportBox'); box.select(); var ok=function(){ document.getElementById('dataMsg').style.color='var(--g)'; document.getElementById('dataMsg').textContent='コピーしました！'; }; if(navigator.clipboard){ navigator.clipboard.writeText(box.value).then(ok,function(){ try{ document.execCommand('copy'); ok(); }catch(e){} }); } else { try{ document.execCommand('copy'); ok(); }catch(e){} } };
