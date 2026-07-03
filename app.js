@@ -359,7 +359,9 @@ window._eigoPetInit = function() {
       state.memories.unshift({ name:state.name, adultType:state.adultType, adultName:ai.name, born:state.born, died:today(), days:Math.max(1,Math.round(ageDays())), learned:state.learned });
       if(state.memories.length>30) state.memories.length=30;
     }
-    state._lastBuyout=buyoutFood();
+    // おこづかいの かいとりは「寿命を まっとうした とき」だけ。早いお別れ(空腹・病気)は なし＆えさも消える
+    if(state._deathCause==='hunger'||state._deathCause==='sick'){ state.food=0; state._lastBuyout={baht:0,food:0}; }
+    else { state._lastBuyout=buyoutFood(); }
     save(); showFarewell(ai);
   }
   function rebirth(){
@@ -372,22 +374,44 @@ window._eigoPetInit = function() {
     var fw=document.getElementById('farewell'); if(fw) fw.style.display='none';
     save(); show('home'); render();
   }
+  // お墓のドット絵（おせわ不足で 早いお別れの とき）
+  var GRAVE_SVG='<svg width="116" height="116" viewBox="0 0 36 36" shape-rendering="crispEdges">'
+    +'<rect x="6" y="30" width="24" height="3" fill="#7bb661"/>'
+    +'<rect x="12" y="8" width="12" height="2" fill="#4b5563"/><rect x="11" y="10" width="14" height="20" fill="#4b5563"/>'
+    +'<rect x="13" y="9" width="10" height="1" fill="#9aa0a6"/><rect x="12" y="10" width="12" height="19" fill="#9aa0a6"/>'
+    +'<rect x="13" y="10" width="3" height="2" fill="#c4c9cf"/>'
+    +'<rect x="17" y="13" width="2" height="8" fill="#5b6470"/><rect x="14" y="15" width="8" height="2" fill="#5b6470"/>'
+    +'<rect x="14" y="24" width="8" height="2" fill="#6b7280"/>'
+    +'<rect x="7" y="27" width="2" height="2" fill="#f472b6"/><rect x="9" y="26" width="2" height="2" fill="#fbbf24"/><rect x="8" y="29" width="1" height="2" fill="#2f7d4f"/>'
+    +'</svg>';
   function showFarewell(ai){
     var el=document.getElementById('farewell'); if(!el){ rebirth(); return; }
-    var sp=document.getElementById('fwSprite'); if(sp) sp.innerHTML=spriteHTML(ai,4);
+    var c=state._deathCause, neglect=(c==='hunger'||c==='sick');
+    var sp=document.getElementById('fwSprite');
+    if(sp){
+      if(neglect) sp.innerHTML=GRAVE_SVG;
+      else sp.innerHTML='<div style="position:relative;display:inline-block;"><div style="position:absolute;top:-14px;left:50%;transform:translateX(-50%);font-size:15px;">⭐</div><div style="position:absolute;top:6px;left:-20px;font-size:13px;">✨</div><div style="position:absolute;top:2px;right:-20px;font-size:13px;">✨</div>'+spriteHTML(ai,4)+'</div>';
+    }
     var nm=document.getElementById('fwName'); if(nm) nm.textContent=state.name+'（'+ai.name+'）';
     var days=Math.max(1,Math.round(ageDays()));
     var ms=document.getElementById('fwMsg');
-    if(ms){ var c=state._deathCause;
+    if(ms){
       if(c==='hunger') ms.innerHTML=days+'日 いっしょに いたよ。<br>おなかが すいて げんきが なくなっちゃった…<br><strong style="color:#c2410c;">まいにち ごはんを あげてね。</strong>';
       else if(c==='sick') ms.innerHTML=days+'日 いっしょに いたよ。<br>びょうきを なおして あげられなかった…<br><strong style="color:#c2410c;">びょうきの ときは はやく おくすりを あげてね。</strong>';
-      else ms.innerHTML=days+'日 いっしょに がんばったね。<br>たくさんの えいごを おぼえる おてつだいを ありがとう！';
+      else ms.innerHTML='<strong style="color:#29a65e;">いままで ありがとう！</strong><br>'+days+'日 いっしょに がんばったね。<br>おほしさまに なって みまもってるよ。';
     }
     var mo=document.getElementById('fwMoney');
     if(mo){ var bo=state._lastBuyout||{baht:0,food:0};
-      if(bo.baht>0){ mo.style.display='block'; mo.innerHTML='のこった えさ '+bo.food+'こ を かいとり<br><span style="font-size:22px;color:#ea580c;">฿'+bo.baht+'</span><br><span style="font-size:11px;color:var(--mut);">おこづかい ごうけい ฿'+(state.money||0)+'（せってい→おこづかい）</span>'; }
+      if(!neglect && bo.baht>0){
+        mo.style.display='block';
+        mo.innerHTML='そだてきった ごほうび！ のこった えさ '+bo.food+'こ を かいとり<br><span style="font-size:26px;color:#ea580c;">฿'+bo.baht+'</span><br>'
+          +'<div style="margin-top:8px;padding:8px;background:#fffbeb;border:2px dashed #f59e0b;border-radius:8px;font-size:13px;color:#92400e;">👨‍👩‍👧 おとうさん・おかあさんに<br>この がめんを みせてね！</div>'
+          +'<span style="font-size:11px;color:var(--mut);">おこづかい ごうけい ฿'+(state.money||0)+'（せってい→おこづかい）</span>';
+      }
+      else if(neglect){ mo.style.display='block'; mo.innerHTML='<span style="font-size:12px;color:var(--mut);">はやい おわかれの ときは おこづかいは もらえないよ…<br>つぎは さいごまで そだてよう！</span>'; }
       else { mo.style.display='none'; }
     }
+    var nt=document.getElementById('fwNote'); if(nt) nt.textContent=neglect?'あたらしい いのちが やってくる…':'けいふに きろくされたよ。あたらしい いのちが やってくる…';
     el.style.display='flex';
   }
   function stageName(){ if(state.lv>=5) return "アダルト（"+adultInfo().name+"）"; if(state.lv>=4) return "ヤング（"+youngInfo().name+"）"; if(state.lv>=3) return "キッズ（"+childInfo().name+"）"; if(state.lv>=2) return "ベビー（"+babyInfo().name+"）"; return "タマゴ"; }
