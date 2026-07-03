@@ -221,6 +221,15 @@ window._eigoPetInit = function() {
   function isRewardTime(){ var h=new Date().getHours(); return h>=15&&h<17; }
   function weekId(ds){ var d=new Date(ds); var day=(d.getDay()+6)%7; d.setDate(d.getDate()-day); return dayStr(d); }
   function thisWeekMet(){ var wk=weekId(today()); return state.metDates.filter(function(m){ return weekId(m)===wk; }).length+((state.metDates.indexOf(today())<0&&todayDone())?1:0); }
+  // 2ばいデー：月〜土を ぜんぶ 目標達成すると、にちようが 終日 えさ2倍
+  function isDoubleDay(){
+    try{ var now=new Date(today());
+      if(now.getDay()!==0) return false;                 // にちようだけ
+      var md=state.metDates||[];
+      for(var i=1;i<=6;i++){ var d=new Date(now); d.setDate(now.getDate()-i); if(md.indexOf(dayStr(d))<0) return false; }
+      return true;
+    }catch(e){ return false; }
+  }
   function boxAvailable(){ return thisWeekMet()>=5&&state.lastBoxWeek!==weekId(today()); }
 
   /* ---- sound ---- */
@@ -464,6 +473,10 @@ window._eigoPetInit = function() {
     var tt=document.getElementById('titleN'); if(tt) tt.textContent=(state.titles.length)+'/'+TITLES.length;
     var bb=document.getElementById('boxBtn'); if(bb) bb.style.display=boxAvailable()?'block':'none';
     var rb=document.getElementById('rewardBanner'); if(rb) rb.style.display=isRewardTime()?'block':'none';
+    var db=document.getElementById('doubleBanner');
+    if(db){ if(isDoubleDay()){ db.style.display='block'; db.textContent='🎉 きょうは 2ばいデー！ えさ 2ばい（月〜土 ぜんぶ たっせい！）'; }
+      else { var now2=new Date(today()), wd2=(now2.getDay()+6)%7; if(wd2>=1&&wd2<=5){ db.style.display='block'; db.style.background='#f0fdf4'; db.style.borderColor='#bbf7d0'; db.style.color='#15803d'; db.textContent='月〜土 ぜんぶ たっせいで にちよう 2ばいデー！'; } else { db.style.display='none'; } }
+    }
     document.querySelectorAll('#sndset .optbtn').forEach(function(b){ b.classList.toggle('sel',(b.dataset.v==='1')===!!state.sound); });
     var fc=document.getElementById('fcSprite');
     if(fc){
@@ -759,11 +772,11 @@ window._eigoPetInit = function() {
   function awardCorrect(en){
     var prev=state.learned, kL=en.toLowerCase(), wasM=!!(state.learn[kL]&&state.learn[kL].m);
     session.combo=(session.combo||0)+1; if(session.combo>(session.maxCombo||0)) session.maxCombo=session.combo;
-    var mult=session.combo>=6?3:session.combo>=3?2:1; var rt=isRewardTime()?2:1; var gain=mult*rt;
+    var mult=session.combo>=6?3:session.combo>=3?2:1; var rt=isRewardTime()?2:1; var dd=isDoubleDay()?2:1; var gain=mult*rt*dd;
     session.correct++; state.food+=gain; state.learned++; gainGP((reviewMode?10:8)*gain); onAnswer(en,true);
     if(!wasM&&state.learn[kL]&&state.learn[kL].m) session.newMastered=(session.newMastered||0)+1;
     recordLearned(en); checkUnlock(prev); checkTickets(); checkTitles(); sfx(session.combo>=3?'combo':'correct');
-    var msg2='せいかい！'; if(mult>1) msg2+=' コンボ×'+mult; if(rt>1) msg2+=' ⏰2ばい'; msg2+=reviewMode?' おぼえたね':(' えさ+'+gain);
+    var msg2='せいかい！'; if(mult>1) msg2+=' コンボ×'+mult; if(rt>1) msg2+=' ⏰2ばい'; if(dd>1) msg2+=' 🎉2ばいデー'; msg2+=reviewMode?' おぼえたね':(' えさ+'+gain);
     document.getElementById('reward').textContent=msg2; save(); checkEvolve();
     setTimeout(function(){ qIdx++; nextQ(); },800);
   }
