@@ -613,7 +613,7 @@ window._eigoPetInit = function() {
       var kanji=correct[1]||'', yom=correct[2]||'';
       qw.innerHTML='<div class="qmain">'+rubyHTML(kanji,yom)+'</div>';
       qw.classList.toggle('long', kanji.length>6);
-      if(hint) hint.textContent='えいごを えらんでね';
+      if(hint) hint.textContent='もんだいを ながおしで やさしいいみ';
       var poolR=currentWords().filter(function(w){ return w[0]!==en&&w[1]!==correct[1]; });
       shuffle([correct].concat(shuffle(poolR).slice(0,3))).forEach(function(o){ mkBtn(o,'<span class="base'+((o[0]||'').length>9?' long':'')+'">'+escJa(o[0])+'</span>'); });
     } else if(isSpell){
@@ -684,7 +684,7 @@ window._eigoPetInit = function() {
   if(window.speechSynthesis){ speechSynthesis.onvoiceschanged=function(){ enVoice=pickVoice(); }; ensureVoice(); }
   function speak(en){ try{ if(!window.speechSynthesis) return; var u=new SpeechSynthesisUtterance(en); var v=ensureVoice(); if(v){ u.voice=v; u.lang=v.lang; } else { u.lang='en-US'; } u.rate=0.8; u.pitch=1.0; speechSynthesis.cancel(); speechSynthesis.speak(u); }catch(e){} }
   document.getElementById('speak').onclick=function(){ speak(curWord?curWord[0]:document.getElementById('qword').textContent); };
-  (function(){ var sb=document.getElementById('spellSubmit'); if(sb) sb.onclick=submitSpell; var si=document.getElementById('spellInput'); if(si){ si.addEventListener('keydown',function(e){ if(e.key==='Enter'){ e.preventDefault(); submitSpell(); } }); si.addEventListener('input',updateSpellBars); } })();
+  (function(){ var sb=document.getElementById('spellSubmit'); if(sb) sb.onclick=submitSpell; var si=document.getElementById('spellInput'); if(si){ si.addEventListener('keydown',function(e){ if(e.key==='Enter'){ e.preventDefault(); submitSpell(); } }); si.addEventListener('input',updateSpellBars); } var qw=document.getElementById('qword'); if(qw) attachLongPress(qw,function(){ if(curWord && (qMode==='reverse'||qMode==='spell')) showEasy(curWord); }); })();
   document.getElementById('dontKnow').onclick=function(){
     if(!curWord) return;
     if(qMode==='spell'){ var inp=document.getElementById('spellInput'); if(inp&&inp.disabled) return; if(inp) inp.disabled=true; var sb2=document.getElementById('spellSubmit'); if(sb2) sb2.disabled=true; onAnswer(curWord[0],false); save(); document.getElementById('reward').textContent='こたえ：'+curWord[0]; showEasy(curWord); setTimeout(function(){ qIdx++; nextQ(); },2200); return; }
