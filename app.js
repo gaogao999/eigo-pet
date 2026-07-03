@@ -234,11 +234,11 @@ window._eigoPetInit = function() {
     if(!Array.isArray(s.moneyLog)) s.moneyLog=[];
     if(typeof s.moneyBonusFood!=='number'||s.moneyBonusFood<1) s.moneyBonusFood=(s.moneyRate||5)*5; // 上限こえたぶん えさ何個で1バーツか
     if(typeof s.moneyBonusMax!=='number'||s.moneyBonusMax<0) s.moneyBonusMax=100; // ボーナスの さいだい（＋バーツ）
-    // だんかいレート（貯まるほど レートが かわる）。旧設定が あれば それを 段階に変換
-    if(!Array.isArray(s.moneyTiers)||!s.moneyTiers.length){
-      var _r=s.moneyRate||5, _c=s.moneyCapPerPet||200;
-      s.moneyTiers=[{cap:_c, rate:_r}];
-      if((s.moneyBonusMax||0)>0) s.moneyTiers.push({cap:_c+(s.moneyBonusMax||100), rate:(s.moneyBonusFood||_r*5)});
+    // だんかいレート：デフォルトは 3段階（฿100=えさ5／฿200=えさ10／฿300=えさ15）。
+    // 一度だけ この新デフォルトに 統一（moneyTiersV=2）。以降は 親が変えた設定を そのまま保持
+    if(s.moneyTiersV!==2 || !Array.isArray(s.moneyTiers) || !s.moneyTiers.length){
+      s.moneyTiers=[{cap:100,rate:5},{cap:200,rate:10},{cap:300,rate:15}];
+      s.moneyTiersV=2;
     }
     if(typeof s.parentPin!=='string') s.parentPin=''; // おうちのひとコード（未設定は空）
     // 単語ごとの学習状況(learn)へ移行：旧mastery(正解数>=2でおぼえた)＋wrongWords(にがて)から復元
