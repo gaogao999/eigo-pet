@@ -55,20 +55,6 @@ window._eigoPetInit = function() {
   var EGG=[".....oooo.....","...oowwwwoo...","..owwwwwwwwo..",".owwwwwwwwwwo.",".owwwgwwgwwwo.",".owwwwwwwwwwo.",".owwoowwoowwwo",".owwwoowwwwwo.",".owwwwwwwwwwo.","..owwwwwwwwo..","...owwwwwwo...","....oooooo...."];
   var BABY=["......oo......",".....o..o.....","....oooooo....","...owwwwwwo...","..owwwwwwwwo..",".owwoowwwoowwo","owwwwwwwwwwwwo",".owwwggwwwwwo.",".owwwoooowwwwo","..owwwwwwwwo..","...owwwwwwo...","....oooooo....","....o.oo.o...."];
   var KID=["..o........o..","..oo......oo..",".ooowwwwwwooo.",".owwwwwwwwwwwo","owwwoowwwoowwo","owwwwwwwwwwwwo","owwwwoooooowwo","owwwwwwwwwwwwo",".owwwwwwwwwwo.","o.owwwwwwwwo.o","...owwwwwwo...","....oooooo....","...oo.oo.oo..."];
-  var ADULT=["....o..o......","....o..o......","..oowwwwwwoo..",".owwwwwwwwwwo.","owwwwwwwwwwwwo","owwoowwwwoowwo","owwwwwwwwwwwwo","owwggwwwwggwwo","owwwwoooowwwwo","owwwwwwwwwwwwo",".owwwwwwwwwwo.","..owwwwwwwwo..","...oo.oo.oo..."];
-  var ADULT_GOOD=["...oo..oo.....","....o..o......","..oowwwwwwoo..",".owwwwwwwwwwo.","owwwwwwwwwwwwo","owwowwwwwwowwo","owwwwwwwwwwwwo","owwgwwwwwwgwwo","owwwowwwwowwwo","owwwwooooowwwo",".owwwwwwwwwwo.","..owwwwwwwwo..","...oo.oo.oo..."];
-  var ADULT_WILD=["o.o.o..o.o.o..",".o.o.o.o.o.o..","..oowwwwwwoo..",".owwwwwwwwwwo.","owwwwwwwwwwwwo","owowwwwwwwwowo","owwwwwwwwwwwwo","owoooooooowwwo","owwwwwwwwwwwwo","oowwwwwwwwwwoo",".owwwwwwwwwwo.","..owwwwwwwwo..","..o.oo..oo.o.."];
-  var ADULT_GOOD2=["....o.o.o.....",".....ooo......","..oowwwwwwoo..",".owwwwwwwwwwo.","owwwwwwwwwwwwo","owwowwwwwwowwo","owwwwwwwwwwwwo","owwwgwwwwgwwwo","owwwwoooowwwwo","owwwwwwwwwwwwo",".owwwwwwwwwwo.","..owwwwwwwwo..","...oo.oo.oo..."];
-  var ADULT_NORMAL2=[".......o......",".......o......","..oowwwwwwoo..",".owwwwwwwwwwo.","owwwwwwwwwwwwo","owwoowwwwoowwo","owwwwwwwwwwwwo","owwwwwwwwwwwwo","owwwoowwwoowwo","owwwwwwwwwwwwo",".owwwwwwwwwwo.","..owwwwwwwwo..","...o.o..o.o..."];
-  var ADULT_WILD2=[".oo......oo...","..oo....oo....","..oowwwwwwoo..",".owwwwwwwwwwo.","owwwwwwwwwwwwo","owooowwwwooowo","owwwwwwwwwwwwo","owoooooooowwwo","owwwwwwwwwwwwo",".owwwwwwwwwwo.","..owwwwwwwwo..","..oo.oo..oo...",".............."];
-  var BABY2=[".......o......","......ooo.....","....oooooo....","...owwwwwwo...","..owwwwwwwwo..",".owooowwooowwo",".owwwwwwwwwwwo",".owwwwoowwwwwo","..owwwwwwwwo..","...owwwwwwo...","....oooooo....","....o.oo.o...."];
-  var KID2=["..oo......oo..","..ow......wo..","..oowwwwwwoo..",".owwwwwwwwwwo.","owwoowwwwoowwo","owwwwwwwwwwwwo","owwwwoooooowwo","owwwwwwwwwwwwo",".owwwwwwwwwwo.","..owwwwwwwwo..","...oo.oo.oo..."];
-  var KID3=["......oo......",".....o........","....oooooo....","...owwwwwwo...","..owwwwwwwwo..",".owooowwooowwo",".owooowwooowwo",".owwwwwwwwwwwo",".owwwooooowwwo","..owwwwwwwwo..","...owwwwwwo...","....oooooo...."];
-  var KID4=["....oooooo....","...owwwwwwo...","..owwwwwwwwo..",".owwwwwwwwwwo.","owwwwwwwwwwwwo","owwoowwwwoowwo","owwwwwwwwwwwwo","owwgwwwwwwgwwo","owwwwoooowwwwo","owwwwwwwwwwwwo",".owwgwwwwgwwo.","..owwwwwwwwo..","...oo.oo.oo..."];
-  var ADULT_STAR=["...o.o.o.o....","...oooooooo...","..oowwwwwwoo..",".owwwwwwwwwwo.","owwwwwwwwwwwwo","owwoowwwwoowwo","owwwwwwwwwwwwo","owwgwowwowgwwo","owwwwooooowwwo","owwwwwwwwwwwwo",".owwwwwwwwwwo.","..owwwwwwwwo..","...oo.oo.oo..."];
-  var ADULT_STAR2=["...oooooo.....","...o....o.....","..oowwwwwwoo..",".owwwwwwwwwwo.","owwwwwwwwwwwwo","owwowwwwwwowwo","owwwwwwwwwwwwo","owwwgwwwwgwwwo","owwwowwwwowwwo","owwwwooooowwwo",".owwwwwwwwwwo.","..owwwwwwwwo..","...oo.oo.oo..."];
-  var DEVIL_PAL = { o:'#15131a', k:'#2c2733', Y:'#f6d65e', e:'#15131a', p:'#f3a3bf' };
-  var DEVIL=["..o.........o..",".ooo.......ooo.",".okko.....okko.","..ookkkkkkkoo..","...okkkkkkkkko.","okkYYkkkkkYYkko","okkYekkkkkeYkko","okkkkkpkpkkkkko","okkkkkkkkkkkkko",".okkkkkkkkkkko.","..okkkkkkkko.oo","...oo...oo...ok",".............oo"];
 
   // 表示名マップ（画像ファイル名＝IDは変えず、見せる名前だけ変更）
   var NAME_MAP = {
@@ -160,7 +146,6 @@ window._eigoPetInit = function() {
   function youngInfo() { return YOUNGS[state.youngType] || YOUNGS.normal; }
   function adultById(id){ return ADULTS[id] || (id&&LEGACY_ADULT[id]&&ADULTS[LEGACY_ADULT[id]]) || ADULTS[ADULT_TIERS.normal[0]]; }
   function adultInfo() { return adultById(state.adultType); }
-  function adultMap()  { return adultInfo().map; }
   function predictedTier(){ if((state.careMiss+state.disciplineMiss)>=8) return 'devil'; return TIER_ORDER[careTierIndex()]; }
   function predictedAdultKey(){ var t=predictedTier(); if(t==='devil') return RARE_ADULTS[0]; return (LINEAGE[t]||LINEAGE.normal)[0]; }
   // アダルト確定：いまの ヤング(=おせわランク)の 系統から、見た目の似た6種のどれかに進化。
@@ -691,7 +676,6 @@ window._eigoPetInit = function() {
   function startStudy(){ reviewMode=false; qList=pickWeighted(currentWords(),QPER); qIdx=0; session={correct:0,combo:0,maxCombo:0,newMastered:0,total:qList.length}; document.getElementById('qTotal').textContent=qList.length; show('study'); nextQ(); }
   function escJa(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;'); }
   function splitSenses(s){ return (s||'').split(/[，、,]/).map(function(x){ return x.trim(); }).filter(Boolean); }
-  function brJoin(s){ return splitSenses(s).map(escJa).join('，<br>'); } // コンマで 行を わける（読みやすく）
   // 各いみの ふりがなを その漢字の 真上に（ruby）。コンマで 行を わける
   function rubyHTML(kanjiStr,yomiStr){ var ks=splitSenses(kanjiStr), ys=splitSenses(yomiStr); return ks.map(function(k,i){ var y=ys[i]; return y?('<ruby>'+escJa(k)+'<rt>'+escJa(y)+'</rt></ruby>'):escJa(k); }).join('，<br>'); }
   function choiceHtml(w){ var lng=(w[1]||'').length>9?' long':''; return '<span class="base'+lng+'">'+rubyHTML(w[1],w[2])+'</span>'; }
