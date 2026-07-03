@@ -868,13 +868,13 @@ window._eigoPetInit = function() {
   /* ---- 躍動感（ホームでの ふるまい：おさんぽ・おひるね） ---- */
   var asleep=false, walkTimer=null, behaveT=null, napUntil=0, napCooldown=0;
   function petWrapEl(){ return document.getElementById('petWrap'); }
-  function sleepProfile(){ // 成長段階ごとの ねむり：あかちゃんほど よくねる・おとなは よふかし
-    if(state.lv<=2) return {start:19,end:8, nap:0.22, napMin:60000,napMax:150000, cdMin:30000,cdMax:60000};   // ベビー：夜19時〜朝8時・よく昼寝(1〜2.5分)
-    if(state.lv===3) return {start:20,end:7, nap:0.12, napMin:45000,napMax:100000, cdMin:45000,cdMax:90000};  // キッズ：夜20時〜朝7時
-    if(state.lv===4) return {start:21,end:7, nap:0.06, napMin:35000,napMax:70000, cdMin:60000,cdMax:120000};  // ヤング：夜21時〜朝7時
-    return {start:22,end:6, nap:0.04, napMin:25000,napMax:50000, cdMin:60000,cdMax:120000};                   // アダルト：夜22時〜朝6時
+  function sleepProfile(){ // 成長段階ごとの ねむり：あかちゃんほど よくねる・おとなは 昼寝しない
+    if(state.lv<=2) return {start:19,end:8, nap:0.10, napMin:50000,napMax:80000, cdMin:45000,cdMax:90000};    // ベビー：夜19時〜朝8時・ときどき昼寝
+    if(state.lv===3) return {start:20,end:7, nap:0.05, napMin:35000,napMax:60000, cdMin:60000,cdMax:120000};  // キッズ：夜20時〜朝7時・たまに昼寝
+    if(state.lv===4) return {start:21,end:7, nap:0.03, napMin:30000,napMax:50000, cdMin:90000,cdMax:150000};  // ヤング：夜21時〜朝7時・まれに昼寝
+    return {start:22,end:6, nap:0, napMin:25000,napMax:50000, cdMin:90000,cdMax:150000};                      // アダルト：夜22時〜朝6時・昼寝なし（病気・ごきげん低下時のみ）
   }
-  function isNightTime(){ var b=curBg(); if(b&&b.id==='night') return true; try{ var pr=sleepProfile(), h=new Date().getHours(); return h>=pr.start||h<pr.end; }catch(e){ return false; } }
+  function isNightTime(){ try{ var pr=sleepProfile(), h=new Date().getHours(); return h>=pr.start||h<pr.end; }catch(e){ return false; } } // 背景ではなく 時刻だけで判定
   var lightsOff=false;
   function setLights(off){ lightsOff=off; document.body.classList.toggle('lights-off',off); var b=document.getElementById('bLight'); if(b) b.textContent=off?'でんきを つける':'でんきを けす'; }
   (function(){ var b=document.getElementById('bLight'); if(b) b.onclick=function(){ setLights(!lightsOff); }; })();
