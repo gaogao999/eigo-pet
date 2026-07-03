@@ -389,9 +389,8 @@ window._eigoPetInit = function() {
     if(mo){ var bo=state._lastBuyout||{baht:0,food:0};
       if(!neglect && bo.baht>0){
         mo.style.display='block';
-        mo.innerHTML='そだてきった ごほうび！ のこった えさ '+bo.food+'こ を かいとり<br><span style="font-size:26px;color:#ea580c;">฿'+bo.baht+'</span><br>'
-          +'<div style="margin-top:8px;padding:8px;background:#fffbeb;border:2px dashed #f59e0b;border-radius:8px;font-size:13px;color:#92400e;">👨‍👩‍👧 おとうさん・おかあさんに<br>この がめんを みせてね！</div>'
-          +'<span style="font-size:11px;color:var(--mut);">おこづかい ごうけい ฿'+(state.money||0)+'（せってい→おこづかい）</span>';
+        mo.innerHTML='そだてきった ごほうび！ のこった えさ '+bo.food+'こ ぶんの おこづかい<br><span style="font-size:30px;color:#ea580c;">฿'+bo.baht+'</span>'
+          +'<div style="margin-top:8px;padding:8px;background:#fffbeb;border:2px dashed #f59e0b;border-radius:8px;font-size:13px;color:#92400e;">👨‍👩‍👧 おとうさん・おかあさんに<br>この ฿'+bo.baht+' を みせてね！</div>';
       }
       else if(neglect){ mo.style.display='block'; mo.innerHTML='<span style="font-size:12px;color:var(--mut);">はやい おわかれの ときは おこづかいは もらえないよ…<br>つぎは さいごまで そだてよう！</span>'; }
       else { mo.style.display='none'; }
@@ -552,12 +551,11 @@ window._eigoPetInit = function() {
   function unlockParent(){ var pp=document.getElementById('okParent'); if(pp) pp.style.display='block'; var lk=document.getElementById('okLock'); if(lk) lk.style.display='none'; }
   function renderMoney(){
     lockParent(); // タブを開くたび おうち設定は かくす（子供に見えないように）
-    var z=document.getElementById('okZandaka'); if(z) z.textContent='฿'+(state.money||0);
     var f=document.getElementById('okFood'); if(f) f.textContent=(state.food||0);
     var rate0=Math.max(1,state.moneyRate||5), cap0=Math.max(0,state.moneyCapPerPet||0);
     var est=Math.floor((state.food||0)/rate0); if(cap0>0) est=Math.min(est,cap0);
     var fb=document.getElementById('okFoodBaht'); if(fb) fb.textContent='฿'+est;
-    var cn=document.getElementById('okCapNote'); if(cn) cn.textContent='おわかれの ときに かいとり（1匹 さいだい ฿'+cap0+'）';
+    var cn=document.getElementById('okCapNote'); if(cn) cn.textContent='1匹 さいだい ฿'+cap0+'（えさ'+rate0+'こ＝฿1）';
     var r=document.getElementById('okRate'); if(r) r.value=state.moneyRate||5;
     var c=document.getElementById('okCap'); if(c) c.value=state.moneyCapPerPet||0;
     var h=document.getElementById('okRateHint'); if(h){ var rate=Math.max(1,state.moneyRate||5); h.textContent='いまの えさ '+(state.food||0)+'こ は 約 ฿'+Math.floor((state.food||0)/rate)+' ぶん'; }
@@ -581,12 +579,6 @@ window._eigoPetInit = function() {
       var r=parseInt(document.getElementById('okRate').value,10), c=parseInt(document.getElementById('okCap').value,10);
       if(!(r>=1)) r=5; if(!(c>=0)) c=0;
       state.moneyRate=r; state.moneyCapPerPet=c; save(); renderMoney(); bubble('せってい を ほぞんしたよ');
-    };
-    var pd=document.getElementById('okPaid'); if(pd) pd.onclick=function(){
-      if(!(state.money>0)){ bubble('ざんだかは ฿0だよ'); return; }
-      if(!confirm('おこづかい ฿'+state.money+' を しはらいましたか？ ざんだかを ０に します。')) return;
-      state.moneyLog=state.moneyLog||[]; state.moneyLog.unshift({ date:today(), baht:-state.money, food:0, name:'しはらい' }); if(state.moneyLog.length>60) state.moneyLog.length=60;
-      state.money=0; save(); renderMoney();
     };
   })();
   function renderData(){ document.getElementById('dataStat').textContent='なまえ：'+state.name+' ／ レベル '+state.lv+' ／ おぼえた '+state.learned+'こ ／ 🔥'+displayStreak()+'にち'; document.getElementById('exportBox').style.display='none'; document.getElementById('btnCopy').style.display='none'; document.getElementById('importBox').value=''; document.getElementById('dataMsg').textContent=''; }
