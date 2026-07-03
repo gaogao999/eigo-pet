@@ -688,7 +688,7 @@ window._eigoPetInit = function() {
   function startGame(){ var s=gameSetup('ジャンプゲーム','タップで ジャンプ！ しょうがいぶつを よけよう','ジャンプ'); var groundY=s.H-26,petW=s.petW,petH=s.petH; if(game) cancelAnimationFrame(game.raf); game={ mode:'jump',ctx:s.ctx,W:s.W,H:s.H,groundY:groundY,map:s.map,cell:s.cell,img:s.img,petW:petW,petH:petH,px:34,py:groundY-petH,vy:0,onGround:true,jumps:0,obs:[],speed:2.6,t:0,score:0,over:false,raf:0 }; loopGame(); }
   function jump(){ if(game&&!game.over&&game.jumps<2){ game.vy=-9.6; game.jumps++; game.onGround=false; } }
   function startSeaGame(){ var s=gameSetup('うみゲーム','タップで うく！ いわの あいだを とおろう','うく'); var petW=s.petW,petH=s.petH; if(game) cancelAnimationFrame(game.raf); game={ mode:'sea',ctx:s.ctx,W:s.W,H:s.H,map:s.map,cell:s.cell,img:s.img,petW:petW,petH:petH,px:40,py:Math.round(s.H/2-petH/2),vy:0,obs:[],gap:Math.round(petH*2.8),speed:2.2,t:0,score:0,over:false,raf:0 }; loopSea(); }
-  function floatUp(){ if(game&&!game.over&&game.mode==='sea'){ game.vy=-5.0; } }
+  function floatUp(){ if(game&&!game.over&&game.mode==='sea'){ game.vy=-3.6; } }
   // りんごキャッチ：タップで むきを かえて、りんごを あつめる。いわに あたったら おわり
   function startCatchGame(){ var s=gameSetup('りんごキャッチ','タップで ターン！ りんごを あつめて いわは よけよう','ターン'); var groundY=s.H-26; if(game) cancelAnimationFrame(game.raf); game={ mode:'catch',ctx:s.ctx,W:s.W,H:s.H,groundY:groundY,map:s.map,cell:s.cell,img:s.img,petW:s.petW,petH:s.petH,px:Math.round(s.W/2-s.petW/2),dir:1,vx:2.8,items:[],t:0,score:0,over:false,raf:0 }; loopCatch(); }
   function turnPet(){ if(game&&!game.over&&game.mode==='catch'){ game.dir*=-1; } }
@@ -705,13 +705,28 @@ window._eigoPetInit = function() {
     g.items.forEach(function(it){ if(it.rock){ ctx.fillStyle='#8a8f98'; ctx.fillRect(it.x,it.y,12,10); ctx.fillStyle='#5b6470'; ctx.fillRect(it.x+2,it.y+7,8,3); } else { ctx.fillStyle='#e0402a'; ctx.fillRect(it.x,it.y+3,12,9); ctx.fillStyle='#8a5a2a'; ctx.fillRect(it.x+5,it.y,2,4); ctx.fillStyle='#3b8a5a'; ctx.fillRect(it.x+7,it.y+1,4,2); } });
     drawPetSprite(ctx,g,Math.round(g.px),g.groundY-g.petH); document.getElementById('gscore').textContent=g.score; g.raf=requestAnimationFrame(loopCatch); }
   function loopSea(){ var g=game; if(!g||g.over) return; g.t++; g.speed+=0.0012;
-    if(g.obs.length===0||(g.W-g.obs[g.obs.length-1].x)>(150+Math.random()*70)){ var gw=16+Math.floor(Math.random()*6); var og=Math.max(Math.round(g.petH*2.0), g.gap-Math.floor(g.t/150)); var gy=24+Math.floor(Math.random()*Math.max(1,g.H-og-48)); g.obs.push({x:g.W,w:gw,gy:gy,og:og}); } // すきまは だんだん せまく
-    g.obs.forEach(function(o){ o.x-=g.speed; }); g.obs=g.obs.filter(function(o){ return o.x+o.w>-4; }); g.score=Math.floor(g.t/6);
-    g.vy+=0.38; g.py+=g.vy;
+    if(g.t>90 && (g.obs.length===0||(g.W-g.obs[g.obs.length-1].x)>(155+Math.random()*70))){ var gw=16+Math.floor(Math.random()*6); var og=Math.max(Math.round(g.petH*2.0), g.gap-Math.floor(g.t/150)); g.gateN=(g.gateN||0)+1; var gy=(g.gateN<=3)?Math.round((g.H-og)/2+(Math.random()*30-15)):(24+Math.floor(Math.random()*Math.max(1,g.H-og-48))); g.obs.push({x:g.W,w:gw,gy:gy,og:og}); } // 最初の3枚は 中央よりで やさしく。すきまは だんだん せまく
+    g.obs.forEach(function(o){ o.x-=g.speed; }); g.obs=g.obs.filter(function(o){ return o.x+o.w>-4; });
+    // フラッピー系の ふんわり物理：おちるのは ゆっくり、さいこう速度つき
+    g.vy+=0.22; if(g.vy>3.6) g.vy=3.6; g.py+=g.vy;
     if(g.py<0){ g.py=0; g.vy=0; } if(g.py+g.petH>g.H){ g.py=g.H-g.petH; g.vy=0; } // 上下の はしでは しなない（いわ だけが てき）
     var pl=g.px+5,pr=g.px+g.petW-5,pt=g.py+3,pb=g.py+g.petH-3;
-    for(var oi=0;oi<g.obs.length;oi++){ var o=g.obs[oi]; var gp=o.og||g.gap; if(pl<o.x+o.w&&pr>o.x){ if(pt<o.gy||pb>o.gy+gp){ endGame(); return; } } }
-    var ctx=g.ctx; ctx.fillStyle='#5fb0e8'; ctx.fillRect(0,0,g.W,g.H); ctx.fillStyle='#bfe3f7'; ctx.fillRect(8,14,16,3); ctx.fillRect(g.W-60,28,16,3); ctx.fillRect(g.W-120,10,16,3);
+    for(var oi=0;oi<g.obs.length;oi++){ var o=g.obs[oi]; var gp=o.og||g.gap;
+      if(pl<o.x+o.w&&pr>o.x){ if(pt<o.gy||pb>o.gy+gp){ endGame(); return; } }
+      if(!o.passed && o.x+o.w<g.px){ o.passed=true; g.score+=5; } // いわを 通過で +5
+    }
+    var ctx=g.ctx; ctx.fillStyle='#5fb0e8'; ctx.fillRect(0,0,g.W,g.H);
+    // 背景の さかな と あわ
+    if(!g.deco){ g.deco={fish:[],bub:[]}; }
+    if(g.t%160===0) g.deco.fish.push({x:g.W+10,y:20+Math.random()*(g.H-60),v:0.8+Math.random()*0.7});
+    if(g.t%22===0) g.deco.bub.push({x:10+Math.random()*(g.W-20),y:g.H,v:0.5+Math.random()*0.6});
+    ctx.fillStyle='#8fd0f4';
+    g.deco.fish.forEach(function(f){ f.x-=f.v; ctx.fillRect(f.x,f.y,10,5); ctx.fillRect(f.x+10,f.y+1,3,3); });
+    g.deco.fish=g.deco.fish.filter(function(f){ return f.x>-16; });
+    ctx.fillStyle='#cfeafd';
+    g.deco.bub.forEach(function(bb){ bb.y-=bb.v; ctx.fillRect(bb.x,bb.y,3,3); });
+    g.deco.bub=g.deco.bub.filter(function(bb){ return bb.y>-4; });
+    ctx.fillStyle='#bfe3f7'; ctx.fillRect(8,14,16,3); ctx.fillRect(g.W-60,28,16,3); ctx.fillRect(g.W-120,10,16,3);
     g.obs.forEach(function(o){ var gp=o.og||g.gap; ctx.fillStyle='#3b8a5a'; ctx.fillRect(o.x,0,o.w,o.gy); ctx.fillRect(o.x,o.gy+gp,o.w,g.H-(o.gy+gp)); ctx.fillStyle='#2e6e47'; ctx.fillRect(o.x,o.gy-3,o.w,3); ctx.fillRect(o.x,o.gy+gp,o.w,3); });
     drawPetSprite(ctx,g,g.px,Math.round(g.py)); document.getElementById('gscore').textContent=g.score; g.raf=requestAnimationFrame(loopSea); }
   function gameInput(){ if(!game||game.over) return; if(game.mode==='sea') floatUp(); else if(game.mode==='catch') turnPet(); else jump(); }
