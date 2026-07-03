@@ -224,23 +224,17 @@ window._eigoPetInit = function() {
     var s=null;
     var keys=[KEY, BAKKEY];
     for(var ki=0;ki<keys.length;ki++){ try{ var raw=localStorage.getItem(keys[ki]); if(raw){ s=JSON.parse(raw); break; } }catch(e){} }
-    var def={ name:"ぴよ",lv:1,xp:0,hunger:80,happy:80,food:0,dirty:false,streak:1,learned:0,last:today(),grade:"g3",discipline:50,weight:5,careMiss:0,disciplineMiss:0,wagamama:false,babyType:null,childType:null,adultType:null,customImg:{},gameHi:0,dailyGoal:20,todayDate:today(),todayWords:[],lastGoalDate:null,metDates:[],wrongWords:[],petColor:'brown',bg:'meadow',freezeTickets:0,lastTicketDate:null,rewardHour:null,lastBoxWeek:null,titles:[],sound:true,mastery:{},learn:{},maxStreak:0,sick:false,sickSince:null,starveSince:null,gamesPlayed:0,genCorrect:0,sleepCount:0,dirtySince:null,born:Date.now(),stageSince:Date.now(),lifespanDays:12+Math.floor(Math.random()*3),youngType:null,memories:[],schemaV:2,lastBackupNudge:null,lastTick:Date.now(),keifuHints:0,keifuRevealed:[],money:0,moneyRate:5,moneyCapPerPet:200,moneyLog:[],parentPin:'' };
+    var def={ name:"ぴよ",lv:1,xp:0,hunger:80,happy:80,food:0,dirty:false,streak:1,learned:0,last:today(),grade:"g3",discipline:50,weight:5,careMiss:0,disciplineMiss:0,wagamama:false,babyType:null,childType:null,adultType:null,customImg:{},gameHi:0,dailyGoal:20,todayDate:today(),todayWords:[],lastGoalDate:null,metDates:[],wrongWords:[],petColor:'brown',bg:'meadow',freezeTickets:0,lastTicketDate:null,lastBoxWeek:null,titles:[],sound:true,mastery:{},learn:{},maxStreak:0,sick:false,sickSince:null,starveSince:null,gamesPlayed:0,genCorrect:0,sleepCount:0,dirtySince:null,born:Date.now(),stageSince:Date.now(),lifespanDays:12+Math.floor(Math.random()*3),youngType:null,memories:[],schemaV:2,lastBackupNudge:null,lastTick:Date.now(),keifuRevealed:[],moneyLog:[] };
     s=Object.assign({},def,s||{});
     s.dailyGoal=20; // 1日の目標は20に固定
     // おこづかい機能の初期化（家庭内でえさを買い取ってお金に）
-    if(typeof s.money!=='number') s.money=0;
-    if(typeof s.moneyRate!=='number'||s.moneyRate<1) s.moneyRate=5;   // えさ何個で1バーツか
-    if(typeof s.moneyCapPerPet!=='number'||s.moneyCapPerPet<0) s.moneyCapPerPet=200; // 1匹あたりの上限バーツ
     if(!Array.isArray(s.moneyLog)) s.moneyLog=[];
-    if(typeof s.moneyBonusFood!=='number'||s.moneyBonusFood<1) s.moneyBonusFood=(s.moneyRate||5)*5; // 上限こえたぶん えさ何個で1バーツか
-    if(typeof s.moneyBonusMax!=='number'||s.moneyBonusMax<0) s.moneyBonusMax=100; // ボーナスの さいだい（＋バーツ）
     // だんかいレート：デフォルトは 3段階（฿100=えさ5／฿200=えさ10／฿300=えさ15）。
     // 一度だけ この新デフォルトに 統一（moneyTiersV=2）。以降は 親が変えた設定を そのまま保持
     if(s.moneyTiersV!==2 || !Array.isArray(s.moneyTiers) || !s.moneyTiers.length){
       s.moneyTiers=[{cap:100,rate:5},{cap:200,rate:10},{cap:300,rate:15}];
       s.moneyTiersV=2;
     }
-    if(typeof s.parentPin!=='string') s.parentPin=''; // おうちのひとコード（未設定は空）
     // 単語ごとの学習状況(learn)へ移行：旧mastery(正解数>=2でおぼえた)＋wrongWords(にがて)から復元
     if(!s.learn || typeof s.learn!=='object'){ s.learn={}; }
     if(Object.keys(s.learn).length===0 && ((s.mastery&&Object.keys(s.mastery).length)||(s.wrongWords&&s.wrongWords.length))){
@@ -251,8 +245,6 @@ window._eigoPetInit = function() {
     if(s.grade==='g3') s.grade='jun2';
     // ライフサイクル改修(schemaV2)への移行：旧アダルト(lv4)→新アダルト(lv5)
     if(!s.schemaV || s.schemaV<2){ if(s.lv>=4) s.lv=5; if(typeof s.born!=='number') s.born=Date.now(); if(typeof s.stageSince!=='number') s.stageSince=Date.now(); if(typeof s.lifespanDays!=='number') s.lifespanDays=12; if(!Array.isArray(s.memories)) s.memories=[]; s.schemaV=2; }
-    // 旧「ヒントまとめ買い」(keifuHints)は タップ式に変更ずみ → 払ったえさを 返金して精算
-    if(s.keifuHints>0){ s.food=(s.food||0)+s.keifuHints*5; s.keifuHints=0; }
     return s;
   })();
   function save(){ try{ var js=JSON.stringify(state); localStorage.setItem(KEY,js); localStorage.setItem(BAKKEY,js); }catch(e){} }
@@ -392,7 +384,6 @@ window._eigoPetInit = function() {
     var had=state.food||0, m=moneyFor(had);
     state.food=0;
     if(m.total<=0) return {baht:0, food:had, bonus:0};
-    state.money=(state.money||0)+m.total;
     state.moneyLog=state.moneyLog||[];
     state.moneyLog.unshift({ date:today(), baht:m.total, food:had, name:state.name });
     if(state.moneyLog.length>60) state.moneyLog.length=60;
@@ -507,7 +498,6 @@ window._eigoPetInit = function() {
     var sh=document.getElementById('streak'); if(sh) sh.textContent=ds;
     var wd=document.getElementById('weekdots');
     if(wd){ var h=''; var W='月火水木金土日'; var mon=new Date(weekId(today())); for(var i=0;i<7;i++){ var dd2=new Date(mon); dd2.setDate(mon.getDate()+i); var dds=dayStr(dd2); var met2=state.metDates.indexOf(dds)>=0||(dds===today()&&done>=goal); var isT=(dds===today()); h+='<div class="wdot'+(met2?' met':'')+(isT?' today':'')+'">'+W[i]+'</div>'; } wd.innerHTML=h; }
-    document.querySelectorAll('.goalbtn').forEach(function(b){ b.classList.toggle('sel',(+b.dataset.goal)===state.dailyGoal); });
     var gp=gradeProgress();
     var mb=document.getElementById('masterBar'); if(mb) mb.style.width=(gp.total?Math.round(gp.mastered/gp.total*100):0)+'%';
     var mn=document.getElementById('masterN'); if(mn) mn.textContent=gp.mastered;
