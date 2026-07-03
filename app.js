@@ -551,6 +551,7 @@ window._eigoPetInit = function() {
   document.getElementById('backSelect').onclick=function(){ show('home'); render(); };
   document.getElementById('selJump').onclick=function(){ if(state.food<=0){ bubble('えさが たりない'); return; } consumePlay(); startGame(); };
   document.getElementById('selSea').onclick=function(){ if(state.food<=0){ bubble('えさが たりない'); return; } consumePlay(); startSeaGame(); };
+  document.getElementById('selCatch').onclick=function(){ if(state.food<=0){ bubble('えさが たりない'); return; } consumePlay(); startCatchGame(); };
   document.getElementById('bScold').onclick=function(){ if(state.wagamama){ state.wagamama=false; state.discipline=Math.min(100,state.discipline+12); clearTimeout(wagaTimer); bubble("いいこ だね！"); cheer(); } else { state.discipline=Math.max(0,state.discipline-6); bubble("いまは しからないで…"); } save(); render(); };
   var flushing=false;
   document.getElementById('bClean').onclick=function(){ if(flushing) return; if(state.dirty){ flushing=true; var p=document.getElementById('poop'), fl=document.getElementById('flush'); p.classList.add('flushing'); fl.classList.add('on'); bubble("ザブーン！"); sfx('flush'); setTimeout(function(){ p.classList.remove('flushing'); fl.classList.remove('on'); flushing=false; state.dirty=false; state.dirtySince=null; state.happy=Math.min(100,state.happy+10); bubble("ぴかぴか"); save(); render(); },1000); } else bubble("きれいだよ"); };
@@ -688,6 +689,21 @@ window._eigoPetInit = function() {
   function jump(){ if(game&&!game.over&&game.jumps<2){ game.vy=-9.6; game.jumps++; game.onGround=false; } }
   function startSeaGame(){ var s=gameSetup('うみゲーム','タップで うく！ いわの あいだを とおろう','うく'); var petW=s.petW,petH=s.petH; if(game) cancelAnimationFrame(game.raf); game={ mode:'sea',ctx:s.ctx,W:s.W,H:s.H,map:s.map,cell:s.cell,img:s.img,petW:petW,petH:petH,px:40,py:Math.round(s.H/2-petH/2),vy:0,obs:[],gap:Math.round(petH*2.8),speed:2.2,t:0,score:0,over:false,raf:0 }; loopSea(); }
   function floatUp(){ if(game&&!game.over&&game.mode==='sea'){ game.vy=-5.0; } }
+  // りんごキャッチ：タップで むきを かえて、りんごを あつめる。いわに あたったら おわり
+  function startCatchGame(){ var s=gameSetup('りんごキャッチ','タップで ターン！ りんごを あつめて いわは よけよう','ターン'); var groundY=s.H-26; if(game) cancelAnimationFrame(game.raf); game={ mode:'catch',ctx:s.ctx,W:s.W,H:s.H,groundY:groundY,map:s.map,cell:s.cell,img:s.img,petW:s.petW,petH:s.petH,px:Math.round(s.W/2-s.petW/2),dir:1,vx:2.8,items:[],t:0,score:0,over:false,raf:0 }; loopCatch(); }
+  function turnPet(){ if(game&&!game.over&&game.mode==='catch'){ game.dir*=-1; } }
+  function loopCatch(){ var g=game; if(!g||g.over) return; g.t++;
+    var iv=Math.max(30, 52-Math.floor(g.t/180)); // 出現間隔：だんだん みじかく
+    if(g.t%iv===0){ var rock=Math.random()<(0.24+Math.min(0.16,g.t/3600)); g.items.push({x:8+Math.random()*(g.W-28), y:-12, vy:1.7+g.t*0.0035+Math.random()*0.7, rock:rock}); }
+    g.px+=g.vx*g.dir; if(g.px<4){ g.px=4; g.dir=1; } if(g.px>g.W-g.petW-4){ g.px=g.W-g.petW-4; g.dir=-1; } // かべで はねかえる
+    var py=g.groundY-g.petH, pl=g.px+4, pr=g.px+g.petW-4, pt=py+4, pb=g.groundY;
+    for(var i=g.items.length-1;i>=0;i--){ var it=g.items[i]; it.y+=it.vy;
+      if(it.x+12>pl && it.x<pr && it.y+12>pt && it.y<pb){ if(it.rock){ endGame(); return; } g.score++; g.items.splice(i,1); continue; }
+      if(it.y>g.H) g.items.splice(i,1); // とりのがしは ペナルティなし
+    }
+    var ctx=g.ctx; ctx.fillStyle='#fdf1d6'; ctx.fillRect(0,0,g.W,g.H); ctx.fillStyle='#e0d3b0'; ctx.fillRect(0,g.groundY,g.W,g.H-g.groundY); ctx.fillStyle='#4a3526'; ctx.fillRect(0,g.groundY,g.W,2);
+    g.items.forEach(function(it){ if(it.rock){ ctx.fillStyle='#8a8f98'; ctx.fillRect(it.x,it.y,12,10); ctx.fillStyle='#5b6470'; ctx.fillRect(it.x+2,it.y+7,8,3); } else { ctx.fillStyle='#e0402a'; ctx.fillRect(it.x,it.y+3,12,9); ctx.fillStyle='#8a5a2a'; ctx.fillRect(it.x+5,it.y,2,4); ctx.fillStyle='#3b8a5a'; ctx.fillRect(it.x+7,it.y+1,4,2); } });
+    drawPetSprite(ctx,g,Math.round(g.px),g.groundY-g.petH); document.getElementById('gscore').textContent=g.score; g.raf=requestAnimationFrame(loopCatch); }
   function loopSea(){ var g=game; if(!g||g.over) return; g.t++; g.speed+=0.0012;
     if(g.obs.length===0||(g.W-g.obs[g.obs.length-1].x)>(150+Math.random()*70)){ var gw=16+Math.floor(Math.random()*6); var og=Math.max(Math.round(g.petH*2.0), g.gap-Math.floor(g.t/150)); var gy=24+Math.floor(Math.random()*Math.max(1,g.H-og-48)); g.obs.push({x:g.W,w:gw,gy:gy,og:og}); } // すきまは だんだん せまく
     g.obs.forEach(function(o){ o.x-=g.speed; }); g.obs=g.obs.filter(function(o){ return o.x+o.w>-4; }); g.score=Math.floor(g.t/6);
@@ -698,7 +714,7 @@ window._eigoPetInit = function() {
     var ctx=g.ctx; ctx.fillStyle='#5fb0e8'; ctx.fillRect(0,0,g.W,g.H); ctx.fillStyle='#bfe3f7'; ctx.fillRect(8,14,16,3); ctx.fillRect(g.W-60,28,16,3); ctx.fillRect(g.W-120,10,16,3);
     g.obs.forEach(function(o){ var gp=o.og||g.gap; ctx.fillStyle='#3b8a5a'; ctx.fillRect(o.x,0,o.w,o.gy); ctx.fillRect(o.x,o.gy+gp,o.w,g.H-(o.gy+gp)); ctx.fillStyle='#2e6e47'; ctx.fillRect(o.x,o.gy-3,o.w,3); ctx.fillRect(o.x,o.gy+gp,o.w,3); });
     drawPetSprite(ctx,g,g.px,Math.round(g.py)); document.getElementById('gscore').textContent=g.score; g.raf=requestAnimationFrame(loopSea); }
-  function gameInput(){ if(!game||game.over) return; if(game.mode==='sea') floatUp(); else jump(); }
+  function gameInput(){ if(!game||game.over) return; if(game.mode==='sea') floatUp(); else if(game.mode==='catch') turnPet(); else jump(); }
   function loopGame(){ var g=game; if(!g||g.over) return; g.t++; g.speed+=0.0018; // だんだん はやく
     if(g.obs.length===0||(g.W-g.obs[g.obs.length-1].x)>(Math.max(100,150-g.t*0.02)+Math.random()*110)){ // かんかくも だんだん せまく
       var fly=(g.t>250 && Math.random()<0.3);
@@ -718,7 +734,7 @@ window._eigoPetInit = function() {
     drawPetSprite(ctx,g,g.px,Math.round(g.py)); document.getElementById('gscore').textContent=g.score; g.raf=requestAnimationFrame(loopGame); }
   function endGame(){ var g=game; g.over=true; cancelAnimationFrame(g.raf); var sc=g.score; var happyGain=Math.min(30,6+Math.floor(sc/4)); state.happy=Math.min(100,state.happy+happyGain); addXp(5); if(sc>(state.gameHi||0)) state.gameHi=sc; save(); document.getElementById('goverScore').textContent='スコア '+sc+'（さいこう '+state.gameHi+'）'; document.getElementById('goverReward').textContent='ごきげん +'+happyGain+' ／ うんどうした！'; document.getElementById('gover').style.display='flex'; } // えさ報酬なし（えさは べんきょうで）
   function leaveGame(){ if(game){ game.over=true; cancelAnimationFrame(game.raf); } show('home'); render(); }
-  (function(){ var cv=document.getElementById('gcanvas'); cv.addEventListener('pointerdown',function(e){ e.preventDefault(); gameInput(); }); document.getElementById('gJump').onclick=gameInput; document.getElementById('gRetry').onclick=function(){ if(state.food<=0){ leaveGame(); bubble('えさが なくなった！べんきょうで あつめよう'); return; } consumePlay(); if(game&&game.mode==='sea') startSeaGame(); else startGame(); }; document.getElementById('gHome').onclick=leaveGame; document.getElementById('backGame').onclick=leaveGame; })();
+  (function(){ var cv=document.getElementById('gcanvas'); cv.addEventListener('pointerdown',function(e){ e.preventDefault(); gameInput(); }); document.getElementById('gJump').onclick=gameInput; document.getElementById('gRetry').onclick=function(){ if(state.food<=0){ leaveGame(); bubble('えさが なくなった！べんきょうで あつめよう'); return; } consumePlay(); if(game&&game.mode==='sea') startSeaGame(); else if(game&&game.mode==='catch') startCatchGame(); else startGame(); }; document.getElementById('gHome').onclick=leaveGame; document.getElementById('backGame').onclick=leaveGame; })();
 
   /* ---- study ---- */
   var session, qIdx, qList;
