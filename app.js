@@ -100,7 +100,10 @@ window._eigoPetInit = function() {
     normal: ['うさたま','どきどき','たまぱ','めっこ','もぐもぐ','ちゃめ'],
     wild:   ['かぶら','ぴよたま','くちぱ','はんば','ぴな','めらめら']
   };
-  var RARE_ADULTS = ['くろだま','おばけ']; // どのヤングからでも（サボりすぎ）
+  var RARE_ADULTS = ['くろだま','おばけ']; // じょうずに育てた子に まれに（どの系統からでも）。サボりでは出ない
+  var RARE_CHANCE = 0.07;                  // レアが出る かくりつ（お世話が よい子のみ）
+  var TIER_LABEL = { star:'⭐さいこう', good:'◎よいこ', normal:'○ふつう', wild:'△わんぱく' };
+  var FAMILY_NAME = { star:'すいすいたま系（あお・メカ）', good:'しろころ系（しろ・ふしぎ）', normal:'もふたま系（どうぶつ）', wild:'くさたま系（しぜん・たべもの）' };
   var ADULT_DESC = {
     'おひさま':'みんなを てらす あかるい たいようの子。',
     'みらたま':'みらいから きた かしこい ロボの子。',
@@ -126,8 +129,8 @@ window._eigoPetInit = function() {
     'くちぱ':'まけずぎらいの つよがり。',
     'ぴねむ':'いたずら まほうの わんぱくっ子。',
     'ばぶたま':'すこし わがままな あばれんぼう。',
-    'くろだま':'レア！せわを サボりすぎると あらわれる くろねこ。',
-    'おばけ':'レア！よなかに そっと あらわれる おばけ。'
+    'くろだま':'レア！じょうずに そだてた子に まれに あらわれる くろねこ。',
+    'おばけ':'レア！じょうずに そだてた子に まれに あらわれる おばけ。'
   };
   var ADULTS = (function(){ var o={}; Object.keys(ADULT_TIERS).forEach(function(t){ ADULT_TIERS[t].forEach(function(id){ o[id]={ img:id, name:dispName(id), desc:ADULT_DESC[id]||'', tier:t, rare:(t==='devil') }; }); }); return o; })();
   // きゅうバージョンの セーブ（tier_parity / devil）との ごかんマップ
@@ -146,13 +149,14 @@ window._eigoPetInit = function() {
   function youngInfo() { return YOUNGS[state.youngType] || YOUNGS.normal; }
   function adultById(id){ return ADULTS[id] || (id&&LEGACY_ADULT[id]&&ADULTS[LEGACY_ADULT[id]]) || ADULTS[ADULT_TIERS.normal[0]]; }
   function adultInfo() { return adultById(state.adultType); }
-  function predictedTier(){ if((state.careMiss+state.disciplineMiss)>=8) return 'devil'; return TIER_ORDER[careTierIndex()]; }
-  function predictedAdultKey(){ var t=predictedTier(); if(t==='devil') return RARE_ADULTS[0]; return (LINEAGE[t]||LINEAGE.normal)[0]; }
+  function careMissTotal(){ return (state.careMiss||0)+(state.disciplineMiss||0); }
+  function predictedTier(){ return youngTierKey(); } // いまの おせわランク（系統）。レアは予告しない
+  function predictedAdultKey(){ var t=predictedTier(); return (LINEAGE[t]||LINEAGE.normal)[0]; }
   // アダルト確定：いまの ヤング(=おせわランク)の 系統から、見た目の似た6種のどれかに進化。
-  // おせわを サボりすぎると（どのヤングからでも）レアに。
+  // レアは「じょうずに育てた子（ミスが少ない）」だけ 低確率で（どの系統からでも）。サボりでは出ない。
   function pickAdultType(){
-    if((state.careMiss+state.disciplineMiss)>=8){ return RARE_ADULTS[(Math.random()*RARE_ADULTS.length)|0]; }
     var yt=state.youngType||youngTierKey();
+    if(careMissTotal()<=2 && Math.random()<RARE_CHANCE){ return RARE_ADULTS[(Math.random()*RARE_ADULTS.length)|0]; }
     var pool=LINEAGE[yt]||LINEAGE.normal;
     return pool[(Math.random()*pool.length)|0];
   }
@@ -481,7 +485,13 @@ window._eigoPetInit = function() {
     var fc=document.getElementById('fcSprite');
     if(fc){
       if(state.lv>=5){ var ai=adultInfo(); fc.innerHTML=spriteHTML(ai,3); document.getElementById('fcTitle').textContent='そだった アダルト'; document.getElementById('fcName').textContent=ai.name; document.getElementById('fcMsg').textContent='りっぱに そだったね！'; }
-      else { var tier2=predictedTier(), pa=ADULTS[predictedAdultKey()]; fc.innerHTML=spriteHTML(pa,3); document.getElementById('fcTitle').textContent='いまの ペースだと…'; document.getElementById('fcName').textContent=(tier2==='devil')?'？？？':(pa.name+' など'); var needS=Math.max(0,3-genMetDays()); document.getElementById('fcMsg').textContent=(tier2==='star')?'さいこうの おとな コース！この ちょうしで！':(tier2==='devil')?'サボりすぎ… べんきょう・おせわを しよう':('まいにち もくひょうたっせいで さいこうの おとなに！（あと'+needS+'日）'); }
+      else { var tier2=predictedTier(), pa=ADULTS[predictedAdultKey()]; fc.innerHTML=spriteHTML(pa,3);
+        document.getElementById('fcTitle').textContent='いまの ペースだと… '+(FAMILY_NAME[tier2]||'');
+        document.getElementById('fcName').textContent=pa.name+' など';
+        var met=genMetDays(), miss=careMissTotal(), needS=Math.max(0,3-met);
+        var base='ランク：'+TIER_LABEL[tier2]+'（もくひょうたっせい '+met+'日／せわ・しつけミス '+miss+'かい）';
+        var tail=(tier2==='star')?' さいこう！この ちょうしで！':(' さいこうまで あと '+needS+'日 たっせい');
+        document.getElementById('fcMsg').textContent=base+'。'+tail+' ／ ミスを へらすと レアも！'; }
     }
     var nd=document.getElementById('nudge');
     if(nd){ if(done>=goal){ nd.style.display='none'; } else { nd.style.display='block'; nd.textContent=done>0?('きょうは あと '+(goal-done)+'こ！ がくしゅうしよう →'):('きょうの べんきょうを はじめよう！ →'); } }
@@ -522,7 +532,9 @@ window._eigoPetInit = function() {
     tree+='<div class="trow">'+tnode(BABIES.a,BABIES.a.name,true)+'</div><div class="tarrow">↓</div>';
     tree+='<div class="trow">'+tnode(CHILDREN.a,CHILDREN.a.name,true)+'</div><div class="tarrow">↓</div>';
     var ytiers=[['star','⭐さいこう'],['good','◎よいこ'],['normal','○ふつう'],['wild','△わんぱく']];
-    tree+='<div class="tiertag">ヤング（おせわランクで わかれる）</div><div class="tgrid4">'+ytiers.map(function(t){ return tnode(YOUNGS[t[0]],YOUNGS[t[0]].name,true); }).join('')+'</div><div class="tarrow">↓</div>';
+    var nowTier=predictedTier();
+    tree+='<div class="keifuHint" style="background:#eff6ff;border-color:#bfdbfe;"><div style="font-size:12px;font-weight:800;color:var(--ink);line-height:1.6;">いまの ランク：<b style="color:#2563eb;">'+TIER_LABEL[nowTier]+'</b>（もくひょうたっせい '+genMetDays()+'日／せわ・しつけミス '+careMissTotal()+'かい）<br><span style="font-size:11px;color:var(--mut);font-weight:700;">たっせい日が おおいほど 上の系統へ。ミスを へらすと まれに ★レア（サボりでは 出ない）</span></div></div>';
+    tree+='<div class="tiertag">ヤング（おせわランクで きまる）</div><div class="tgrid4">'+ytiers.map(function(t){ return tnode(YOUNGS[t[0]],YOUNGS[t[0]].name,true); }).join('')+'</div><div class="tarrow">↓</div>';
     // アダルト：入手ずみは無料表示。それ以外は「？」を自分でタップ＋えさ で 1体ずつ ひらける
     var HINT_COST=50;
     var allAdults=[]; Object.keys(ADULT_TIERS).forEach(function(t){ ADULT_TIERS[t].forEach(function(id){ allAdults.push(id); }); });
@@ -533,9 +545,9 @@ window._eigoPetInit = function() {
     // ヤング1種ごとに「ヤング → アダルト6種」を 矢印つきの1行で 表示（レアは どのヤングからでも）
     var lineTiers=[['star','⭐さいこう'],['good','◎よいこ'],['normal','○ふつう'],['wild','△わんぱく']];
     lineTiers.forEach(function(t){ var y=YOUNGS[t[0]];
-      tree+='<div class="tiertag">'+t[1]+'</div><div class="lrow"><div class="lfrom">'+tnode(y,y.name,true)+'</div><div class="larrow">→</div><div class="lgrid">'+LINEAGE[t[0]].map(function(id){ return revealed[id]?tnode(ADULTS[id],ADULTS[id].name,true):lockNode(id); }).join('')+'</div></div>';
+      tree+='<div class="tiertag">おせわ '+t[1]+' → '+FAMILY_NAME[t[0]]+'</div><div class="lrow"><div class="lfrom">'+tnode(y,y.name,true)+'</div><div class="larrow">→</div><div class="lgrid">'+LINEAGE[t[0]].map(function(id){ return revealed[id]?tnode(ADULTS[id],ADULTS[id].name,true):lockNode(id); }).join('')+'</div></div>';
     });
-    tree+='<div class="tiertag">★レア</div><div class="lrow"><div class="lfrom" style="font-size:11px;font-weight:800;color:var(--mut);text-align:center;line-height:1.5;">どの子<br>からでも<br><span style="font-size:10px;">(サボりすぎ)</span></div><div class="larrow">→</div><div class="lgrid">'+RARE_ADULTS.map(function(id){ return revealed[id]?tnode(ADULTS[id],ADULTS[id].name,true):lockNode(id); }).join('')+'</div></div>';
+    tree+='<div class="tiertag">★レア（じょうずに そだてた ごほうび）</div><div class="lrow"><div class="lfrom" style="font-size:11px;font-weight:800;color:var(--mut);text-align:center;line-height:1.5;">どの系統<br>からでも<br><span style="font-size:10px;">(まれに)</span></div><div class="larrow">→</div><div class="lgrid">'+RARE_ADULTS.map(function(id){ return revealed[id]?tnode(ADULTS[id],ADULTS[id].name,true):lockNode(id); }).join('')+'</div></div>';
     if((state.memories||[]).length){
       var mh='<div class="gstage">おもいで（これまでの子）</div>';
       state.memories.forEach(function(m){ var ai=adultById(m.adultType); mh+='<div class="gcard" style="display:flex;gap:12px;align-items:center;text-align:left;margin-bottom:8px;"><div style="flex:none;">'+spriteHTML(ai,3)+'</div><div><div class="gname">'+m.name+'（'+(m.adultName||ai.name)+'）</div><div class="gdesc">'+m.days+'日 いっしょ ／ '+m.died+' たびだち ／ おぼえた '+m.learned+'こ</div></div></div>'; });
