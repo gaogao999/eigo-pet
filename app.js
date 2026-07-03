@@ -196,9 +196,14 @@ window._eigoPetInit = function() {
     var s=null;
     var keys=[KEY, BAKKEY];
     for(var ki=0;ki<keys.length;ki++){ try{ var raw=localStorage.getItem(keys[ki]); if(raw){ s=JSON.parse(raw); break; } }catch(e){} }
-    var def={ name:"ぴよ",lv:1,xp:0,hunger:80,happy:80,food:0,dirty:false,streak:1,learned:0,last:today(),grade:"g3",discipline:50,weight:5,careMiss:0,disciplineMiss:0,wagamama:false,babyType:null,childType:null,adultType:null,customImg:{},gameHi:0,dailyGoal:20,todayDate:today(),todayWords:[],lastGoalDate:null,metDates:[],wrongWords:[],petColor:'brown',bg:'meadow',freezeTickets:0,lastTicketDate:null,rewardHour:null,lastBoxWeek:null,titles:[],sound:true,mastery:{},learn:{},maxStreak:0,sick:false,born:Date.now(),stageSince:Date.now(),lifespanDays:12+Math.floor(Math.random()*3),youngType:null,memories:[],schemaV:2,lastBackupNudge:null,lastTick:Date.now(),keifuHints:0,keifuRevealed:[] };
+    var def={ name:"ぴよ",lv:1,xp:0,hunger:80,happy:80,food:0,dirty:false,streak:1,learned:0,last:today(),grade:"g3",discipline:50,weight:5,careMiss:0,disciplineMiss:0,wagamama:false,babyType:null,childType:null,adultType:null,customImg:{},gameHi:0,dailyGoal:20,todayDate:today(),todayWords:[],lastGoalDate:null,metDates:[],wrongWords:[],petColor:'brown',bg:'meadow',freezeTickets:0,lastTicketDate:null,rewardHour:null,lastBoxWeek:null,titles:[],sound:true,mastery:{},learn:{},maxStreak:0,sick:false,born:Date.now(),stageSince:Date.now(),lifespanDays:12+Math.floor(Math.random()*3),youngType:null,memories:[],schemaV:2,lastBackupNudge:null,lastTick:Date.now(),keifuHints:0,keifuRevealed:[],money:0,moneyRate:5,moneyCapPerPet:200,moneyLog:[] };
     s=Object.assign({},def,s||{});
     s.dailyGoal=20; // 1日の目標は20に固定
+    // おこづかい機能の初期化（家庭内でえさを買い取ってお金に）
+    if(typeof s.money!=='number') s.money=0;
+    if(typeof s.moneyRate!=='number'||s.moneyRate<1) s.moneyRate=5;   // えさ何個で1バーツか
+    if(typeof s.moneyCapPerPet!=='number'||s.moneyCapPerPet<0) s.moneyCapPerPet=200; // 1匹あたりの上限バーツ
+    if(!Array.isArray(s.moneyLog)) s.moneyLog=[];
     // 単語ごとの学習状況(learn)へ移行：旧mastery(正解数>=2でおぼえた)＋wrongWords(にがて)から復元
     if(!s.learn || typeof s.learn!=='object'){ s.learn={}; }
     if(Object.keys(s.learn).length===0 && ((s.mastery&&Object.keys(s.mastery).length)||(s.wrongWords&&s.wrongWords.length))){
@@ -314,12 +319,27 @@ window._eigoPetInit = function() {
     if(state.lv>=5 && ageDays()>=state.lifespanDays){ farewell(); return true; }
     return false;
   }
+  function buyoutFood(){
+    // お別れ時に 余ったえさを お金(バーツ)に買い取り。1匹あたり上限つき、払った分だけ えさを消費
+    var rate=Math.max(1,state.moneyRate||5), cap=Math.max(0,state.moneyCapPerPet||0);
+    var baht=Math.floor((state.food||0)/rate);
+    if(cap>0) baht=Math.min(baht,cap);
+    if(baht<=0) return {baht:0, food:0};
+    var used=baht*rate;
+    state.food=Math.max(0,(state.food||0)-used);
+    state.money=(state.money||0)+baht;
+    state.moneyLog=state.moneyLog||[];
+    state.moneyLog.unshift({ date:today(), baht:baht, food:used, name:state.name });
+    if(state.moneyLog.length>60) state.moneyLog.length=60;
+    return {baht:baht, food:used};
+  }
   function farewell(){
     state._farewell=true;
     var ai=adultInfo();
     state.memories=state.memories||[];
     state.memories.unshift({ name:state.name, adultType:state.adultType, adultName:ai.name, born:state.born, died:today(), days:Math.max(1,Math.round(ageDays())), learned:state.learned });
     if(state.memories.length>30) state.memories.length=30;
+    state._lastBuyout=buyoutFood();
     save(); showFarewell(ai);
   }
   function rebirth(){
@@ -337,6 +357,11 @@ window._eigoPetInit = function() {
     var sp=document.getElementById('fwSprite'); if(sp) sp.innerHTML=spriteHTML(ai,4);
     var nm=document.getElementById('fwName'); if(nm) nm.textContent=state.name+'（'+ai.name+'）';
     var ms=document.getElementById('fwMsg'); if(ms) ms.innerHTML=Math.max(1,Math.round(ageDays()))+'日 いっしょに がんばったね。<br>たくさんの えいごを おぼえる おてつだいを ありがとう！';
+    var mo=document.getElementById('fwMoney');
+    if(mo){ var bo=state._lastBuyout||{baht:0,food:0};
+      if(bo.baht>0){ mo.style.display='block'; mo.innerHTML='のこった えさ '+bo.food+'こ を かいとり<br><span style="font-size:22px;color:#ea580c;">฿'+bo.baht+'</span><br><span style="font-size:11px;color:var(--mut);">おこづかい ごうけい ฿'+(state.money||0)+'（せってい→おこづかい）</span>'; }
+      else { mo.style.display='none'; }
+    }
     el.style.display='flex';
   }
   function stageName(){ if(state.lv>=5) return "アダルト（"+adultInfo().name+"）"; if(state.lv>=4) return "ヤング（"+youngInfo().name+"）"; if(state.lv>=3) return "キッズ（"+childInfo().name+"）"; if(state.lv>=2) return "ベビー（"+babyInfo().name+"）"; return "タマゴ"; }
@@ -483,7 +508,32 @@ window._eigoPetInit = function() {
   document.getElementById('wlSearch').oninput=function(){ renderWordList(); };
   document.getElementById('wlWrongBtn').onclick=function(){ wlWrongOnly=!wlWrongOnly; renderWordList(); };
   var curAdminTab='zukan';
-  function setAdminTab(t){ curAdminTab=t; ['zukan','kisekae','keifu','tango','data'].forEach(function(k){ document.getElementById('tab-'+k).style.display=(k===t)?'block':'none'; }); document.querySelectorAll('#atabs .atab').forEach(function(b){ b.classList.toggle('sel',b.dataset.t===t); }); if(t==='kisekae') renderCosmetics(); if(t==='tango') renderWordList(); if(t==='data') renderData(); window.scrollTo(0,0); }
+  function setAdminTab(t){ curAdminTab=t; ['zukan','kisekae','keifu','okane','tango','data'].forEach(function(k){ document.getElementById('tab-'+k).style.display=(k===t)?'block':'none'; }); document.querySelectorAll('#atabs .atab').forEach(function(b){ b.classList.toggle('sel',b.dataset.t===t); }); if(t==='kisekae') renderCosmetics(); if(t==='tango') renderWordList(); if(t==='data') renderData(); if(t==='okane') renderMoney(); window.scrollTo(0,0); }
+  function renderMoney(){
+    var z=document.getElementById('okZandaka'); if(z) z.textContent='฿'+(state.money||0);
+    var f=document.getElementById('okFood'); if(f) f.textContent=(state.food||0);
+    var r=document.getElementById('okRate'); if(r) r.value=state.moneyRate||5;
+    var c=document.getElementById('okCap'); if(c) c.value=state.moneyCapPerPet||0;
+    var h=document.getElementById('okRateHint'); if(h){ var rate=Math.max(1,state.moneyRate||5); h.textContent='いまの えさ '+(state.food||0)+'こ は 約 ฿'+Math.floor((state.food||0)/rate)+' ぶん'; }
+    var log=document.getElementById('okLog');
+    if(log){ var L=state.moneyLog||[];
+      if(!L.length){ log.innerHTML='<div style="font-size:12px;color:var(--mut);font-weight:700;text-align:center;padding:12px;">まだ ありません</div>'; }
+      else { log.innerHTML=L.map(function(e){ return '<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 12px;border:2px solid var(--bdr);border-radius:8px;margin-bottom:6px;font-size:12px;font-weight:700;color:var(--ink);"><span>'+e.date+' <span style="color:var(--mut);">'+(e.name||'')+' えさ'+e.food+'</span></span><span style="color:#ea580c;font-weight:900;">＋฿'+e.baht+'</span></div>'; }).join(''); }
+    }
+  }
+  (function(){
+    var sv=document.getElementById('okSave'); if(sv) sv.onclick=function(){
+      var r=parseInt(document.getElementById('okRate').value,10), c=parseInt(document.getElementById('okCap').value,10);
+      if(!(r>=1)) r=5; if(!(c>=0)) c=0;
+      state.moneyRate=r; state.moneyCapPerPet=c; save(); renderMoney(); bubble('せってい を ほぞんしたよ');
+    };
+    var pd=document.getElementById('okPaid'); if(pd) pd.onclick=function(){
+      if(!(state.money>0)){ bubble('ざんだかは ฿0だよ'); return; }
+      if(!confirm('おこづかい ฿'+state.money+' を しはらいましたか？ ざんだかを ０に します。')) return;
+      state.moneyLog=state.moneyLog||[]; state.moneyLog.unshift({ date:today(), baht:-state.money, food:0, name:'しはらい' }); if(state.moneyLog.length>60) state.moneyLog.length=60;
+      state.money=0; save(); renderMoney();
+    };
+  })();
   function renderData(){ document.getElementById('dataStat').textContent='なまえ：'+state.name+' ／ レベル '+state.lv+' ／ おぼえた '+state.learned+'こ ／ 🔥'+displayStreak()+'にち'; document.getElementById('exportBox').style.display='none'; document.getElementById('btnCopy').style.display='none'; document.getElementById('importBox').value=''; document.getElementById('dataMsg').textContent=''; }
   function encodeState(){ return btoa(unescape(encodeURIComponent(JSON.stringify(state)))); }
   document.getElementById('btnExport').onclick=function(){ var box=document.getElementById('exportBox'); box.value=encodeState(); box.style.display='block'; document.getElementById('btnCopy').style.display='block'; };
@@ -546,7 +596,7 @@ window._eigoPetInit = function() {
   }
   document.getElementById('shopList').onclick=function(e){ var b=e.target.closest('.shopbuy'); if(!b) return; var it=SHOP.find(function(x){ return x.id===b.dataset.id; }); if(!it) return; if(it.max&&it.max()){ return; } if(state.food<it.cost){ bubble('えさが たりない'); return; } state.food-=it.cost; it.buy(); save(); sfx('unlock'); cheer(); bubble(it.name+' を かった！'); renderShop(); render(); };
   document.getElementById('tabbar').onclick=function(e){ var b=e.target.closest('.tab'); if(!b) return; gotoTab(b.dataset.s); };
-  var ADMIN_TABS=['zukan','kisekae','keifu','tango','data'];
+  var ADMIN_TABS=['zukan','kisekae','keifu','okane','tango','data'];
   function swipeTab(dir){ var cur=document.querySelector('.screen.on'); if(!cur) return; if(document.getElementById('goalCele').style.display==='flex') return; if(cur.id==='admin'){ var i=ADMIN_TABS.indexOf(curAdminTab),ni=i+dir; if(ni>=0&&ni<ADMIN_TABS.length){ setAdminTab(ADMIN_TABS[ni]); return; } if(dir<0&&i<=0){ gotoTab('learn'); } return; } if(MAIN_TABS.indexOf(cur.id)>=0){ var i2=MAIN_TABS.indexOf(cur.id),ni2=i2+dir; if(ni2>=0&&ni2<MAIN_TABS.length) gotoTab(MAIN_TABS[ni2]); } }
   var swX=0,swY=0,swOn=false;
   document.body.addEventListener('touchstart',function(e){ if(e.touches.length!==1){ swOn=false; return; } swX=e.touches[0].clientX; swY=e.touches[0].clientY; swOn=true; },{passive:true});
