@@ -493,18 +493,18 @@ window._eigoPetInit = function() {
     var ytiers=[['star','⭐さいこう'],['good','◎よいこ'],['normal','○ふつう'],['wild','△わんぱく']];
     tree+='<div class="tiertag">ヤング（おせわランクで わかれる）</div><div class="tgrid4">'+ytiers.map(function(t){ return tnode(YOUNGS[t[0]],YOUNGS[t[0]].name,true); }).join('')+'</div><div class="tarrow">↓</div>';
     // アダルト：入手ずみは無料表示。それ以外は「？」を自分でタップ＋えさ で 1体ずつ ひらける
-    var HINT_COST=5;
+    var HINT_COST=50;
     var allAdults=[]; Object.keys(ADULT_TIERS).forEach(function(t){ ADULT_TIERS[t].forEach(function(id){ allAdults.push(id); }); });
     var rev=state.keifuRevealed||[], revealed={}, totalRev=0;
     allAdults.forEach(function(id){ if(col[id]||rev.indexOf(id)>=0){ revealed[id]=true; totalRev++; } });
     tree+='<div class="keifuHint"><div style="font-size:12px;font-weight:800;color:var(--ink);line-height:1.5;">そだてかたの ヒント <b>'+totalRev+' / '+allAdults.length+'</b><br><span style="font-size:11px;color:var(--mut);font-weight:700;">すきな「？」を タップ＋🍚'+HINT_COST+' で すがたが わかるよ</span></div></div>';
     var lockNode=function(id){ return '<button class="tnode small lock" data-id="'+id+'"><div class="tsprite">？</div><div class="tlabel">🍚×'+HINT_COST+'</div></button>'; };
-    // ヤング1種ごとに 見た目の似た アダルト6種へ（レアは どのヤングからでも）
+    // ヤング1種ごとに「ヤング → アダルト6種」を 矢印つきの1行で 表示（レアは どのヤングからでも）
     var lineTiers=[['star','⭐さいこう'],['good','◎よいこ'],['normal','○ふつう'],['wild','△わんぱく']];
-    lineTiers.forEach(function(t){ var yn=YOUNGS[t[0]].name;
-      tree+='<div class="tiertag">'+yn+'（'+t[1]+'）から すすむ →</div><div class="tgrid">'+LINEAGE[t[0]].map(function(id){ return revealed[id]?tnode(ADULTS[id],ADULTS[id].name,true):lockNode(id); }).join('')+'</div>';
+    lineTiers.forEach(function(t){ var y=YOUNGS[t[0]];
+      tree+='<div class="tiertag">'+t[1]+'</div><div class="lrow"><div class="lfrom">'+tnode(y,y.name,true)+'</div><div class="larrow">→</div><div class="lgrid">'+LINEAGE[t[0]].map(function(id){ return revealed[id]?tnode(ADULTS[id],ADULTS[id].name,true):lockNode(id); }).join('')+'</div></div>';
     });
-    tree+='<div class="tiertag">★レア（どの子からでも／サボりすぎ）</div><div class="tgrid">'+RARE_ADULTS.map(function(id){ return revealed[id]?tnode(ADULTS[id],ADULTS[id].name,true):lockNode(id); }).join('')+'</div>';
+    tree+='<div class="tiertag">★レア</div><div class="lrow"><div class="lfrom" style="font-size:11px;font-weight:800;color:var(--mut);text-align:center;line-height:1.5;">どの子<br>からでも<br><span style="font-size:10px;">(サボりすぎ)</span></div><div class="larrow">→</div><div class="lgrid">'+RARE_ADULTS.map(function(id){ return revealed[id]?tnode(ADULTS[id],ADULTS[id].name,true):lockNode(id); }).join('')+'</div></div>';
     if((state.memories||[]).length){
       var mh='<div class="gstage">おもいで（これまでの子）</div>';
       state.memories.forEach(function(m){ var ai=adultById(m.adultType); mh+='<div class="gcard" style="display:flex;gap:12px;align-items:center;text-align:left;margin-bottom:8px;"><div style="flex:none;">'+spriteHTML(ai,3)+'</div><div><div class="gname">'+m.name+'（'+(m.adultName||ai.name)+'）</div><div class="gdesc">'+m.days+'日 いっしょ ／ '+m.died+' たびだち ／ おぼえた '+m.learned+'こ</div></div></div>'; });
@@ -545,6 +545,10 @@ window._eigoPetInit = function() {
     lockParent(); // タブを開くたび おうち設定は かくす（子供に見えないように）
     var z=document.getElementById('okZandaka'); if(z) z.textContent='฿'+(state.money||0);
     var f=document.getElementById('okFood'); if(f) f.textContent=(state.food||0);
+    var rate0=Math.max(1,state.moneyRate||5), cap0=Math.max(0,state.moneyCapPerPet||0);
+    var est=Math.floor((state.food||0)/rate0); if(cap0>0) est=Math.min(est,cap0);
+    var fb=document.getElementById('okFoodBaht'); if(fb) fb.textContent='฿'+est;
+    var cn=document.getElementById('okCapNote'); if(cn) cn.textContent='おわかれの ときに かいとり（1匹 さいだい ฿'+cap0+'）';
     var r=document.getElementById('okRate'); if(r) r.value=state.moneyRate||5;
     var c=document.getElementById('okCap'); if(c) c.value=state.moneyCapPerPet||0;
     var h=document.getElementById('okRateHint'); if(h){ var rate=Math.max(1,state.moneyRate||5); h.textContent='いまの えさ '+(state.food||0)+'こ は 約 ฿'+Math.floor((state.food||0)/rate)+' ぶん'; }
@@ -588,7 +592,7 @@ window._eigoPetInit = function() {
     if(!ADULTS[id]) return;
     if(!Array.isArray(state.keifuRevealed)) state.keifuRevealed=[];
     if(state.keifuRevealed.indexOf(id)>=0) return; // すでに開いてる
-    var cost=5; if(state.food<cost){ bubble('えさが たりない（'+cost+'こ ひつよう）'); return; }
+    var cost=50; if(state.food<cost){ bubble('えさが たりない（'+cost+'こ ひつよう）'); return; }
     state.food-=cost; state.keifuRevealed.push(id); save(); sfx('unlock'); cheer(); renderAdmin(); render();
   }
   document.getElementById('adminTree').addEventListener('click',function(e){ var b=e.target.closest('.tnode.lock'); if(b&&b.dataset.id) buyReveal(b.dataset.id); });
