@@ -203,6 +203,12 @@ window._eigoPetInit = function() {
     if(!Array.isArray(s.moneyLog)) s.moneyLog=[];
     if(typeof s.moneyBonusFood!=='number'||s.moneyBonusFood<1) s.moneyBonusFood=(s.moneyRate||5)*5; // 上限こえたぶん えさ何個で1バーツか
     if(typeof s.moneyBonusMax!=='number'||s.moneyBonusMax<0) s.moneyBonusMax=100; // ボーナスの さいだい（＋バーツ）
+    // だんかいレート（貯まるほど レートが かわる）。旧設定が あれば それを 段階に変換
+    if(!Array.isArray(s.moneyTiers)||!s.moneyTiers.length){
+      var _r=s.moneyRate||5, _c=s.moneyCapPerPet||200;
+      s.moneyTiers=[{cap:_c, rate:_r}];
+      if((s.moneyBonusMax||0)>0) s.moneyTiers.push({cap:_c+(s.moneyBonusMax||100), rate:(s.moneyBonusFood||_r*5)});
+    }
     if(typeof s.parentPin!=='string') s.parentPin=''; // おうちのひとコード（未設定は空）
     // 単語ごとの学習状況(learn)へ移行：旧mastery(正解数>=2でおぼえた)＋wrongWords(にがて)から復元
     if(!s.learn || typeof s.learn!=='object'){ s.learn={}; }
@@ -336,17 +342,17 @@ window._eigoPetInit = function() {
     }
     return false;
   }
+  var DEFAULT_TIERS=[{cap:100,rate:5},{cap:200,rate:10},{cap:300,rate:15}];
+  function moneyTiers(){ var t=state.moneyTiers; return (Array.isArray(t)&&t.length)?t:DEFAULT_TIERS; }
   function moneyFor(food){
-    // えさ→おこづかい。上限までは通常レート、超えたぶんは がんばりボーナス（少なめ）、全体に天井
-    var rate=Math.max(1,state.moneyRate||5), cap=Math.max(0,state.moneyCapPerPet||0);
-    var bonusFood=Math.max(1,state.moneyBonusFood||rate*5), bonusMax=Math.max(0,(state.moneyBonusMax!=null?state.moneyBonusMax:100));
-    var base=Math.floor(food/rate);
-    if(cap<=0) return {base:base, bonus:0, total:base};      // 上限なし設定
-    var capFood=cap*rate, bonus=0;
-    if(base>cap){ base=cap; }
-    if(food>capFood){ bonus=Math.floor((food-capFood)/bonusFood); }
-    var total=Math.min(base+bonus, cap+bonusMax);
-    return {base:base, bonus:total-base, total:total};
+    // えさ→おこづかい。だんかいレート：฿capまで えさrate個＝฿1。たまるほど レートが かわる。最後のcapが 上限
+    var tiers=moneyTiers(), baht=0, prevCap=0, remaining=food;
+    for(var i=0;i<tiers.length;i++){ var span=tiers[i].cap-prevCap; if(span<=0) continue;
+      var rate=Math.max(1,tiers[i].rate), take=Math.min(Math.floor(remaining/rate), span);
+      baht+=take; remaining-=take*rate; prevCap=tiers[i].cap;
+      if(take<span) break; // えさが つきた
+    }
+    return {total:baht, bonus:0};
   }
   function buyoutFood(){
     // お別れ時に 余ったえさを お金(バーツ)に買い取り。えさは繰り越さない
@@ -590,17 +596,17 @@ window._eigoPetInit = function() {
     var m=moneyFor(state.food||0);
     var fb=document.getElementById('okFoodBaht'); if(fb) fb.textContent='฿'+m.total;   // 子供には 見込み額だけ（内訳は出さない）
     var cn=document.getElementById('okCapNote'); if(cn) cn.textContent='※この額は あくまで みこみです（じょうげん あり）';
-    var r=document.getElementById('okRate'); if(r) r.value=state.moneyRate||5;
-    var c=document.getElementById('okCap'); if(c) c.value=state.moneyCapPerPet||0;
-    var bf=document.getElementById('okBonusFood'); if(bf) bf.value=state.moneyBonusFood||((state.moneyRate||5)*5);
-    var bm=document.getElementById('okBonusMax'); if(bm) bm.value=(state.moneyBonusMax!=null?state.moneyBonusMax:100);
-    var h=document.getElementById('okRateHint'); if(h){ h.textContent='いまの えさ '+(state.food||0)+'こ → みこみ ฿'+m.total+(m.bonus>0?'（うち ボーナス ฿'+m.bonus+'）':''); }
+    var tc=document.getElementById('okTiers'); if(tc) tc.innerHTML=moneyTiers().map(function(t){ return tierRowHTML(t.cap,t.rate); }).join('');
+    var h=document.getElementById('okRateHint'); if(h){ var last=moneyTiers(); last=last.length?last[last.length-1].cap:0; h.textContent='いまの えさ '+(state.food||0)+'こ → みこみ ฿'+m.total+'（1匹 さいだい ฿'+last+'）'; }
     var log=document.getElementById('okLog');
     if(log){ var L=state.moneyLog||[];
       if(!L.length){ log.innerHTML='<div style="font-size:12px;color:var(--mut);font-weight:700;text-align:center;padding:12px;">まだ ありません</div>'; }
       else { log.innerHTML=L.map(function(e){ return '<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 12px;border:2px solid var(--bdr);border-radius:8px;margin-bottom:6px;font-size:12px;font-weight:700;color:var(--ink);"><span>'+e.date+' <span style="color:var(--mut);">'+(e.name||'')+' えさ'+e.food+'</span></span><span style="color:#ea580c;font-weight:900;">＋฿'+e.baht+'</span></div>'; }).join(''); }
     }
   }
+  function tierRowHTML(cap,rate){ var inp='padding:7px;border:2px solid var(--bdr);border-radius:8px;font-size:14px;font-family:inherit;text-align:center;background:var(--card);color:var(--ink);';
+    return '<div class="oktier" style="display:flex;align-items:center;gap:5px;margin-bottom:6px;font-size:13px;font-weight:700;color:var(--ink);">฿<input class="okTierCap" type="number" min="1" max="99999" value="'+(cap||'')+'" style="width:64px;'+inp+'"> まで<span style="margin-left:auto;">えさ</span><input class="okTierRate" type="number" min="1" max="99999" value="'+(rate||'')+'" style="width:54px;'+inp+'">＝฿1<button class="okTierDel" type="button" style="border:none;background:none;color:#dc2626;font-size:16px;font-weight:900;cursor:pointer;font-family:inherit;padding:0 2px;">✕</button></div>'; }
+  function readTiers(){ var arr=[]; document.querySelectorAll('#okTiers .oktier').forEach(function(r){ var cap=parseInt(r.querySelector('.okTierCap').value,10), rate=parseInt(r.querySelector('.okTierRate').value,10); if(cap>=1&&rate>=1) arr.push({cap:cap,rate:rate}); }); arr.sort(function(a,b){ return a.cap-b.cap; }); var out=[],prev=0; arr.forEach(function(t){ if(t.cap>prev){ out.push(t); prev=t.cap; } }); return out.length?out:DEFAULT_TIERS.slice(); }
   (function(){
     var PARENT_PW='0785770131'; // おうちのひとコード（固定）
     var lk=document.getElementById('okLock'); if(lk) lk.onclick=function(){
@@ -611,11 +617,10 @@ window._eigoPetInit = function() {
     };
     var rl=document.getElementById('okRelock'); if(rl) rl.onclick=lockParent;
     var pc=document.getElementById('okPinChange'); if(pc) pc.style.display='none';
+    var ta=document.getElementById('okTierAdd'); if(ta) ta.onclick=function(){ var tc=document.getElementById('okTiers'); if(tc) tc.insertAdjacentHTML('beforeend',tierRowHTML('','')); };
+    var tcont=document.getElementById('okTiers'); if(tcont) tcont.addEventListener('click',function(e){ var d=e.target.closest('.okTierDel'); if(d){ var row=d.closest('.oktier'); if(row) row.remove(); } });
     var sv=document.getElementById('okSave'); if(sv) sv.onclick=function(){
-      var r=parseInt(document.getElementById('okRate').value,10), c=parseInt(document.getElementById('okCap').value,10);
-      var bf=parseInt(document.getElementById('okBonusFood').value,10), bm=parseInt(document.getElementById('okBonusMax').value,10);
-      if(!(r>=1)) r=5; if(!(c>=0)) c=0; if(!(bf>=1)) bf=r*5; if(!(bm>=0)) bm=100;
-      state.moneyRate=r; state.moneyCapPerPet=c; state.moneyBonusFood=bf; state.moneyBonusMax=bm; save(); renderMoney(); bubble('せってい を ほぞんしたよ');
+      state.moneyTiers=readTiers(); save(); renderMoney(); bubble('せってい を ほぞんしたよ');
     };
   })();
   function renderData(){ document.getElementById('dataStat').textContent='なまえ：'+state.name+' ／ レベル '+state.lv+' ／ おぼえた '+state.learned+'こ ／ 🔥'+displayStreak()+'にち'; document.getElementById('exportBox').style.display='none'; document.getElementById('btnCopy').style.display='none'; document.getElementById('importBox').value=''; document.getElementById('dataMsg').textContent=''; }
