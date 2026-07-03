@@ -321,19 +321,28 @@ window._eigoPetInit = function() {
     }
     return false;
   }
-  function buyoutFood(){
-    // お別れ時に 余ったえさを お金(バーツ)に買い取り。1匹あたり上限つき、払った分だけ えさを消費
+  var BONUS_DIV=5, BONUS_MAX=100; // 上限を超えたぶんは 1/5レートの「がんばりボーナス」／全体は 上限+฿100 まで
+  function moneyFor(food){
+    // えさ→おこづかい。上限までは通常レート、超えたぶんは がんばりボーナス（少なめ）、全体に天井
     var rate=Math.max(1,state.moneyRate||5), cap=Math.max(0,state.moneyCapPerPet||0);
-    var had=state.food||0;
-    var baht=Math.floor(had/rate);
-    if(cap>0) baht=Math.min(baht,cap);
-    state.food=0; // えさは繰り越さない（お別れでリセット）
-    if(baht<=0) return {baht:0, food:had};
-    state.money=(state.money||0)+baht;
+    var base=Math.floor(food/rate);
+    if(cap<=0) return {base:base, bonus:0, total:base};      // 上限なし設定
+    var capFood=cap*rate, bonus=0;
+    if(base>cap){ base=cap; }
+    if(food>capFood){ bonus=Math.floor((food-capFood)/(rate*BONUS_DIV)); }
+    var total=Math.min(base+bonus, cap+BONUS_MAX);
+    return {base:base, bonus:total-base, total:total};
+  }
+  function buyoutFood(){
+    // お別れ時に 余ったえさを お金(バーツ)に買い取り。えさは繰り越さない
+    var had=state.food||0, m=moneyFor(had);
+    state.food=0;
+    if(m.total<=0) return {baht:0, food:had, bonus:0};
+    state.money=(state.money||0)+m.total;
     state.moneyLog=state.moneyLog||[];
-    state.moneyLog.unshift({ date:today(), baht:baht, food:had, name:state.name });
+    state.moneyLog.unshift({ date:today(), baht:m.total, food:had, name:state.name });
     if(state.moneyLog.length>60) state.moneyLog.length=60;
-    return {baht:baht, food:had};
+    return {baht:m.total, food:had, bonus:m.bonus};
   }
   function farewell(){
     state._farewell=true;
@@ -390,6 +399,7 @@ window._eigoPetInit = function() {
       if(!neglect && bo.baht>0){
         mo.style.display='block';
         mo.innerHTML='そだてきった ごほうび！ のこった えさ '+bo.food+'こ ぶんの おこづかい<br><span style="font-size:30px;color:#ea580c;">฿'+bo.baht+'</span>'
+          +((bo.bonus>0)?'<br><span style="font-size:12px;color:#16a34a;font-weight:800;">（がんばりボーナス +฿'+bo.bonus+' こみ）</span>':'')
           +'<div style="margin-top:8px;padding:8px;background:#fffbeb;border:2px dashed #f59e0b;border-radius:8px;font-size:13px;color:#92400e;">👨‍👩‍👧 おとうさん・おかあさんに<br>この ฿'+bo.baht+' を みせてね！</div>';
       }
       else if(neglect){ mo.style.display='block'; mo.innerHTML='<span style="font-size:12px;color:var(--mut);">はやい おわかれの ときは おこづかいは もらえないよ…<br>つぎは さいごまで そだてよう！</span>'; }
@@ -546,16 +556,16 @@ window._eigoPetInit = function() {
   document.getElementById('wlSearch').oninput=function(){ renderWordList(); };
   document.getElementById('wlWrongBtn').onclick=function(){ wlWrongOnly=!wlWrongOnly; renderWordList(); };
   var curAdminTab='zukan';
-  function setAdminTab(t){ curAdminTab=t; ['zukan','kisekae','keifu','okane','tango','data'].forEach(function(k){ document.getElementById('tab-'+k).style.display=(k===t)?'block':'none'; }); document.querySelectorAll('#atabs .atab').forEach(function(b){ b.classList.toggle('sel',b.dataset.t===t); }); if(t==='kisekae') renderCosmetics(); if(t==='tango') renderWordList(); if(t==='data') renderData(); if(t==='okane') renderMoney(); window.scrollTo(0,0); }
+  function setAdminTab(t){ curAdminTab=t; ['zukan','kisekae','keifu','tango','data'].forEach(function(k){ document.getElementById('tab-'+k).style.display=(k===t)?'block':'none'; }); document.querySelectorAll('#atabs .atab').forEach(function(b){ b.classList.toggle('sel',b.dataset.t===t); }); if(t==='kisekae') renderCosmetics(); if(t==='tango') renderWordList(); if(t==='data') renderData(); window.scrollTo(0,0); }
   function lockParent(){ var pp=document.getElementById('okParent'); if(pp) pp.style.display='none'; var lk=document.getElementById('okLock'); if(lk) lk.style.display='block'; }
   function unlockParent(){ var pp=document.getElementById('okParent'); if(pp) pp.style.display='block'; var lk=document.getElementById('okLock'); if(lk) lk.style.display='none'; }
   function renderMoney(){
     lockParent(); // タブを開くたび おうち設定は かくす（子供に見えないように）
     var f=document.getElementById('okFood'); if(f) f.textContent=(state.food||0);
     var rate0=Math.max(1,state.moneyRate||5), cap0=Math.max(0,state.moneyCapPerPet||0);
-    var est=Math.floor((state.food||0)/rate0); if(cap0>0) est=Math.min(est,cap0);
-    var fb=document.getElementById('okFoodBaht'); if(fb) fb.textContent='฿'+est;
-    var cn=document.getElementById('okCapNote'); if(cn) cn.textContent='1匹 さいだい ฿'+cap0+'（えさ'+rate0+'こ＝฿1）';
+    var m=moneyFor(state.food||0);
+    var fb=document.getElementById('okFoodBaht'); if(fb) fb.innerHTML='฿'+m.total+(m.bonus>0?'<span style="font-size:14px;color:#16a34a;"> （ボーナス+฿'+m.bonus+'）</span>':'');
+    var cn=document.getElementById('okCapNote'); if(cn) cn.textContent=(cap0>0?('฿'+cap0+'まで えさ'+rate0+'こ＝฿1／こえたら がんばりボーナス（さいだい ฿'+(cap0+BONUS_MAX)+'）'):('えさ'+rate0+'こ＝฿1'));
     var r=document.getElementById('okRate'); if(r) r.value=state.moneyRate||5;
     var c=document.getElementById('okCap'); if(c) c.value=state.moneyCapPerPet||0;
     var h=document.getElementById('okRateHint'); if(h){ var rate=Math.max(1,state.moneyRate||5); h.textContent='いまの えさ '+(state.food||0)+'こ は 約 ฿'+Math.floor((state.food||0)/rate)+' ぶん'; }
@@ -621,29 +631,11 @@ window._eigoPetInit = function() {
 
   /* ---- study ---- */
   var session, qIdx, qList;
-  var MAIN_TABS=['home','learn','shop','admin'];
+  var MAIN_TABS=['home','learn','okane','admin'];
   function show(id){ document.querySelectorAll('.screen').forEach(function(s){ s.classList.remove('on'); }); document.getElementById(id).classList.add('on'); var tb=document.getElementById('tabbar'); if(MAIN_TABS.indexOf(id)>=0){ tb.classList.add('on'); document.querySelectorAll('#tabbar .tab').forEach(function(b){ b.classList.toggle('sel',b.dataset.s===id); }); } else { tb.classList.remove('on'); } window.scrollTo(0,0); }
-  function gotoTab(s){ if(s==='admin'){ renderAdmin(); wlGrade=state.grade; setAdminTab('zukan'); } if(s==='shop'){ renderShop(); } show(s); render(); } // 単語一覧(最大2258行)は たんごタブを開いたときだけ描画
-  /* ---- ショップ（エサの使い道） ---- */
-  var SHOP=[
-    {id:'ticket', icon:'🎫', name:'おやすみ券', desc:'れんぞく記録を 1日 まもれる', cost:25, max:function(){ return state.freezeTickets>=9; }, buy:function(){ state.freezeTickets=Math.min(9,state.freezeTickets+1); }},
-    {id:'feast',  icon:'🍱', name:'ごちそう',   desc:'おなか まんたん＋ごきげん（太らない）', cost:12, buy:function(){ state.hunger=100; state.happy=Math.min(100,state.happy+25); }},
-    {id:'toy',    icon:'🧸', name:'おもちゃ',   desc:'ごきげん +30', cost:8,  buy:function(){ state.happy=Math.min(100,state.happy+30); }},
-    {id:'charm',  icon:'🛡', name:'いのちの おまもり', desc:'じゅみょう +1日（さいだい15）', cost:40, max:function(){ return (state.lifespanDays||12)>=15; }, buy:function(){ state.lifespanDays=Math.min(15,(state.lifespanDays||12)+1); }}
-  ];
-  function renderShop(){
-    var esa=document.getElementById('shopEsa'); if(esa) esa.textContent='🍚 えさ '+state.food;
-    var box=document.getElementById('shopList'); if(!box) return;
-    box.innerHTML=SHOP.map(function(it){
-      var maxed=it.max&&it.max(), afford=state.food>=it.cost;
-      var btn = maxed ? '<span class="shopmax">MAX</span>'
-        : '<button class="shopbuy" data-id="'+it.id+'"'+(afford?'':' disabled')+'>えさ '+it.cost+(afford?'':'<br><span style="font-size:10px;">たりない</span>')+'</button>';
-      return '<div class="shopcard"><div class="shopinfo"><div class="shopname">'+it.icon+' '+it.name+'</div><div class="shopdesc">'+it.desc+'</div></div>'+btn+'</div>';
-    }).join('');
-  }
-  document.getElementById('shopList').onclick=function(e){ var b=e.target.closest('.shopbuy'); if(!b) return; var it=SHOP.find(function(x){ return x.id===b.dataset.id; }); if(!it) return; if(it.max&&it.max()){ return; } if(state.food<it.cost){ bubble('えさが たりない'); return; } state.food-=it.cost; it.buy(); save(); sfx('unlock'); cheer(); bubble(it.name+' を かった！'); renderShop(); render(); };
+  function gotoTab(s){ if(s==='admin'){ renderAdmin(); wlGrade=state.grade; setAdminTab('zukan'); } if(s==='okane'){ renderMoney(); } show(s); render(); } // 単語一覧(最大2258行)は たんごタブを開いたときだけ描画
   document.getElementById('tabbar').onclick=function(e){ var b=e.target.closest('.tab'); if(!b) return; gotoTab(b.dataset.s); };
-  var ADMIN_TABS=['zukan','kisekae','keifu','okane','tango','data'];
+  var ADMIN_TABS=['zukan','kisekae','keifu','tango','data'];
   function swipeTab(dir){ var cur=document.querySelector('.screen.on'); if(!cur) return; if(document.getElementById('goalCele').style.display==='flex') return; if(cur.id==='admin'){ var i=ADMIN_TABS.indexOf(curAdminTab),ni=i+dir; if(ni>=0&&ni<ADMIN_TABS.length){ setAdminTab(ADMIN_TABS[ni]); return; } if(dir<0&&i<=0){ gotoTab('learn'); } return; } if(MAIN_TABS.indexOf(cur.id)>=0){ var i2=MAIN_TABS.indexOf(cur.id),ni2=i2+dir; if(ni2>=0&&ni2<MAIN_TABS.length) gotoTab(MAIN_TABS[ni2]); } }
   var swX=0,swY=0,swOn=false;
   document.body.addEventListener('touchstart',function(e){ if(e.touches.length!==1){ swOn=false; return; } swX=e.touches[0].clientX; swY=e.touches[0].clientY; swOn=true; },{passive:true});
