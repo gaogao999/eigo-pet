@@ -105,33 +105,53 @@ window._eigoPetInit = function() {
   var TIER_LABEL = { star:'⭐さいこう', good:'◎よいこ', normal:'○ふつう', wild:'△わんぱく' };
   var FAMILY_NAME = { star:'すいすいたま系（あお・メカ）', good:'しろころ系（しろ・ふしぎ）', normal:'もふたま系（どうぶつ）', wild:'くさたま系（しぜん・たべもの）' };
   var ADULT_DESC = {
-    'おひさま':'みんなを てらす あかるい たいようの子。',
-    'みらたま':'みらいから きた かしこい ロボの子。',
-    'にんじゃ':'しゅぎょうを つんだ すばやい にんじゃ。',
-    'ぴこぴこ':'げんきに うごく メカな ロボの子。',
-    'どきどき':'やさしさ いっぱい。みんなが だいすき。',
-    'はがた':'れいぎ ただしい しっかりや。',
-    'かぶら':'のんびりやさん。しぜんが だいすき。',
-    'うらら':'ほんわか おっとり マイペース。',
-    'ねむね':'ものしずかで かんがえぶかい まほうつかい。',
-    'うさたま':'みみが かわいい やさしい あまえんぼう。',
-    'ぷくたま':'ぷくぷく ほっぺの たべるの だいすきっ子。',
-    'ぴよたま':'まんまるで ほんわか。げんきな よいこ。',
-    'ぴな':'すなおで げんきいっぱいの ふつうの子。',
-    'はんば':'たべるの だいすき。げんきな ふつうの子。',
-    'もぐもぐ':'おっとり マイペース。たべるの だいすき。',
-    'げーむ':'あそぶの だいすき。すなおな ふつうの子。',
-    'たまぱ':'マイペースで のんびりやの ふつうの子。',
-    'めっこ':'げんきで すなおな ふつうの子。',
-    'めらめら':'やんちゃで ねっけつ。あばれんぼう。',
-    'ちゃめ':'いたずら だいすきな やんちゃっ子。',
-    'がくがく':'おちつきの ない げんきいっぱいっ子。',
-    'くちぱ':'まけずぎらいの つよがり。',
-    'ぴねむ':'いたずら まほうの わんぱくっ子。',
-    'ばぶたま':'すこし わがままな あばれんぼう。',
-    'くろだま':'レア！じょうずに そだてた子に まれに あらわれる くろねこ。',
-    'おばけ':'レア！じょうずに そだてた子に まれに あらわれる おばけ。'
+    'おひさま':'いつも にこにこ、みんなを あかるく てらす たいようの子。あさが とくい。',
+    'みらたま':'みらいから きた もの知り ロボ。なんでも けいさんしちゃう かしこい子。',
+    'にんじゃ':'しゅぎょうで きたえた すばやい にんじゃ。しずかに みんなを まもってる。',
+    'ぴこぴこ':'ピコピコ うごく げんきな メカ。ちょっぴり おもたいのが じまん。',
+    'どきどき':'あいじょう たっぷり、みんなが だいすきな はぁとの子。',
+    'はがた':'れいぎ ただしい しっかりや。あいさつは かかさないよ。',
+    'かぶら':'のんびりやさん。おひさまと つちの においが だいすき。',
+    'うらら':'ほんわか おっとり。いつも マイペースで にこにこ。',
+    'ねむね':'ものしずかで かんがえぶかい まほうつかい。よふかしは にがて。',
+    'うさたま':'ながい みみが チャームポイント。やさしい あまえんぼう。',
+    'ぷくたま':'ぷくぷくの ほっぺが じまん。たべるのも あそぶのも だいすき。',
+    'ぴよたま':'まんまるで ほんわか。げんきな あいさつが とくいな よいこ。',
+    'ぴな':'すなおで げんきいっぱい。じっと してられない わんぱくさん。',
+    'はんば':'たべるの だいすき！ こんがり やけた いいにおいの子。',
+    'もぐもぐ':'おっとり マイペース。ほっぺに ごはんを ためこむ くせが あるよ。',
+    'げーむ':'あそぶの だいすきな ゲームずき。ハイスコアを ねらってる。',
+    'たまぱ':'まんまる おみみの ちゃめっけ者。あそびに さそうのが とくい。',
+    'めっこ':'かいぬしに ちゅうじつな おりこうさん。おすわりも できるよ。',
+    'めらめら':'ねっけつで あばれんぼう。やる気は だれにも まけない！',
+    'ちゃめ':'いたずら だいすきな おさるさん。びっくりさせるのが すき。',
+    'がくがく':'おちつきが なくて そわそわ。でも いつも げんきいっぱい。',
+    'くちぱ':'おおきな おくちが じまん。なんでも パクッと たべちゃう。',
+    'ぴねむ':'あおい ぼうしの おとぼけ まほうつかい。いつも うとうと ねむそう。',
+    'ばぶたま':'すこし わがままな あかちゃん。だっこが だいすき。',
+    'くろだま':'レア！ よなかに そっと あらわれる ふしぎな くろねこ。',
+    'おばけ':'レア！ ふわふわ そらを ただよう やさしい おばけ。'
   };
+  // 育て方の こだわり（相性）：体重・あそび・しつけ 等で なりやすい子が かわる＝進化への 重みづけ
+  var TRAITS = {
+    heavy: { label:'おもい子',  hint:'ごはん・おかしを たくさん たべて おもく なると なりやすい', test:function(s){ return s.weight>=25; } },
+    light: { label:'かるい子',  hint:'ミニゲームで うんどうして かるく なると なりやすい',      test:function(s){ return s.weight<=12; } },
+    play:  { label:'あそびずき', hint:'ミニゲームで たくさん あそぶと なりやすい',              test:function(s){ return (s.gamesPlayed||0)>=4; } },
+    disc:  { label:'おぎょうぎ◎', hint:'しつけを きちんと（ミス0）すると なりやすい',           test:function(s){ return (s.disciplineMiss||0)===0 && s.discipline>=60; } },
+    wild:  { label:'やんちゃ',   hint:'わがままを ほうっておくと なりやすい',                  test:function(s){ return (s.disciplineMiss||0)>=3; } },
+    happy: { label:'ごきげん屋', hint:'ごきげんを たかく たもつと なりやすい',                 test:function(s){ return s.happy>=80; } }
+  };
+  var AFFINITY = {
+    'みらたま':'disc','ぴこぴこ':'heavy','にんじゃ':'disc','ぷくたま':'happy','ぴねむ':'light','げーむ':'play',
+    'はがた':'disc','ばぶたま':'heavy','うらら':'happy','おひさま':'happy','ねむね':'light','がくがく':'wild',
+    'うさたま':'light','どきどき':'happy','たまぱ':'play','めっこ':'disc','もぐもぐ':'heavy','ちゃめ':'play',
+    'かぶら':'light','ぴよたま':'happy','くちぱ':'heavy','はんば':'heavy','ぴな':'play','めらめら':'wild',
+    'おばけ':'light','くろだま':'wild'
+  };
+  var AFF_BOOST=4;
+  function affinityWeight(id){ var a=AFFINITY[id]; if(!a) return 1; var t=TRAITS[a]; return (t&&t.test(state))?AFF_BOOST:1; }
+  function affinityLabel(id){ var a=AFFINITY[id]; return a&&TRAITS[a]?TRAITS[a].label:''; }
+  function affinityHint(id){ var a=AFFINITY[id]; return a&&TRAITS[a]?TRAITS[a].hint:''; }
   var ADULTS = (function(){ var o={}; Object.keys(ADULT_TIERS).forEach(function(t){ ADULT_TIERS[t].forEach(function(id){ o[id]={ img:id, name:dispName(id), desc:ADULT_DESC[id]||'', tier:t, rare:(t==='devil') }; }); }); return o; })();
   // きゅうバージョンの セーブ（tier_parity / devil）との ごかんマップ
   var LEGACY_ADULT = { star_e:'おひさま',star_o:'みらたま',good_e:'どきどき',good_o:'はがた',normal_e:'はんば',normal_o:'もぐもぐ',wild_e:'めらめら',wild_o:'ちゃめ',devil:'くろだま' };
@@ -154,11 +174,15 @@ window._eigoPetInit = function() {
   function predictedAdultKey(){ var t=predictedTier(); return (LINEAGE[t]||LINEAGE.normal)[0]; }
   // アダルト確定：いまの ヤング(=おせわランク)の 系統から、見た目の似た6種のどれかに進化。
   // レアは「じょうずに育てた子（ミスが少ない）」だけ 低確率で（どの系統からでも）。サボりでは出ない。
+  function pickWeightedAdult(pool){ // 育て方の こだわり(相性)で 重みづけして 1体えらぶ
+    var wt=pool.map(affinityWeight), tot=0, i; for(i=0;i<wt.length;i++) tot+=wt[i];
+    var r=Math.random()*tot, acc=0; for(i=0;i<pool.length;i++){ acc+=wt[i]; if(r<=acc) return pool[i]; }
+    return pool[pool.length-1];
+  }
   function pickAdultType(){
     var yt=state.youngType||youngTierKey();
-    if(careMissTotal()<=2 && Math.random()<RARE_CHANCE){ return RARE_ADULTS[(Math.random()*RARE_ADULTS.length)|0]; }
-    var pool=LINEAGE[yt]||LINEAGE.normal;
-    return pool[(Math.random()*pool.length)|0];
+    if(careMissTotal()<=2 && Math.random()<RARE_CHANCE){ return pickWeightedAdult(RARE_ADULTS); }
+    return pickWeightedAdult(LINEAGE[yt]||LINEAGE.normal);
   }
   function petInfo(){ if(state.lv>=5) return adultInfo(); if(state.lv>=4) return youngInfo(); if(state.lv>=3) return childInfo(); if(state.lv>=2) return babyInfo(); return EGG_INFO; }
   function petMap(){ var i=petInfo(); return i.map||EGG; }
@@ -193,7 +217,7 @@ window._eigoPetInit = function() {
     var s=null;
     var keys=[KEY, BAKKEY];
     for(var ki=0;ki<keys.length;ki++){ try{ var raw=localStorage.getItem(keys[ki]); if(raw){ s=JSON.parse(raw); break; } }catch(e){} }
-    var def={ name:"ぴよ",lv:1,xp:0,hunger:80,happy:80,food:0,dirty:false,streak:1,learned:0,last:today(),grade:"g3",discipline:50,weight:5,careMiss:0,disciplineMiss:0,wagamama:false,babyType:null,childType:null,adultType:null,customImg:{},gameHi:0,dailyGoal:20,todayDate:today(),todayWords:[],lastGoalDate:null,metDates:[],wrongWords:[],petColor:'brown',bg:'meadow',freezeTickets:0,lastTicketDate:null,rewardHour:null,lastBoxWeek:null,titles:[],sound:true,mastery:{},learn:{},maxStreak:0,sick:false,sickSince:null,starveSince:null,born:Date.now(),stageSince:Date.now(),lifespanDays:12+Math.floor(Math.random()*3),youngType:null,memories:[],schemaV:2,lastBackupNudge:null,lastTick:Date.now(),keifuHints:0,keifuRevealed:[],money:0,moneyRate:5,moneyCapPerPet:200,moneyLog:[],parentPin:'' };
+    var def={ name:"ぴよ",lv:1,xp:0,hunger:80,happy:80,food:0,dirty:false,streak:1,learned:0,last:today(),grade:"g3",discipline:50,weight:5,careMiss:0,disciplineMiss:0,wagamama:false,babyType:null,childType:null,adultType:null,customImg:{},gameHi:0,dailyGoal:20,todayDate:today(),todayWords:[],lastGoalDate:null,metDates:[],wrongWords:[],petColor:'brown',bg:'meadow',freezeTickets:0,lastTicketDate:null,rewardHour:null,lastBoxWeek:null,titles:[],sound:true,mastery:{},learn:{},maxStreak:0,sick:false,sickSince:null,starveSince:null,gamesPlayed:0,born:Date.now(),stageSince:Date.now(),lifespanDays:12+Math.floor(Math.random()*3),youngType:null,memories:[],schemaV:2,lastBackupNudge:null,lastTick:Date.now(),keifuHints:0,keifuRevealed:[],money:0,moneyRate:5,moneyCapPerPet:200,moneyLog:[],parentPin:'' };
     s=Object.assign({},def,s||{});
     s.dailyGoal=20; // 1日の目標は20に固定
     // おこづかい機能の初期化（家庭内でえさを買い取ってお金に）
@@ -383,7 +407,7 @@ window._eigoPetInit = function() {
     state._farewell=false;
     state.lv=1; state.xp=0; state.born=Date.now(); state.stageSince=Date.now();
     state.hunger=80; state.happy=80; state.dirty=false; state.weight=5;
-    state.careMiss=0; state.disciplineMiss=0; state.wagamama=false;
+    state.careMiss=0; state.disciplineMiss=0; state.wagamama=false; state.gamesPlayed=0;
     state.babyType=null; state.childType=null; state.youngType=null; state.adultType=null;
     state.sick=false; state.sickSince=null; state.starveSince=null; state._deathCause=null; state.lifespanDays=12+Math.floor(Math.random()*3);
     var fw=document.getElementById('farewell'); if(fw) fw.style.display='none';
@@ -513,7 +537,7 @@ window._eigoPetInit = function() {
   document.getElementById('bFeed').onclick=function(){ if(state.lv<2){ bubble("タマゴは まだ たべられないよ"); return; } if(state.hunger>=99){ bubble("おなか いっぱい！"); return; } if(state.food<=0){ bubble("べんきょうして えさをあつめよう"); return; } state.food--; state.hunger=Math.min(100,state.hunger+25); if(state.hunger>0) state.starveSince=null; state.happy=Math.min(100,state.happy+5); state.weight+=1; addXp(5); if(Math.random()<0.45) state.dirty=true; bubble("もぐもぐ"); cheer(); save(); render(); };
   document.getElementById('bSnack').onclick=function(){ state.happy=Math.min(100,state.happy+14); state.weight+=3; if(Math.random()<0.35) state.dirty=true; bubble("おいしい！でも たいじゅう+"); cheer(); save(); render(); };
   document.getElementById('bPlay').onclick=function(){ if(state.food<=0){ bubble("べんきょうして えさを あつめよう"); return; } show('gameSelect'); };
-  function consumePlay(){ state.food--; state.weight=Math.max(5,state.weight-1); save(); }
+  function consumePlay(){ state.food--; state.weight=Math.max(5,state.weight-1); state.gamesPlayed=(state.gamesPlayed||0)+1; save(); }
   document.getElementById('backSelect').onclick=function(){ show('home'); render(); };
   document.getElementById('selJump').onclick=function(){ if(state.food<=0){ bubble('えさが たりない'); return; } consumePlay(); startGame(); };
   document.getElementById('selSea').onclick=function(){ if(state.food<=0){ bubble('えさが たりない'); return; } consumePlay(); startSeaGame(); };
@@ -534,7 +558,7 @@ window._eigoPetInit = function() {
   function collectedAdults(){ var set={}; (state.memories||[]).forEach(function(m){ if(m.adultType) set[normAdult(m.adultType)]=true; }); if(state.lv>=5&&state.adultType) set[normAdult(state.adultType)]=true; return set; }
   function renderAdmin(){
     var col=collectedAdults(), ak=Object.keys(ADULTS), got=ak.filter(function(k){return col[k];}).length;
-    var adultHTML='<div class="gstage">アダルト ずかん（'+got+'/'+ak.length+'）</div><div class="ggrid">'+ak.map(function(k){ var a=ADULTS[k], has=col[k]; return '<div class="gcard"'+(has?'':' style="opacity:.4;"')+'><div class="gsprite">'+(has?spriteHTML(a,5):'<div style="height:65px;display:flex;align-items:center;justify-content:center;font-size:28px;color:var(--mut);">？</div>')+'</div><div class="gname">'+(has?a.name:'？？？')+'</div><div class="gdesc">'+(has?a.desc:'まだ そだてていない')+'</div></div>'; }).join('')+'</div>';
+    var adultHTML='<div class="gstage">アダルト ずかん（'+got+'/'+ak.length+'）</div><div class="ggrid">'+ak.map(function(k){ var a=ADULTS[k], has=col[k]; var aff=has&&affinityLabel(k)?'<div class="gaff">🌱 '+affinityLabel(k)+'<div style="font-size:9px;color:var(--mut);font-weight:700;margin-top:1px;">'+affinityHint(k)+'</div></div>':''; return '<div class="gcard"'+(has?'':' style="opacity:.4;"')+'><div class="gsprite">'+(has?spriteHTML(a,5):'<div style="height:65px;display:flex;align-items:center;justify-content:center;font-size:28px;color:var(--mut);">？</div>')+'</div><div class="gname">'+(has?a.name:'？？？')+'</div><div class="gdesc">'+(has?a.desc:'まだ そだてていない')+'</div>'+aff+'</div>'; }).join('')+'</div>';
     document.getElementById('adminGallery').innerHTML='<div class="gstage">タマゴ</div>'+gridHTML([EGG_INFO])+'<div class="gstage">ベビー</div>'+gridHTML(Object.values(BABIES))+'<div class="gstage">キッズ</div>'+gridHTML(Object.values(CHILDREN))+'<div class="gstage">ヤング</div>'+gridHTML(Object.values(YOUNGS))+adultHTML;
     var tree='<div style="display:flex;align-items:center;justify-content:center;gap:8px;margin:2px 0 4px;">'+tnode(EGG_INFO,'タマゴ',true)+'<span class="larrow">→</span>'+tnode(BABIES.a,BABIES.a.name,true)+'<span class="larrow">→</span>'+tnode(CHILDREN.a,CHILDREN.a.name,true)+'</div><div class="tarrow">↓</div>';
     var ytiers=[['star','⭐さいこう'],['good','◎よいこ'],['normal','○ふつう'],['wild','△わんぱく']];
