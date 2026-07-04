@@ -310,6 +310,8 @@ window._eigoPetInit = function() {
     state.happy =Math.max(0, state.happy  - 1.0*hrs);   // 約 -24/日
     if(state.sick) state.happy=Math.max(0, state.happy - 0.5*hrs);
     if(state.dirty) state.happy=Math.max(0, state.happy - 0.8*hrs); // よごれ放置で ごきげん低下
+    // 自然な代謝：時間とともに少しずつ体重が減る（太っているほど よく燃える）→ 体重が一方通行で増え続けないように
+    if(state.lv>=2){ var burn=0.07+(state.weight>=30?0.06:0); state.weight=Math.max(5, state.weight - burn*hrs); }
     // 「毎日世話」を成立させる：おなかが0 / 病気 が つづくと あぶない → お別れ(checkDeath)
     if(state.hunger<=0){ if(!state.starveSince) state.starveSince=now; } else { state.starveSince=null; }
     if(state.sick){ if(!state.sickSince) state.sickSince=now; } else { state.sickSince=null; }
