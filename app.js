@@ -224,7 +224,7 @@ window._eigoPetInit = function() {
     var s=null;
     var keys=[KEY, BAKKEY];
     for(var ki=0;ki<keys.length;ki++){ try{ var raw=localStorage.getItem(keys[ki]); if(raw){ s=JSON.parse(raw); break; } }catch(e){} }
-    var def={ name:"ぴよ",lv:1,xp:0,hunger:80,happy:80,food:0,dirty:false,streak:1,learned:0,last:today(),grade:"g3",discipline:50,weight:5,careMiss:0,disciplineMiss:0,wagamama:false,babyType:null,childType:null,adultType:null,customImg:{},gameHi:0,dailyGoal:20,todayDate:today(),todayWords:[],lastGoalDate:null,metDates:[],wrongWords:[],petColor:'brown',bg:'meadow',freezeTickets:0,lastTicketDate:null,lastBoxWeek:null,titles:[],sound:true,mastery:{},learn:{},maxStreak:0,sick:false,sickSince:null,starveSince:null,gamesPlayed:0,genCorrect:0,sleepCount:0,dirtySince:null,born:Date.now(),stageSince:Date.now(),lifespanDays:12+Math.floor(Math.random()*3),youngType:null,memories:[],schemaV:2,lastBackupNudge:null,lastTick:Date.now(),keifuRevealed:[],moneyLog:[] };
+    var def={ name:"ぴよ",lv:1,xp:0,hunger:80,happy:80,food:0,dirty:false,streak:1,learned:0,last:today(),grade:"g3",discipline:50,weight:5,careMiss:0,disciplineMiss:0,wagamama:false,babyType:null,childType:null,adultType:null,customImg:{},gameHi:0,dailyGoal:20,todayDate:today(),todayWords:[],lastGoalDate:null,metDates:[],wrongWords:[],petColor:'brown',bg:'meadow',freezeTickets:0,lastTicketDate:null,lastBoxWeek:null,titles:[],sound:true,mastery:{},learn:{},maxStreak:0,sick:false,sickSince:null,starveSince:null,gamesPlayed:0,genCorrect:0,sleepCount:0,dirtySince:null,poopDate:null,poopBits:0,born:Date.now(),stageSince:Date.now(),lifespanDays:12+Math.floor(Math.random()*3),youngType:null,memories:[],schemaV:2,lastBackupNudge:null,lastTick:Date.now(),keifuRevealed:[],moneyLog:[] };
     s=Object.assign({},def,s||{});
     s.dailyGoal=20; // 1日の目標は20に固定
     // おこづかい機能の初期化（家庭内でえさを買い取ってお金に）
@@ -313,6 +313,15 @@ window._eigoPetInit = function() {
     // 「毎日世話」を成立させる：おなかが0 / 病気 が つづくと あぶない → お別れ(checkDeath)
     if(state.hunger<=0){ if(!state.starveSince) state.starveSince=now; } else { state.starveSince=null; }
     if(state.sick){ if(!state.sickSince) state.sickSince=now; } else { state.sickSince=null; }
+    maybePoop();
+  }
+  // うんこは ごはんと関係なく「時間帯」でする。ヤング・アダルトは 朝おきてから と 夕方、ベビー・キッズは 多め（朝・昼・夕）
+  function poopWindows(){ if(state.lv>=4) return [[7,10],[16,20]]; if(state.lv>=2) return [[7,10],[11,14],[16,20]]; return []; }
+  function maybePoop(){
+    if(state.lv<2 || state.dirty) return;
+    var d=today(); if(state.poopDate!==d){ state.poopDate=d; state.poopBits=0; }
+    var h=new Date().getHours(), ws=poopWindows();
+    for(var i=0;i<ws.length;i++){ if(state.poopBits&(1<<i)) continue; if(h>=ws[i][0]&&h<ws[i][1]){ if(Math.random()<0.5){ makeDirty(); state.poopBits|=(1<<i); } break; } }
   }
   function applyDaily(){
     if(state.todayDate!==today()){ state.todayDate=today(); state.todayWords=[]; }
@@ -406,7 +415,7 @@ window._eigoPetInit = function() {
   function rebirth(){
     state._farewell=false;
     state.lv=1; state.xp=0; state.born=Date.now(); state.stageSince=Date.now();
-    state.hunger=80; state.happy=80; state.dirty=false; state.dirtySince=null; state.weight=5;
+    state.hunger=80; state.happy=80; state.dirty=false; state.dirtySince=null; state.poopDate=null; state.poopBits=0; state.weight=5;
     state.careMiss=0; state.disciplineMiss=0; state.wagamama=false; state.gamesPlayed=0; state.genCorrect=0; state.sleepCount=0;
     state.babyType=null; state.childType=null; state.youngType=null; state.adultType=null;
     state.sick=false; state.sickSince=null; state.starveSince=null; state._deathCause=null; state.lifespanDays=12+Math.floor(Math.random()*3);
@@ -533,8 +542,8 @@ window._eigoPetInit = function() {
   function cheer(){ var w=document.getElementById('petWrap'); if(!w) return; wakePet(); w.classList.add('happy'); setTimeout(function(){ w.classList.remove('happy'); },1200); }
 
   /* ---- care ---- */
-  document.getElementById('bFeed').onclick=function(){ if(state.lv<2){ bubble("タマゴは まだ たべられないよ"); return; } if(state.hunger>=99){ bubble("おなか いっぱい！"); return; } if(state.food<=0){ bubble("べんきょうして えさをあつめよう"); return; } state.food--; state.hunger=Math.min(100,state.hunger+25); if(state.hunger>0) state.starveSince=null; state.happy=Math.min(100,state.happy+5); state.weight+=1; addXp(5); if(Math.random()<0.45) makeDirty(); bubble("もぐもぐ"); cheer(); save(); render(); };
-  document.getElementById('bSnack').onclick=function(){ if(state.lv<2){ bubble("タマゴは まだ たべられないよ"); return; } if(state.happy>=85){ bubble("もう ごきげん！ おかしは たまに ね"); return; } state.happy=Math.min(100,state.happy+14); state.weight+=3; if(Math.random()<0.35) makeDirty(); bubble("おいしい！でも たいじゅう+"); cheer(); save(); render(); };
+  document.getElementById('bFeed').onclick=function(){ if(state.lv<2){ bubble("タマゴは まだ たべられないよ"); return; } if(state.hunger>=99){ bubble("おなか いっぱい！"); return; } if(state.food<=0){ bubble("べんきょうして えさをあつめよう"); return; } state.food--; state.hunger=Math.min(100,state.hunger+25); if(state.hunger>0) state.starveSince=null; state.happy=Math.min(100,state.happy+5); state.weight+=1; addXp(5); bubble("もぐもぐ"); cheer(); save(); render(); };
+  document.getElementById('bSnack').onclick=function(){ if(state.lv<2){ bubble("タマゴは まだ たべられないよ"); return; } if(state.happy>=85){ bubble("もう ごきげん！ おかしは たまに ね"); return; } state.happy=Math.min(100,state.happy+14); state.weight+=3; bubble("おいしい！でも たいじゅう+"); cheer(); save(); render(); };
   function makeDirty(){ if(!state.dirty){ state.dirty=true; state.dirtySince=Date.now(); } }
   document.getElementById('bPlay').onclick=function(){ if(state.food<=0){ bubble("べんきょうして えさを あつめよう"); return; } show('gameSelect'); };
   function consumePlay(){ state.food--; state.weight=Math.max(5,state.weight-2); state.hunger=Math.max(0,state.hunger-4); state.gamesPlayed=(state.gamesPlayed||0)+1; save(); } // あそぶと 運動：体重-2・おなか-4

@@ -195,8 +195,11 @@ if(window.caches){caches.keys().then(function(ks){ks.forEach(function(k){caches.
     <div id="scene"></div>
     <div id="bubble"></div>
     <div id="wagamark" style="position:absolute;top:22px;left:50%;transform:translateX(50px);font-size:32px;font-weight:900;color:#ef4444;display:none;animation:pulse 0.8s infinite;">！</div>
-    <div id="sickmark" style="position:absolute;top:20px;left:50%;transform:translateX(-70px);display:none;">
-      <svg width="20" height="20" viewBox="0 0 20 20" shape-rendering="crispEdges"><rect x="2" y="0" width="4" height="4" fill="#ef4444"/><rect x="14" y="0" width="4" height="4" fill="#ef4444"/><rect x="6" y="4" width="4" height="4" fill="#ef4444"/><rect x="10" y="4" width="4" height="4" fill="#ef4444"/><rect x="2" y="8" width="4" height="4" fill="#ef4444"/><rect x="14" y="8" width="4" height="4" fill="#ef4444"/></svg>
+    <div id="sickmark" style="position:absolute;top:14px;left:50%;transform:translateX(-50%);display:none;animation:pulse 0.8s infinite;text-align:center;z-index:5;">
+      <div style="background:#111827;border-radius:10px;padding:4px 8px;box-shadow:0 2px 6px rgba(0,0,0,.3);display:inline-flex;align-items:center;gap:5px;">
+        <svg width="26" height="26" viewBox="0 0 12 12" shape-rendering="crispEdges"><rect x="3" y="0" width="6" height="1" fill="#fff"/><rect x="2" y="1" width="8" height="3" fill="#fff"/><rect x="1" y="4" width="10" height="3" fill="#fff"/><rect x="3" y="3" width="2" height="2" fill="#111827"/><rect x="7" y="3" width="2" height="2" fill="#111827"/><rect x="5" y="5" width="2" height="1" fill="#111827"/><rect x="3" y="7" width="6" height="2" fill="#fff"/><rect x="4" y="7" width="1" height="2" fill="#111827"/><rect x="6" y="7" width="1" height="2" fill="#111827"/><rect x="7" y="7" width="1" height="1" fill="#111827"/></svg>
+        <span style="color:#fff;font-size:12px;font-weight:900;">びょうき</span>
+      </div>
     </div>
     <div id="futon"><svg width="184" height="56" viewBox="0 0 184 56" shape-rendering="crispEdges"><rect x="2" y="4" width="180" height="48" fill="#dfe0df"/><rect x="4" y="6" width="176" height="44" fill="#ffffff"/><rect x="4" y="46" width="176" height="4" fill="#eef0ee"/></svg></div>
     <div id="petWrap">
