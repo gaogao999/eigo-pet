@@ -230,10 +230,10 @@ window._eigoPetInit = function() {
     // おこづかい機能の初期化（家庭内でえさを買い取ってお金に）
     if(!Array.isArray(s.moneyLog)) s.moneyLog=[];
     // だんかいレート：デフォルトは 3段階（฿100=えさ5／฿200=えさ10／฿300=えさ15）。
-    // 一度だけ この新デフォルトに 統一（moneyTiersV=2）。以降は 親が変えた設定を そのまま保持
-    if(s.moneyTiersV!==2 || !Array.isArray(s.moneyTiers) || !s.moneyTiers.length){
-      s.moneyTiers=[{cap:100,rate:5},{cap:200,rate:10},{cap:300,rate:15}];
-      s.moneyTiersV=2;
+    // 一度だけ この新デフォルトに 統一（moneyTiersV=3：カーブを緩やかに）。以降は 親が変えた設定を そのまま保持
+    if(s.moneyTiersV!==3 || !Array.isArray(s.moneyTiers) || !s.moneyTiers.length){
+      s.moneyTiers=[{cap:100,rate:5},{cap:150,rate:7},{cap:200,rate:9},{cap:250,rate:11},{cap:300,rate:13}];
+      s.moneyTiersV=3;
     }
     // 単語ごとの学習状況(learn)へ移行：旧mastery(正解数>=2でおぼえた)＋wrongWords(にがて)から復元
     if(!s.learn || typeof s.learn!=='object'){ s.learn={}; }
@@ -378,7 +378,7 @@ window._eigoPetInit = function() {
     }
     return false;
   }
-  var DEFAULT_TIERS=[{cap:100,rate:5},{cap:200,rate:10},{cap:300,rate:15}];
+  var DEFAULT_TIERS=[{cap:100,rate:5},{cap:150,rate:7},{cap:200,rate:9},{cap:250,rate:11},{cap:300,rate:13}];
   function moneyTiers(){ var t=state.moneyTiers; return (Array.isArray(t)&&t.length)?t:DEFAULT_TIERS; }
   // ▼ おこづかい不正対策：バックアップに含めない「外部の稼ぎ台帳」。
   //   復元でエサを巻き戻して何度も買い取り＝無限請求 を防ぐため、買い取りは「新たに稼いだエサ」の範囲だけに制限する。
