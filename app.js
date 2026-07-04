@@ -380,6 +380,17 @@ window._eigoPetInit = function() {
   }
   var DEFAULT_TIERS=[{cap:100,rate:5},{cap:200,rate:10},{cap:300,rate:15}];
   function moneyTiers(){ var t=state.moneyTiers; return (Array.isArray(t)&&t.length)?t:DEFAULT_TIERS; }
+  // ▼ おこづかい不正対策：バックアップに含めない「外部の稼ぎ台帳」。
+  //   復元でエサを巻き戻して何度も買い取り＝無限請求 を防ぐため、買い取りは「新たに稼いだエサ」の範囲だけに制限する。
+  //   earned=いままで“勉強で”手に入れたエサの累計（単調増加）、cashed=買い取り済みの累計。復元してもこのキーは戻らない。
+  var WKEY='eigopet_wallet';
+  function walletGet(){ var w=null; try{ w=JSON.parse(localStorage.getItem(WKEY)||'null'); }catch(e){}
+    if(!w||typeof w!=='object'){ var past=0; (state.moneyLog||[]).forEach(function(e){ past+=(e.food||0); }); // 初回：既存ユーザーの持ち分と履歴で初期化（損させない）
+      w={earned:past+(state.food||0), cashed:past}; try{ localStorage.setItem(WKEY,JSON.stringify(w)); }catch(e){} }
+    if(typeof w.earned!=='number') w.earned=0; if(typeof w.cashed!=='number') w.cashed=0; return w; }
+  function walletSave(w){ try{ localStorage.setItem(WKEY,JSON.stringify(w)); }catch(e){} }
+  function walletEarn(n){ if(!(n>0)) return; var w=walletGet(); w.earned+=n; walletSave(w); }
+  function walletAvail(){ var w=walletGet(); return Math.max(0, w.earned - w.cashed); }
   function moneyFor(food){
     // えさ→おこづかい。だんかいレート：฿capまで えさrate個＝฿1。たまるほど レートが かわる。最後のcapが 上限
     var tiers=moneyTiers(), baht=0, prevCap=0, remaining=food;
@@ -392,8 +403,11 @@ window._eigoPetInit = function() {
   }
   function buyoutFood(){
     // お別れ時に 余ったえさを お金(バーツ)に買い取り。えさは繰り越さない
-    var had=state.food||0, m=moneyFor(had);
+    // 「新たに稼いだエサ」の範囲だけ買い取る（復元でエサを巻き戻しての二重請求を防ぐ）
+    var w=walletGet(), avail=Math.max(0, w.earned - w.cashed);
+    var had=Math.min(state.food||0, avail), m=moneyFor(had);
     state.food=0;
+    w.cashed+=had; walletSave(w);
     if(m.total<=0) return {baht:0, food:had, bonus:0};
     state.moneyLog=state.moneyLog||[];
     state.moneyLog.unshift({ date:today(), baht:m.total, food:had, name:state.name });
@@ -628,7 +642,8 @@ window._eigoPetInit = function() {
   function renderMoney(){
     lockParent(); // タブを開くたび おうち設定は かくす（子供に見えないように）
     var f=document.getElementById('okFood'); if(f) f.textContent=(state.food||0);
-    var m=moneyFor(state.food||0);
+    var payFood=Math.min(state.food||0, walletAvail()); // 買い取り対象は「新たに稼いだエサ」の範囲だけ
+    var m=moneyFor(payFood);
     var fb=document.getElementById('okFoodBaht'); if(fb) fb.textContent='฿'+m.total;   // 子供には 見込み額だけ（内訳は出さない）
     var cn=document.getElementById('okCapNote'); if(cn) cn.textContent='※この額は あくまで みこみです（じょうげん あり）';
     var tc=document.getElementById('okTiers'); if(tc) tc.innerHTML=moneyTiers().map(function(t){ return tierRowHTML(t.cap,t.rate); }).join('');
@@ -761,7 +776,7 @@ window._eigoPetInit = function() {
   document.body.addEventListener('touchstart',function(e){ if(e.touches.length!==1){ swOn=false; return; } swX=e.touches[0].clientX; swY=e.touches[0].clientY; swOn=true; },{passive:true});
   document.body.addEventListener('touchend',function(e){ if(!swOn) return; swOn=false; var t=e.changedTouches[0],dx=t.clientX-swX,dy=t.clientY-swY; if(Math.abs(dx)>60&&Math.abs(dx)>Math.abs(dy)*1.5){ swipeTab(dx<0?1:-1); } },{passive:true});
   document.getElementById('sndset').onclick=function(e){ var b=e.target.closest('.optbtn'); if(!b) return; state.sound=b.dataset.v==='1'; save(); renderGoal(); if(state.sound) sfx('correct'); };
-  document.getElementById('boxBtn').onclick=function(){ if(!boxAvailable()) return; state.lastBoxWeek=weekId(today()); state.food+=10; state.freezeTickets=Math.min(5,state.freezeTickets+1); addXp(20); bubble('たからばこ：えさ+10・おやすみ券+1！'); sfx('fanfare'); cheer(); save(); render(); };
+  document.getElementById('boxBtn').onclick=function(){ if(!boxAvailable()) return; state.lastBoxWeek=weekId(today()); state.food+=10; walletEarn(10); state.freezeTickets=Math.min(5,state.freezeTickets+1); addXp(20); bubble('たからばこ：えさ+10・おやすみ券+1！'); sfx('fanfare'); cheer(); save(); render(); };
   // 上級モード：おうちの人コードで 英検3級・1級を がくしゅうの きゅう選択に出す（子供には ふだん見えない）
   function applyAdv(){ document.body.classList.toggle('advgrades',!!state.advGrades); var as=document.getElementById('advState'); if(as) as.innerHTML=state.advGrades?'<span style="color:var(--g);font-weight:900;">いま ON（3級・1級が えらべます）</span>':'いま OFF（準2級・2級のみ）'; }
   (function(){ var bt=document.getElementById('advToggle'); if(!bt) return; bt.onclick=function(){ if(state.advGrades){ state.advGrades=false; if(state.grade==='g3'||state.grade==='g1') state.grade='jun2'; save(); applyAdv(); render(); bubble('上級モードを もどしました'); return; } var en=prompt('おうちのひとコードを いれてね'); if(en===null) return; if((en||'').replace(/\D/g,'')==='0785770131'){ state.advGrades=true; save(); applyAdv(); render(); bubble('上級モード ON：3級・1級が えらべます'); } else bubble('コードが ちがいます'); }; applyAdv(); })();
@@ -888,14 +903,14 @@ window._eigoPetInit = function() {
   }
   function recordLearned(en){ if(state.todayDate!==today()){ state.todayDate=today(); state.todayWords=[]; } var k=en.toLowerCase(), already=state.todayWords.indexOf(k)>=0; if(!already) state.todayWords.push(k); if(!already&&state.todayWords.length===state.dailyGoal){ onGoalReached(); } }
   function streakOnGoal(){ if(state.lastGoalDate===today()) return; if(state.lastGoalDate===yesterday()){ state.streak++; } else if(state.lastGoalDate){ var gap=Math.round((new Date(today())-new Date(state.lastGoalDate))/86400000)-1; if(gap>0&&state.freezeTickets>=gap){ state.freezeTickets-=gap; state.streak++; bubble('おやすみ券で れんぞく キープ！'); } else state.streak=1; } else state.streak=1; state.lastGoalDate=today(); if(state.streak>(state.maxStreak||0)) state.maxStreak=state.streak; if(state.metDates.indexOf(today())<0) state.metDates.push(today()); if(state.metDates.length>60) state.metDates=state.metDates.slice(-60); }
-  function onGoalReached(){ streakOnGoal(); state.food+=5; state.happy=100; gainGP(20); gainGP(Math.min(state.streak,15)); checkTitles(); setTimeout(showGoalCelebration,850); }
+  function onGoalReached(){ streakOnGoal(); state.food+=5; walletEarn(5); state.happy=100; gainGP(20); gainGP(Math.min(state.streak,15)); checkTitles(); setTimeout(showGoalCelebration,850); }
   function checkUnlock(prevLearned){ var items=BGS.filter(function(it){ return it.need>prevLearned&&it.need<=state.learned; }); if(items.length){ bubble('あたらしい はいけい アンロック！'); sfx('unlock'); } }
   function awardCorrect(en){
     var prev=state.learned, kL=en.toLowerCase(), wasM=!!(state.learn[kL]&&state.learn[kL].m);
     state.genCorrect=(state.genCorrect||0)+1; // この世代の せいかい数（べんきょうか 相性用）
     session.combo=(session.combo||0)+1; if(session.combo>(session.maxCombo||0)) session.maxCombo=session.combo;
     var mult=session.combo>=6?3:session.combo>=3?2:1; var rt=isRewardTime()?2:1; var dd=isDoubleDay()?2:1; var gain=mult*rt*dd;
-    session.correct++; state.food+=gain; state.learned++; gainGP((reviewMode?10:8)*gain); onAnswer(en,true);
+    session.correct++; state.food+=gain; walletEarn(gain); state.learned++; gainGP((reviewMode?10:8)*gain); onAnswer(en,true);
     if(!wasM&&state.learn[kL]&&state.learn[kL].m) session.newMastered=(session.newMastered||0)+1;
     recordLearned(en); checkUnlock(prev); checkTickets(); checkTitles(); sfx(session.combo>=3?'combo':'correct');
     var msg2='せいかい！'; if(mult>1) msg2+=' コンボ×'+mult; if(rt>1) msg2+=' ⏰2ばい'; if(dd>1) msg2+=' 🎉2ばいデー'; msg2+=reviewMode?' おぼえたね':(' えさ+'+gain);
