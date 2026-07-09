@@ -224,7 +224,7 @@ window._eigoPetInit = function() {
     var s=null;
     var keys=[KEY, BAKKEY];
     for(var ki=0;ki<keys.length;ki++){ try{ var raw=localStorage.getItem(keys[ki]); if(raw){ s=JSON.parse(raw); break; } }catch(e){} }
-    var def={ name:"ぴよ",lv:1,xp:0,hunger:80,happy:80,food:0,dirty:false,streak:1,learned:0,last:today(),grade:"jun2",discipline:50,weight:5,careMiss:0,disciplineMiss:0,wagamama:false,babyType:null,childType:null,adultType:null,customImg:{},gameHi:0,dailyGoal:20,todayDate:today(),todayWords:[],lastGoalDate:null,metDates:[],wrongWords:[],petColor:'brown',bg:'meadow',freezeTickets:0,lastTicketDate:null,lastBoxWeek:null,titles:[],sound:true,mastery:{},learn:{},maxStreak:0,sick:false,sickSince:null,starveSince:null,gamesPlayed:0,genCorrect:0,sleepCount:0,dirtySince:null,poopDate:null,poopBits:0,voiceName:null,speechRate:0.8,advGrades:false,born:Date.now(),stageSince:Date.now(),lifespanDays:12+Math.floor(Math.random()*3),youngType:null,memories:[],schemaV:2,lastBackupNudge:null,lastTick:Date.now(),keifuRevealed:[],moneyLog:[] };
+    var def={ name:"ぴよ",lv:1,xp:0,hunger:80,happy:80,food:0,dirty:false,streak:1,learned:0,last:today(),grade:"jun2",discipline:50,weight:5,careMiss:0,disciplineMiss:0,wagamama:false,babyType:null,childType:null,adultType:null,customImg:{},gameHi:0,dailyGoal:20,todayDate:today(),todayWords:[],lastGoalDate:null,metDates:[],wrongWords:[],petColor:'brown',bg:'meadow',freezeTickets:0,lastTicketDate:null,lastBoxWeek:null,titles:[],sound:true,mastery:{},learn:{},maxStreak:0,sick:false,sickSince:null,starveSince:null,gamesPlayed:0,genCorrect:0,sleepCount:0,dirtySince:null,poopDate:null,poopBits:0,voiceName:null,speechRate:0.8,advGrades:false,petNo:1,foodFrac:0,born:Date.now(),stageSince:Date.now(),lifespanDays:12+Math.floor(Math.random()*3),youngType:null,memories:[],schemaV:2,lastBackupNudge:null,lastTick:Date.now(),keifuRevealed:[],moneyLog:[] };
     s=Object.assign({},def,s||{});
     s.dailyGoal=20; // 1日の目標は20に固定
     // おこづかい機能の初期化（家庭内でえさを買い取ってお金に）
@@ -235,6 +235,8 @@ window._eigoPetInit = function() {
       s.moneyTiers=[{cap:50,rate:5},{cap:100,rate:7},{cap:150,rate:9},{cap:200,rate:11},{cap:250,rate:13},{cap:300,rate:15}];
       s.moneyTiersV=5;
     }
+    if(typeof s.petNo!=='number'){ s.petNo=((s.memories&&s.memories.length)||0)+1; } // 既存ユーザーの個体No.をこれまで育てた数から復元
+    if(typeof s.foodFrac!=='number'){ s.foodFrac=0; }
     // 単語ごとの学習状況(learn)へ移行：旧mastery(正解数>=2でおぼえた)＋wrongWords(にがて)から復元
     if(!s.learn || typeof s.learn!=='object'){ s.learn={}; }
     if(Object.keys(s.learn).length===0 && ((s.mastery&&Object.keys(s.mastery).length)||(s.wrongWords&&s.wrongWords.length))){
@@ -431,6 +433,7 @@ window._eigoPetInit = function() {
   function rebirth(){
     state._farewell=false;
     state.lv=1; state.xp=0; state.born=Date.now(); state.stageSince=Date.now();
+    state.petNo=(state.petNo||1)+1; state.foodFrac=0; // 新しい個体No.（連番）
     state.hunger=80; state.happy=80; state.dirty=false; state.dirtySince=null; state.poopDate=null; state.poopBits=0; state.weight=5;
     state.careMiss=0; state.disciplineMiss=0; state.wagamama=false; state.gamesPlayed=0; state.genCorrect=0; state.sleepCount=0;
     state.babyType=null; state.childType=null; state.youngType=null; state.adultType=null;
@@ -448,6 +451,7 @@ window._eigoPetInit = function() {
     +'<rect x="14" y="24" width="8" height="2" fill="#6b7280"/>'
     +'<rect x="7" y="27" width="2" height="2" fill="#f472b6"/><rect x="9" y="26" width="2" height="2" fill="#fbbf24"/><rect x="8" y="29" width="1" height="2" fill="#2f7d4f"/>'
     +'</svg>';
+  function petIdStr(){ var no=('00'+(state.petNo||1)).slice(-3); var code=(state.born||0).toString(36).slice(-4).toUpperCase(); return 'No.'+no+' ・ #'+code; }
   function showFarewell(ai){
     var el=document.getElementById('farewell'); if(!el){ rebirth(); return; }
     var c=state._deathCause, neglect=(c==='hunger'||c==='sick');
@@ -457,6 +461,7 @@ window._eigoPetInit = function() {
       else sp.innerHTML='<div style="position:relative;display:inline-block;"><div style="position:absolute;top:-14px;left:50%;transform:translateX(-50%);font-size:15px;">⭐</div><div style="position:absolute;top:6px;left:-20px;font-size:13px;">✨</div><div style="position:absolute;top:2px;right:-20px;font-size:13px;">✨</div>'+spriteHTML(ai,4)+'</div>';
     }
     var nm=document.getElementById('fwName'); if(nm) nm.textContent=state.name+'（'+ai.name+'）';
+    var idEl=document.getElementById('fwId'); if(idEl) idEl.textContent='こたい ID：'+petIdStr(); // 個体ごとの通し番号＋コード（使い回し・重複に気づけるように）
     var days=Math.max(1,Math.round(ageDays()));
     var ms=document.getElementById('fwMsg');
     if(ms){
@@ -910,10 +915,13 @@ window._eigoPetInit = function() {
     state.genCorrect=(state.genCorrect||0)+1; // この世代の せいかい数（べんきょうか 相性用）
     session.combo=(session.combo||0)+1; if(session.combo>(session.maxCombo||0)) session.maxCombo=session.combo;
     var mult=session.combo>=6?3:session.combo>=3?2:1; var rt=isRewardTime()?2:1; var dd=isDoubleDay()?2:1; var gain=mult*rt*dd;
+    // 10日いっしょに いられたら えさ獲得 ×1.5（端数はためて次に反映）
+    var longLive=state.lv>=5 && ageDays()>=10; var extra=0;
+    if(longLive){ state.foodFrac=(state.foodFrac||0)+gain*0.5; extra=Math.floor(state.foodFrac); state.foodFrac-=extra; gain+=extra; }
     session.correct++; state.food+=gain; walletEarn(gain); state.learned++; gainGP((reviewMode?10:8)*gain); onAnswer(en,true);
     if(!wasM&&state.learn[kL]&&state.learn[kL].m) session.newMastered=(session.newMastered||0)+1;
     recordLearned(en); checkUnlock(prev); checkTickets(); checkTitles(); sfx(session.combo>=3?'combo':'correct');
-    var msg2='せいかい！'; if(mult>1) msg2+=' コンボ×'+mult; if(rt>1) msg2+=' ⏰2ばい'; if(dd>1) msg2+=' 🎉2ばいデー'; msg2+=reviewMode?' おぼえたね':(' えさ+'+gain);
+    var msg2='せいかい！'; if(mult>1) msg2+=' コンボ×'+mult; if(rt>1) msg2+=' ⏰2ばい'; if(dd>1) msg2+=' 🎉2ばいデー'; if(longLive) msg2+=' 🌟10日ボーナス×1.5'; msg2+=reviewMode?' おぼえたね':(' えさ+'+gain);
     document.getElementById('reward').textContent=msg2; save(); checkEvolve();
     showNext();
   }
