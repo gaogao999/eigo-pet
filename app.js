@@ -918,14 +918,13 @@ window._eigoPetInit = function() {
     var prev=state.learned, kL=en.toLowerCase(), wasM=!!(state.learn[kL]&&state.learn[kL].m);
     state.genCorrect=(state.genCorrect||0)+1; // この世代の せいかい数（べんきょうか 相性用）
     session.combo=(session.combo||0)+1; if(session.combo>(session.maxCombo||0)) session.maxCombo=session.combo;
-    // えさ(おこづかい)は「まいにちボーナス」「2ばいデー」「10日ボーナス」で倍。コンボは演出＆経験値のみ（餌には効かない）
-    var comboMult=session.combo>=3?2:1; var gb=isDblDay()?2:1; var dd=isDoubleDay()?2:1; var gain=gb*dd;
+    var mult=session.combo>=3?2:1; var gb=isDblDay()?2:1; var dd=isDoubleDay()?2:1; var gain=mult*gb*dd;
     var longLive=state.lv>=5 && ageDays()>=10; // 10日いっしょに いられたら えさ ×2
     if(longLive) gain*=2;
-    session.correct++; state.food+=gain; walletEarn(gain); state.learned++; gainGP((reviewMode?10:8)*gain*comboMult); onAnswer(en,true);
+    session.correct++; state.food+=gain; walletEarn(gain); state.learned++; gainGP((reviewMode?10:8)*gain); onAnswer(en,true);
     if(!wasM&&state.learn[kL]&&state.learn[kL].m) session.newMastered=(session.newMastered||0)+1;
     recordLearned(en); checkUnlock(prev); checkTickets(); checkTitles(); sfx(session.combo>=3?'combo':'correct');
-    var msg2='せいかい！'; if(session.combo>=3) msg2+=' 🔥コンボ'+session.combo; if(gb>1) msg2+=' ✨まいにちボーナス×2'; if(dd>1) msg2+=' 🎉2ばいデー'; if(longLive) msg2+=' 🌟10日ボーナス×2'; msg2+=reviewMode?' おぼえたね':(' えさ+'+gain);
+    var msg2='せいかい！'; if(mult>1) msg2+=' コンボ×'+mult; if(gb>1) msg2+=' ✨まいにちボーナス×2'; if(dd>1) msg2+=' 🎉2ばいデー'; if(longLive) msg2+=' 🌟10日ボーナス×2'; msg2+=reviewMode?' おぼえたね':(' えさ+'+gain);
     document.getElementById('reward').textContent=msg2; save(); checkEvolve();
     showNext();
   }
