@@ -66,6 +66,12 @@ if(window.caches){caches.keys().then(function(ks){ks.forEach(function(k){caches.
     #zzz{position:absolute;top:6px;right:-2px;display:none;font-family:'DotGothic16',sans-serif;font-weight:900;color:#8b5cf6;line-height:1;pointer-events:none;}
     #zzz span{font-size:.8em;opacity:.85;}
     #zzz.on{display:block;animation:zzzf 2.6s ease-in-out infinite;}
+    #bLight{display:none;position:absolute;top:8px;right:8px;z-index:7;background:#1e293b;color:#fde68a;border:2px solid #475569;border-radius:8px;padding:6px 10px;font-size:11px;font-weight:800;font-family:inherit;cursor:pointer;}
+    body.sleeping #bLight{display:block;}
+    #lightsOverlay{display:none;position:absolute;inset:0;background:#0b1026;z-index:6;border-radius:inherit;}
+    body.lights-off #lightsOverlay{display:flex;align-items:center;justify-content:center;}
+    #lightsOverlay .lzzz{font-family:'DotGothic16',sans-serif;font-weight:900;font-size:40px;color:#8b5cf6;line-height:1;animation:zzzf 2.6s ease-in-out infinite;}
+    #lightsOverlay .lzzz span{font-size:.8em;opacity:.85;}
     @keyframes zzzf{0%{opacity:0;transform:translate(0,4px) scale(.6)} 25%{opacity:1} 70%{opacity:1} 100%{opacity:0;transform:translate(8px,-20px) scale(1.15)}}
     #bubble{position:absolute;top:14px;left:50%;transform:translateX(-50%);background:#fff;border:2px solid var(--bdr);border-radius:8px;padding:5px 18px;font-size:14px;font-weight:800;color:var(--g);opacity:0;transition:opacity .2s;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,.08);}
     #poop{position:absolute;bottom:40px;left:30px;display:none;image-rendering:pixelated;}
@@ -99,7 +105,8 @@ if(window.caches){caches.keys().then(function(ks){ks.forEach(function(k){caches.
     .ehlabel{font-size:12px;font-weight:800;color:#92400e;}
     .ehmean{font-size:20px;font-weight:900;color:#15803d;margin-top:4px;line-height:1.4;}
     .gbtn{border:2px solid var(--bdr);background:var(--card);border-radius:8px;padding:13px 0;font-size:14px;font-weight:800;color:var(--mut);cursor:pointer;font-family:inherit;transition:.15s;}
-    .gbtn[data-g="g3"]{display:none;}
+    .gbtn[data-g="g3"],.gbtn[data-g="g1"]{display:none;}
+    body.advgrades .gbtn[data-g="g3"],body.advgrades .gbtn[data-g="g1"]{display:block;}
     .gbtn.sel{background:var(--g);color:#fff;border-color:var(--g);box-shadow:0 2px 8px rgba(41,166,94,.3);}
     .gbtn:active{transform:scale(.96);}
     .atabs{display:grid;grid-template-columns:repeat(5,1fr);gap:3px;margin:8px 0 14px;background:var(--gl);padding:4px;border-radius:10px;}
@@ -129,16 +136,6 @@ if(window.caches){caches.keys().then(function(ks){ks.forEach(function(k){caches.
     .wdot{flex:1;text-align:center;font-size:10px;font-weight:700;color:var(--mut);background:var(--gl);border-radius:4px;padding:4px 0;}
     .wdot.met{background:var(--g);color:#fff;}
     .wdot.today{outline:2px solid var(--g);outline-offset:-2px;}
-    .shopcard{display:flex;align-items:center;gap:10px;background:var(--card);border:2px solid var(--bdr);border-radius:12px;padding:12px 14px;margin-bottom:10px;}
-    .shopinfo{flex:1;min-width:0;}
-    .shopname{font-size:15px;font-weight:900;color:var(--ink);}
-    .shopdesc{font-size:12px;color:var(--mut);font-weight:700;margin-top:2px;line-height:1.4;}
-    .shopbuy{flex-shrink:0;min-width:84px;border:none;border-radius:10px;padding:10px 12px;font-size:14px;font-weight:900;background:linear-gradient(135deg,#29a65e,#5cde94);color:#fff;cursor:pointer;font-family:inherit;box-shadow:0 2px 8px rgba(41,166,94,.3);line-height:1.2;}
-    .shopbuy:disabled{background:#cbd5d1;box-shadow:none;cursor:default;color:#fff;}
-    .shopbuy:active:not(:disabled){transform:scale(.94);}
-    .shopmax{flex-shrink:0;min-width:84px;text-align:center;font-size:13px;font-weight:900;color:var(--g);background:var(--gl);border-radius:10px;padding:10px 12px;}
-    .goalbtn{border:2px solid var(--bdr);background:var(--card);border-radius:6px;padding:6px 16px;margin-left:6px;font-size:14px;font-weight:800;color:var(--mut);cursor:pointer;font-family:inherit;}
-    .goalbtn.sel{background:var(--g);color:#fff;border-color:var(--g);}
     .optbtn{border:2px solid var(--bdr);background:var(--card);border-radius:6px;padding:6px 14px;margin-left:6px;font-size:13px;font-weight:700;color:var(--mut);cursor:pointer;font-family:inherit;}
     .optbtn.sel{background:var(--g);color:#fff;border-color:var(--g);}
     .chip{flex:1;border:2px solid var(--bdr);background:var(--card);border-radius:8px;padding:10px 4px;font-size:12px;font-weight:800;color:var(--ink);cursor:pointer;font-family:inherit;text-align:center;}
@@ -149,8 +146,6 @@ if(window.caches){caches.keys().then(function(ks){ks.forEach(function(k){caches.
     .tnode.small .tsprite{width:52px;height:52px;}
     .tlabel{font-size:10px;font-weight:700;white-space:nowrap;line-height:1.2;}
     .tarrow{text-align:center;color:var(--mut);font-size:18px;margin:6px 0;}
-    .trow{display:flex;justify-content:space-around;gap:6px;}
-    .tgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px 4px;margin-bottom:4px;}
     .tgrid4{display:grid;grid-template-columns:repeat(4,1fr);gap:6px 4px;margin-bottom:4px;}
     button.tnode{background:none;border:none;padding:0;font-family:inherit;cursor:pointer;}
     button.tnode:active{transform:scale(.92);}
@@ -158,15 +153,18 @@ if(window.caches){caches.keys().then(function(ks){ks.forEach(function(k){caches.
     .tnode.lock .tlabel{color:#c2410c;}
     .keifuHint{display:flex;align-items:center;justify-content:space-between;gap:10px;background:#fff7ed;border:2px solid #fed7aa;border-radius:12px;padding:10px 14px;margin:4px 0 12px;}
     .keifuHint b{color:#c2410c;}
-    .keifuHint button{flex-shrink:0;border:none;border-radius:10px;padding:9px 14px;font-size:13px;font-weight:900;background:linear-gradient(135deg,#f59e0b,#fbbf24);color:#fff;cursor:pointer;font-family:inherit;}
-    .keifuHint button:disabled{background:#cbd5d1;cursor:default;}
     .tiertag{font-size:12px;font-weight:800;color:var(--g);margin:10px 0 2px;text-align:center;}
+    .lrow{display:flex;align-items:center;gap:6px;margin:2px 0 10px;background:var(--card);border:2px solid var(--bdr);border-radius:12px;padding:8px 6px;}
+    .lfrom{flex:none;width:76px;}
+    .larrow{flex:none;font-size:18px;font-weight:900;color:var(--mut);}
+    .lgrid{flex:1;display:grid;grid-template-columns:repeat(3,1fr);gap:6px 4px;}
     .ggrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
     .gstage{font-size:14px;font-weight:900;color:var(--g);margin:16px 0 8px;}
     .gcard{background:var(--card);border:2px solid var(--bdr);border-radius:10px;padding:12px;text-align:center;}
     .gsprite{height:84px;border-radius:6px;background:#f1ead7;display:flex;align-items:center;justify-content:center;}
     .gname{font-size:13px;font-weight:800;margin-top:8px;}
     .gdesc{font-size:11px;color:var(--mut);line-height:1.4;margin-top:3px;}
+    .gaff{font-size:10px;color:var(--g);font-weight:800;line-height:1.35;margin-top:5px;background:var(--gl);border-radius:6px;padding:4px 6px;}
     .eohead{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:8px 0 4px;text-align:center;font-size:11px;font-weight:700;color:var(--mut);}
     .wlgrades{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:10px;}
     .cosgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
@@ -198,8 +196,11 @@ if(window.caches){caches.keys().then(function(ks){ks.forEach(function(k){caches.
     <div id="scene"></div>
     <div id="bubble"></div>
     <div id="wagamark" style="position:absolute;top:22px;left:50%;transform:translateX(50px);font-size:32px;font-weight:900;color:#ef4444;display:none;animation:pulse 0.8s infinite;">！</div>
-    <div id="sickmark" style="position:absolute;top:20px;left:50%;transform:translateX(-70px);display:none;">
-      <svg width="20" height="20" viewBox="0 0 20 20" shape-rendering="crispEdges"><rect x="2" y="0" width="4" height="4" fill="#ef4444"/><rect x="14" y="0" width="4" height="4" fill="#ef4444"/><rect x="6" y="4" width="4" height="4" fill="#ef4444"/><rect x="10" y="4" width="4" height="4" fill="#ef4444"/><rect x="2" y="8" width="4" height="4" fill="#ef4444"/><rect x="14" y="8" width="4" height="4" fill="#ef4444"/></svg>
+    <div id="sickmark" style="position:absolute;top:14px;left:50%;transform:translateX(-50%);display:none;animation:pulse 0.8s infinite;text-align:center;z-index:5;">
+      <div style="background:#111827;border-radius:10px;padding:4px 8px;box-shadow:0 2px 6px rgba(0,0,0,.3);display:inline-flex;align-items:center;gap:5px;">
+        <svg width="26" height="26" viewBox="0 0 12 12" shape-rendering="crispEdges"><rect x="3" y="0" width="6" height="1" fill="#fff"/><rect x="2" y="1" width="8" height="3" fill="#fff"/><rect x="1" y="4" width="10" height="3" fill="#fff"/><rect x="3" y="3" width="2" height="2" fill="#111827"/><rect x="7" y="3" width="2" height="2" fill="#111827"/><rect x="5" y="5" width="2" height="1" fill="#111827"/><rect x="3" y="7" width="6" height="2" fill="#fff"/><rect x="4" y="7" width="1" height="2" fill="#111827"/><rect x="6" y="7" width="1" height="2" fill="#111827"/><rect x="7" y="7" width="1" height="1" fill="#111827"/></svg>
+        <span style="color:#fff;font-size:12px;font-weight:900;">びょうき</span>
+      </div>
     </div>
     <div id="futon"><svg width="184" height="56" viewBox="0 0 184 56" shape-rendering="crispEdges"><rect x="2" y="4" width="180" height="48" fill="#dfe0df"/><rect x="4" y="6" width="176" height="44" fill="#ffffff"/><rect x="4" y="46" width="176" height="4" fill="#eef0ee"/></svg></div>
     <div id="petWrap">
@@ -210,6 +211,8 @@ if(window.caches){caches.keys().then(function(ks){ks.forEach(function(k){caches.
     <div id="blanket"><svg width="146" height="64" viewBox="0 0 146 64" shape-rendering="crispEdges"><rect x="3" y="13" width="140" height="47" fill="#8fd0a8"/><rect x="3" y="57" width="140" height="4" fill="#6aab85"/><rect x="3" y="2" width="140" height="12" fill="#caecd5"/><rect x="3" y="2" width="140" height="3" fill="#e6f6ec"/><rect x="3" y="11" width="140" height="3" fill="#a6d8b8"/><rect x="32" y="26" width="3" height="3" fill="#b8e3c6"/><rect x="70" y="34" width="3" height="3" fill="#b8e3c6"/><rect x="106" y="26" width="3" height="3" fill="#b8e3c6"/><rect x="124" y="44" width="3" height="3" fill="#b8e3c6"/><rect x="50" y="46" width="3" height="3" fill="#b8e3c6"/><rect x="92" y="48" width="3" height="3" fill="#b8e3c6"/></svg></div>
     <div id="flush"><svg width="68" height="44" shape-rendering="crispEdges"><rect x="0" y="26" width="68" height="18" fill="#4f9bd6"/><rect x="0" y="18" width="60" height="8" fill="#5fb0e8"/><rect x="36" y="10" width="24" height="8" fill="#5fb0e8"/><rect x="44" y="4" width="14" height="6" fill="#7cc4ee"/><rect x="44" y="0" width="5" height="4" fill="#fbf3df"/><rect x="52" y="0" width="5" height="4" fill="#fbf3df"/><rect x="36" y="10" width="5" height="3" fill="#fbf3df"/><rect x="6" y="18" width="7" height="3" fill="#cfe9fb"/><rect x="22" y="18" width="7" height="3" fill="#cfe9fb"/><rect x="2" y="28" width="9" height="3" fill="#cfe9fb"/></svg></div>
     <div id="poop"><svg width="48" height="42" shape-rendering="crispEdges"><rect x="5" y="29" width="38" height="11" fill="#5f3f1f"/><rect x="10" y="19" width="28" height="11" fill="#7a5a2a"/><rect x="15" y="10" width="18" height="10" fill="#8a6234"/><rect x="19" y="3" width="9" height="8" fill="#9c7438"/><rect x="13" y="21" width="6" height="3" fill="#a5783f"/><rect x="24" y="31" width="7" height="3" fill="#a5783f"/></svg></div>
+    <div id="lightsOverlay"><div class="lzzz">z<span>z</span><span>z</span></div></div>
+    <button id="bLight">でんきを けす</button>
   </div>
 
   <!-- Status bars -->
@@ -300,6 +303,7 @@ if(window.caches){caches.keys().then(function(ks){ks.forEach(function(k){caches.
   </div>
 
   <div id="rewardBanner" style="display:none;text-align:center;background:#fefce8;border:2px solid #fde68a;border-radius:8px;padding:10px;margin-bottom:12px;font-size:13px;font-weight:800;color:#92400e;">ごほうびタイム！ えさ・けいけんち 2ばい</div>
+  <div id="doubleBanner" style="display:none;text-align:center;background:#fef2f2;border:2px solid #fca5a5;border-radius:8px;padding:10px;margin-bottom:12px;font-size:13px;font-weight:800;color:#b91c1c;"></div>
 
   <div style="display:flex;gap:8px;margin-bottom:12px;">
     <button class="chip" id="ticketChip">おやすみ券 <span id="ticketN">0</span></button>
@@ -313,6 +317,7 @@ if(window.caches){caches.keys().then(function(ks){ks.forEach(function(k){caches.
     <button class="gbtn" data-g="g3">英検3級</button>
     <button class="gbtn" data-g="jun2">英検準2級</button>
     <button class="gbtn" data-g="g2">英検2級</button>
+    <button class="gbtn" data-g="g1">英検1級</button>
   </div>
 
   <button id="goStudy" style="width:100%;border:none;border-radius:10px;padding:18px;font-size:18px;font-weight:900;background:linear-gradient(135deg,#29a65e,#5cde94);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;font-family:inherit;box-shadow:0 3px 12px rgba(41,166,94,.35);">えいごの べんきょう</button>
@@ -356,6 +361,7 @@ if(window.caches){caches.keys().then(function(ks){ks.forEach(function(k){caches.
   <button id="dontKnow" style="width:100%;margin-top:12px;padding:13px;font-size:14px;font-weight:800;background:#f1f5f9;color:#64748b;border:2px solid #e2e8f0;border-radius:10px;cursor:pointer;font-family:inherit;">わからない（こたえを みる）</button>
   <div id="reward" style="text-align:center;margin-top:16px;font-size:17px;font-weight:900;color:var(--g);min-height:26px;"></div>
   <div id="easyHint" style="display:none;margin-top:14px;background:#fefce8;border:2px solid #fde68a;border-radius:10px;padding:16px;text-align:center;"></div>
+  <button id="nextBtn" style="display:none;width:100%;margin-top:14px;padding:15px;font-size:16px;font-weight:900;background:linear-gradient(135deg,#29a65e,#5cde94);color:#fff;border:none;border-radius:10px;cursor:pointer;font-family:inherit;box-shadow:0 3px 10px rgba(41,166,94,.3);">つぎへ →</button>
 </section>
 
 <!-- ADMIN -->
@@ -378,7 +384,7 @@ if(window.caches){caches.keys().then(function(ks){ks.forEach(function(k){caches.
     <div id="bgList" class="cosgrid"></div>
   </div>
   <div id="tab-keifu" class="atabpane" style="display:none;">
-    <p style="font-size:12px;color:var(--mut);margin:4px 0 14px;font-weight:700;line-height:1.7;">せわミス・しつけミスが <strong style="color:var(--ink);">すくない</strong>ほど「よいこ」、<strong style="color:var(--ink);">おおい</strong>ほど「わんぱく」に育ちます。</p>
+    <p style="font-size:12px;color:var(--mut);margin:4px 0 14px;font-weight:700;line-height:1.7;">その世代で <strong style="color:var(--ink);">もくひょうを たっせいした日数</strong> で ランクが きまり、系統（すすむ アダルトの グループ）が わかれます。<strong style="color:var(--ink);">せわ・しつけミス</strong> が おおいと ランクが さがります。ミスが すくない子ほど、まれに ★レアに！</p>
     <div id="adminTree"></div>
   </div>
   <div id="tab-tango" class="atabpane" style="display:none;">
@@ -386,6 +392,7 @@ if(window.caches){caches.keys().then(function(ks){ks.forEach(function(k){caches.
       <button class="gbtn" data-g="g3">英検3級</button>
       <button class="gbtn" data-g="jun2">英検準2級</button>
       <button class="gbtn" data-g="g2">英検2級</button>
+      <button class="gbtn" data-g="g1">英検1級</button>
     </div>
     <input id="wlSearch" type="search" placeholder="さがす（えいご・いみ）" style="width:100%;margin:10px 0 8px;padding:11px 14px;border:2px solid var(--bdr);border-radius:8px;font-size:15px;font-family:inherit;background:var(--card);color:var(--ink);outline:none;">
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
@@ -397,7 +404,16 @@ if(window.caches){caches.keys().then(function(ks){ks.forEach(function(k){caches.
   <div id="tab-data" class="atabpane" style="display:none;">
     <h3 style="font-size:15px;font-weight:900;margin:4px 0 8px;color:var(--ink);">せってい</h3>
     <div style="text-align:left;font-size:13px;color:var(--mut);font-weight:700;margin-bottom:8px;" id="sndset">こうかおん：<button class="optbtn" data-v="1">ON</button><button class="optbtn" data-v="0">OFF</button></div>
-    <div style="font-size:12px;color:var(--mut);font-weight:700;line-height:1.8;margin-bottom:16px;">1にちの もくひょう：<strong style="color:var(--g);">20こ</strong> ／ ごほうびタイム：<strong style="color:var(--g);">15〜17時</strong>（えさ・けいけんち 2ばい）</div>
+    <div id="voiceset" style="text-align:left;font-size:13px;color:var(--mut);font-weight:700;margin-bottom:16px;">えいごの こえ：<select id="voiceSel" style="font-family:inherit;font-size:13px;font-weight:700;padding:6px 8px;border:2px solid var(--bdr);border-radius:8px;background:var(--gl);color:var(--ink);max-width:200px;"></select> <button id="voiceTest" class="optbtn">🔊 ためす</button>
+      <div style="margin-top:8px;">はやさ：<select id="rateSel" style="font-family:inherit;font-size:13px;font-weight:700;padding:6px 8px;border:2px solid var(--bdr);border-radius:8px;background:var(--gl);color:var(--ink);"><option value="0.5">とても ゆっくり</option><option value="0.65">ゆっくり</option><option value="0.8">ふつう</option><option value="1">はやい</option></select></div>
+      <div id="voiceNote" style="font-size:11px;color:var(--mut);font-weight:600;margin-top:6px;">「ためす」で こえと はやさを かくにんできます</div></div>
+    <div style="font-size:12px;color:var(--mut);font-weight:700;line-height:1.8;margin-bottom:16px;">1にちの もくひょう：<strong style="color:var(--g);">20こ</strong> ／ まいにちボーナス：<strong style="color:var(--g);">20こ たっせいすると つぎの日 えさ2ばい</strong>（つづけるほど おとく）</div>
+    <div id="advBox" style="font-size:12px;color:var(--mut);font-weight:700;line-height:1.7;margin-bottom:16px;padding:12px 14px;border:2px solid var(--bdr);border-radius:8px;background:var(--gl);">
+      <div style="font-weight:900;color:var(--ink);margin-bottom:4px;">上級モード（おうちの人）</div>
+      <div id="advState" style="margin-bottom:8px;"></div>
+      <button id="advToggle" class="optbtn">かいじょ / もどす</button>
+      <div style="font-size:11px;margin-top:6px;">ONにすると がくしゅうの きゅう選択に <strong>英検3級・英検1級</strong> が ふえます（おうちのひとコードが ひつよう）。</div>
+    </div>
     <p style="font-size:13px;color:var(--mut);line-height:1.7;margin:4px 0 12px;font-weight:700;">しんちょくは この たんまつに ほぞんされています。ときどき バックアップを とっておくと あんしんです。</p>
     <div id="dataStat" style="font-size:13px;color:var(--ink);font-weight:800;background:var(--gl);border:2px solid var(--bdr);border-radius:8px;padding:12px 14px;margin-bottom:16px;"></div>
     <h3 style="font-size:15px;font-weight:900;margin:4px 0 8px;color:var(--ink);">バックアップ（書き出し）</h3>
@@ -416,13 +432,30 @@ if(window.caches){caches.keys().then(function(ks){ks.forEach(function(k){caches.
 </section>
 
 <!-- SHOP -->
-<section id="shop" class="screen">
-  <div style="display:flex;align-items:center;justify-content:space-between;margin:4px 0 14px;">
-    <h2 style="font-size:22px;font-weight:900;color:var(--ink);margin:0;">ショップ</h2>
-    <span id="shopEsa" style="font-size:14px;font-weight:800;color:#c2410c;background:#fff7ed;border:2px solid #fed7aa;border-radius:8px;padding:6px 12px;">🍚 えさ 0</span>
+<section id="okane" class="screen">
+  <h2 style="font-size:22px;font-weight:900;color:var(--ink);margin:4px 0 14px;">おこづかい</h2>
+  <div style="text-align:center;padding:20px 18px;background:linear-gradient(135deg,#fff7ed,#ffedd5);border:2px solid #fed7aa;border-radius:14px;margin-bottom:14px;">
+    <div style="font-size:13px;font-weight:800;color:#c2410c;">いま もらえる おこづかい みこみ</div>
+    <div id="okFoodBaht" style="font-size:44px;font-weight:900;color:#ea580c;line-height:1.15;">฿0</div>
+    <div style="font-size:12px;color:var(--ink);font-weight:800;">いまの えさ <span id="okFood">0</span>こ ぶん</div>
+    <div id="okCapNote" style="font-size:10px;color:var(--mut);font-weight:700;margin-top:4px;"></div>
   </div>
-  <p style="font-size:12px;color:var(--mut);font-weight:700;margin:0 0 14px;">べんきょうで あつめた えさで かえるよ！</p>
-  <div id="shopList"></div>
+  <p style="font-size:12px;color:var(--mut);margin:0 0 12px;font-weight:700;line-height:1.7;">まいにち <strong style="color:var(--ink);">べんきょう＆おせわ</strong>して、キャラを <strong style="color:var(--ink);">さいごまで</strong> そだてると、おわかれの ときに この おこづかいが もらえるよ。<br>（おうちの人に みせてね）</p>
+  <button id="okLock" style="width:100%;padding:13px;border:2px solid var(--bdr);border-radius:10px;background:var(--card);color:var(--mut);font-size:14px;font-weight:800;font-family:inherit;cursor:pointer;margin-bottom:14px;">🔒 おうちのひと せってい</button>
+  <div id="okParent" style="display:none;">
+    <div style="background:var(--card);border:2px solid var(--bdr);border-radius:12px;padding:14px;margin-bottom:14px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;"><div style="font-size:13px;font-weight:900;color:var(--ink);">👨‍👩‍👧 おうちのひと せってい</div><button id="okRelock" style="font-size:11px;font-weight:800;color:var(--mut);background:none;border:none;cursor:pointer;font-family:inherit;">🔒 とじる</button></div>
+      <div style="font-size:12px;font-weight:800;color:var(--ink);margin-bottom:6px;">えさ→おこづかい の だんかいレート</div>
+      <div id="okTiers"></div>
+      <button id="okTierAdd" type="button" style="width:100%;padding:8px;border:2px dashed var(--bdr);border-radius:8px;background:none;color:var(--mut);font-size:12px;font-weight:800;font-family:inherit;cursor:pointer;margin-bottom:8px;">＋ だんかいを ふやす</button>
+      <div style="font-size:10px;color:var(--mut);font-weight:700;line-height:1.6;margin-bottom:12px;">れい：฿100まで えさ5＝฿1、฿200まで えさ10＝฿1…。たまるほど レートを かえられます。いちばん下の ฿が 1匹の じょうげん（もらえる さいだい）です。</div>
+      <button id="okSave" style="width:100%;padding:11px;border:none;border-radius:9px;background:#2563eb;color:#fff;font-size:14px;font-weight:800;font-family:inherit;cursor:pointer;">せってい を ほぞん</button>
+      <div id="okRateHint" style="font-size:11px;color:var(--mut);font-weight:700;margin-top:8px;text-align:center;"></div>
+      <button id="okPinChange" style="width:100%;padding:9px;border:none;border-radius:8px;background:none;color:var(--mut);font-size:11px;font-weight:700;font-family:inherit;cursor:pointer;margin-top:6px;">コードを へんこう する</button>
+    </div>
+  </div>
+  <div style="font-size:13px;font-weight:900;color:var(--ink);margin-bottom:8px;">これまで もらった おこづかい</div>
+  <div id="okLog"></div>
 </section>
 
 <!-- GAME SELECT -->
@@ -475,9 +508,11 @@ if(window.caches){caches.keys().then(function(ks){ks.forEach(function(k){caches.
   <div style="background:var(--card);border-radius:16px;border:3px solid var(--bdr);padding:26px 22px;text-align:center;max-width:300px;width:100%;box-shadow:0 8px 40px rgba(0,0,0,.25);animation:popIn .3s;">
     <div style="font-size:13px;font-weight:800;color:var(--mut);margin-bottom:6px;">おわかれの とき</div>
     <div id="fwSprite" style="display:flex;justify-content:center;margin:6px 0 10px;"></div>
-    <div id="fwName" style="font-size:18px;font-weight:900;color:var(--g);margin-bottom:8px;"></div>
+    <div id="fwName" style="font-size:18px;font-weight:900;color:var(--g);margin-bottom:4px;"></div>
+    <div id="fwId" style="font-size:12px;font-weight:800;color:var(--mut);margin-bottom:8px;letter-spacing:.5px;"></div>
     <div id="fwMsg" style="font-size:14px;color:var(--ink);font-weight:700;line-height:1.8;"></div>
-    <div style="font-size:12px;color:var(--mut);font-weight:700;margin-top:12px;">けいふに きろくされたよ。あたらしい いのちが やってくる…</div>
+    <div id="fwMoney" style="display:none;font-size:13px;font-weight:800;color:var(--ink);line-height:1.7;margin-top:14px;padding:12px;background:#fff7ed;border:2px solid #fed7aa;border-radius:10px;"></div>
+    <div id="fwNote" style="font-size:12px;color:var(--mut);font-weight:700;margin-top:12px;">けいふに きろくされたよ。あたらしい いのちが やってくる…</div>
     <button id="fwClose" style="margin-top:18px;width:100%;padding:16px;border:none;border-radius:10px;background:linear-gradient(135deg,#29a65e,#5cde94);color:#fff;font-size:17px;font-weight:900;cursor:pointer;font-family:inherit;box-shadow:0 3px 10px rgba(41,166,94,.3);">あたらしい タマゴを むかえる</button>
   </div>
 </div>
@@ -519,11 +554,11 @@ if(window.caches){caches.keys().then(function(ks){ks.forEach(function(k){caches.
       </span>
       がくしゅう
     </button>
-    <button class="tab" data-s="shop">
+    <button class="tab" data-s="okane">
       <span class="ti">
-        <svg width="20" height="20" viewBox="0 0 20 20" shape-rendering="crispEdges"><rect x="2" y="2" width="4" height="2" fill="currentColor"/><rect x="6" y="4" width="12" height="2" fill="currentColor"/><rect x="5" y="6" width="13" height="8" fill="currentColor"/><rect x="8" y="8" width="2" height="4" fill="currentColor"/><rect x="13" y="8" width="2" height="4" fill="currentColor"/><rect x="6" y="15" width="3" height="3" fill="currentColor"/><rect x="13" y="15" width="3" height="3" fill="currentColor"/></svg>
+        <svg width="20" height="20" viewBox="0 0 20 20" shape-rendering="crispEdges"><rect x="4" y="1" width="12" height="18" fill="currentColor"/><rect x="6" y="3" width="8" height="14" fill="#fff7ed"/><rect x="9" y="5" width="2" height="10" fill="currentColor"/><rect x="7" y="7" width="6" height="2" fill="currentColor"/><rect x="7" y="11" width="6" height="2" fill="currentColor"/></svg>
       </span>
-      ショップ
+      おこづかい
     </button>
     <button class="tab" data-s="admin">
       <span class="ti">
