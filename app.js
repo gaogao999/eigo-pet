@@ -309,6 +309,7 @@ window._eigoPetInit = function() {
     var now=Date.now(), last=state.lastTick||now, hrs=(now-last)/3600000;
     state.lastTick=now;
     if(hrs<=0) return;
+    var hungerBefore=state.hunger;                       // 減る前のおなか（餓死開始時刻の計算用）
     hrs=Math.min(hrs,72);
     state.hunger=Math.max(0, state.hunger - 1.5*hrs);   // 約 -36/日
     state.happy =Math.max(0, state.happy  - 1.0*hrs);   // 約 -24/日
@@ -317,7 +318,8 @@ window._eigoPetInit = function() {
     // 自然な代謝：時間とともに少しずつ体重が減る（太っているほど よく燃える）→ 体重が一方通行で増え続けないように
     if(state.lv>=2){ var burn=0.07+(state.weight>=30?0.06:0); state.weight=Math.max(5, state.weight - burn*hrs); }
     // 「毎日世話」を成立させる：おなかが0 / 病気 が つづくと あぶない → お別れ(checkDeath)
-    if(state.hunger<=0){ if(!state.starveSince) state.starveSince=now; } else { state.starveSince=null; }
+    // おなかが0：実際に0へ到達した時刻から数える（アプリを閉じていた放置時間も カウントする＝世話ゼロで長生きしない）
+    if(state.hunger<=0){ if(!state.starveSince){ var t=last + (hungerBefore/1.5)*3600000; state.starveSince=Math.min(t, now); } } else { state.starveSince=null; }
     if(state.sick){ if(!state.sickSince) state.sickSince=now; } else { state.sickSince=null; }
     maybePoop();
   }
