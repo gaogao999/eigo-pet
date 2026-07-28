@@ -377,7 +377,7 @@ window._eigoPetInit = function() {
   var NEGLECT_MS=40*3600000; // おなかが0 / 病気 が およそ1.7日つづくと お別れ（毎日世話が必要）
   function checkDeath(){
     if(state._farewell){ showFarewell(petInfo()); return true; } // お別れ未完了で再起動した場合も再表示
-    if(state.lv>=5 && ageDays()>=state.lifespanDays){ state._deathCause='life'; farewell(); return true; }
+    if(ageDays()>=state.lifespanDays){ state._deathCause=(state.lv>=5)?'life':'nogrow'; farewell(); return true; } // 寿命：育て切った子=祝福、育たなかった子(勉強不足)=nogrow（不老不死を防ぐ）
     if(state.lv>=2){ var now=Date.now();
       if(state.starveSince && now-state.starveSince>=NEGLECT_MS){ state._deathCause='hunger'; farewell(); return true; }
       if(state.sick && state.sickSince && now-state.sickSince>=NEGLECT_MS){ state._deathCause='sick'; farewell(); return true; }
@@ -430,7 +430,7 @@ window._eigoPetInit = function() {
       if(state.memories.length>30) state.memories.length=30;
     }
     // おこづかいの かいとりは「寿命を まっとうした とき」だけ。早いお別れ(空腹・病気)は なし＆えさも消える
-    if(state._deathCause==='hunger'||state._deathCause==='sick'){ state.food=0; state._lastBuyout={baht:0,food:0}; }
+    if(state._deathCause==='hunger'||state._deathCause==='sick'||state._deathCause==='nogrow'){ state.food=0; state._lastBuyout={baht:0,food:0}; } // 早いお別れ・育たなかった子は おこづかいなし
     else { state._lastBuyout=buyoutFood(); }
     save(); showFarewell(ai);
   }
@@ -458,7 +458,7 @@ window._eigoPetInit = function() {
   function petIdStr(){ var no=('00'+(state.petNo||1)).slice(-3); var code=(state.born||0).toString(36).slice(-4).toUpperCase(); return 'No.'+no+' ・ #'+code; }
   function showFarewell(ai){
     var el=document.getElementById('farewell'); if(!el){ rebirth(); return; }
-    var c=state._deathCause, neglect=(c==='hunger'||c==='sick');
+    var c=state._deathCause, neglect=(c==='hunger'||c==='sick'||c==='nogrow');
     var sp=document.getElementById('fwSprite');
     if(sp){
       if(neglect) sp.innerHTML=GRAVE_SVG;
@@ -471,6 +471,7 @@ window._eigoPetInit = function() {
     if(ms){
       if(c==='hunger') ms.innerHTML=days+'日 いっしょに いたよ。<br>おなかが すいて げんきが なくなっちゃった…<br><strong style="color:#c2410c;">まいにち ごはんを あげてね。</strong>';
       else if(c==='sick') ms.innerHTML=days+'日 いっしょに いたよ。<br>びょうきを なおして あげられなかった…<br><strong style="color:#c2410c;">びょうきの ときは はやく おくすりを あげてね。</strong>';
+      else if(c==='nogrow') ms.innerHTML=days+'日 いっしょに いたよ。<br>おおきく なれないまま おわかれ…<br><strong style="color:#c2410c;">まいにち べんきょうすると そだつよ。</strong>';
       else ms.innerHTML='<strong style="color:#29a65e;">いままで ありがとう！</strong><br>'+days+'日 いっしょに がんばったね。<br>おほしさまに なって みまもってるよ。';
     }
     var mo=document.getElementById('fwMoney');
