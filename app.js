@@ -833,10 +833,9 @@ window._eigoPetInit = function() {
     var picks=shuffle(same).slice(0,n);
     if(picks.length<n){ var rest=shuffle(pool.filter(function(w){ return picks.indexOf(w)<0; })).slice(0,n-picks.length); picks=picks.concat(rest); }
     return picks; }
-  // ① まちがえた語を 同じセッションの 数問あとに もう一度（1語1回だけ）
-  function requeueMissed(w){ if(!w||!qList) return; var k=(w[0]||'').toLowerCase(); if(requeued[k]) return; requeued[k]=true;
-    var pos=Math.min(qList.length, qIdx+4); qList.splice(pos,0,w);
-    var qt=document.getElementById('qTotal'); if(qt) qt.textContent=qList.length; if(session) session.total=qList.length; }
+  // 1回のべんきょうは つねに QPER(5)問で固定。まちがえた語は 同セッションでは増やさず、
+  //   次回に 重み×5 で 優先的に 再登場する（requeueMissedは 何もしない）
+  function requeueMissed(w){ /* no-op: セッションを のばさない */ }
   // まちがえた単語(復習まち)を出やすくする重み付き抽選。覚えた=低確率で再確認
   // 出題の優先度：1)にがて と 4)新出 を最優先、2)間違えて覚えた は中、3)一発正解 は最低
   function qWeight(w){ var r=state.learn[w[0].toLowerCase()];
