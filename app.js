@@ -822,7 +822,7 @@ window._eigoPetInit = function() {
   document.getElementById('goStudy').onclick=startStudy;
   document.getElementById('back').onclick=function(){ show('learn'); render(); };
   function shuffle(a){ a=a.slice(); for(var i=a.length-1;i>0;i--){ var j=(Math.random()*(i+1))|0; var tmp=a[i]; a[i]=a[j]; a[j]=tmp; } return a; }
-  var curWord=null, reviewMode=false, qMode='meaning', qMissed=false; // qMissed: この問題で一度でも まちがえたか（総当たり防止）
+  var curWord=null, reviewMode=false, qMode='meaning', qMissed=false, spellMiss=0; // qMissed:一度でも まちがえたか（総当たり防止） / spellMiss:スペルの誤答回数（2回で確定）
   // まちがえた単語(復習まち)を出やすくする重み付き抽選。覚えた=低確率で再確認
   // 出題の優先度：1)にがて と 4)新出 を最優先、2)間違えて覚えた は中、3)一発正解 は最低
   function qWeight(w){ var r=state.learn[w[0].toLowerCase()];
@@ -869,7 +869,7 @@ window._eigoPetInit = function() {
     pendingNext=false; var nb0=document.getElementById('nextBtn'); if(nb0) nb0.style.display='none'; var dk0=document.getElementById('dontKnow'); if(dk0) dk0.style.display='block';
     if(qIdx>=qList.length){ finishStudy(); return; }
     updateStudyProg();
-    var correct=qList[qIdx]; curWord=correct; qMissed=false;
+    var correct=qList[qIdx]; curWord=correct; qMissed=false; spellMiss=0;
     var en=correct[0];
     qMode=pickQMode();
     if(qMode==='spell'&&spellLetters(en).length>12) qMode='meaning'; // 長い単語・熟語のスペル入力は むずかしすぎるので 4択に
@@ -929,7 +929,9 @@ window._eigoPetInit = function() {
     if(val===target){ inp.disabled=true; var sb=document.getElementById('spellSubmit'); if(sb) sb.disabled=true; speak(curWord[0]);
       if(qMissed){ document.getElementById('reward').textContent='かけたね！ つぎは いちどで せいかい しよう'; showEasy(curWord); save(); showNext(); return; } // まちがえてからの正解は ごほうびなし
       awardCorrect(curWord[0]); }
-    else { qMissed=true; session.combo=0; onAnswer(curWord[0],false); save(); sfx('wrong'); document.getElementById('reward').textContent='おしい！ もういちど（「わからない」で こたえ）'; try{ inp.focus(); inp.select(); }catch(e){} }
+    else { qMissed=true; spellMiss++; session.combo=0; onAnswer(curWord[0],false); save(); sfx('wrong'); // まちがい＝この時点で「にがて・ふくしゅうゆき」に記録
+      if(spellMiss>=2){ inp.disabled=true; var sb=document.getElementById('spellSubmit'); if(sb) sb.disabled=true; speak(curWord[0]); document.getElementById('reward').textContent='ざんねん… こたえは「'+curWord[0]+'」　ふくしゅうに いれたよ'; showEasy(curWord); showNext(); } // 2回まちがい＝確定・答え表示
+      else { document.getElementById('reward').textContent='おしい！ もう1かい かいてみよう（タイプミス？）'; try{ inp.focus(); inp.select(); }catch(e){} } }
   }
   function recordLearned(en){ if(state.todayDate!==today()){ state.todayDate=today(); state.todayWords=[]; } var k=en.toLowerCase(), already=state.todayWords.indexOf(k)>=0; if(!already) state.todayWords.push(k); if(!already&&state.todayWords.length===state.dailyGoal){ onGoalReached(); } }
   function streakOnGoal(){ if(state.lastGoalDate===today()) return; if(state.lastGoalDate===yesterday()){ state.streak++; } else if(state.lastGoalDate){ var gap=Math.round((new Date(today())-new Date(state.lastGoalDate))/86400000)-1; if(gap>0&&state.freezeTickets>=gap){ state.freezeTickets-=gap; state.streak++; bubble('おやすみ券で れんぞく キープ！'); } else state.streak=1; } else state.streak=1; state.lastGoalDate=today(); if(state.streak>(state.maxStreak||0)) state.maxStreak=state.streak; if(state.metDates.indexOf(today())<0) state.metDates.push(today()); if(state.metDates.length>60) state.metDates=state.metDates.slice(-60); }
