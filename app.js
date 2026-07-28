@@ -822,7 +822,18 @@ window._eigoPetInit = function() {
   document.getElementById('goStudy').onclick=startStudy;
   document.getElementById('back').onclick=function(){ show('learn'); render(); };
   function shuffle(a){ a=a.slice(); for(var i=a.length-1;i>0;i--){ var j=(Math.random()*(i+1))|0; var tmp=a[i]; a[i]=a[j]; a[j]=tmp; } return a; }
-  var curWord=null, reviewMode=false, qMode='meaning', qMissed=false, spellMiss=0; // qMissed:一度でも まちがえたか（総当たり防止） / spellMiss:スペルの誤答回数（2回で確定）
+  var curWord=null, reviewMode=false, qMode='meaning', qMissed=false, spellMiss=0, requeued={}; // qMissed:一度でも まちがえたか（総当たり防止） / spellMiss:スペルの誤答回数（2回で確定） / requeued:このセッションで再出題ずみの語
+  // ④ 紛らわしいダミー：まず同じ品詞の語から、足りなければランダムで
+  function pickDistractors(correct,n){ var en=correct[0], pos=correct[3];
+    var pool=currentWords().filter(function(w){ return w[0]!==en&&w[1]!==correct[1]; });
+    var same=pool.filter(function(w){ return w[3]===pos; });
+    var picks=shuffle(same).slice(0,n);
+    if(picks.length<n){ var rest=shuffle(pool.filter(function(w){ return picks.indexOf(w)<0; })).slice(0,n-picks.length); picks=picks.concat(rest); }
+    return picks; }
+  // ① まちがえた語を 同じセッションの 数問あとに もう一度（1語1回だけ）
+  function requeueMissed(w){ if(!w||!qList) return; var k=(w[0]||'').toLowerCase(); if(requeued[k]) return; requeued[k]=true;
+    var pos=Math.min(qList.length, qIdx+4); qList.splice(pos,0,w);
+    var qt=document.getElementById('qTotal'); if(qt) qt.textContent=qList.length; if(session) session.total=qList.length; }
   // まちがえた単語(復習まち)を出やすくする重み付き抽選。覚えた=低確率で再確認
   // 出題の優先度：1)にがて と 4)新出 を最優先、2)間違えて覚えた は中、3)一発正解 は最低
   function qWeight(w){ var r=state.learn[w[0].toLowerCase()];
@@ -833,7 +844,7 @@ window._eigoPetInit = function() {
     return 3;                     // その他
   }
   function pickWeighted(words,n){ var used={}, chosen=[], wt=words.map(qWeight); for(var s=0;s<n;s++){ var total=0,i; for(i=0;i<words.length;i++){ if(!used[i]) total+=wt[i]; } if(total<=0) break; var rnd=Math.random()*total, acc=0, idx=-1; for(i=0;i<words.length;i++){ if(used[i])continue; acc+=wt[i]; if(rnd<=acc){ idx=i; break; } } if(idx<0){ for(i=0;i<words.length;i++){ if(!used[i]){ idx=i; break; } } } if(idx<0) break; used[idx]=true; chosen.push(words[idx]); } return chosen; }
-  function startStudy(){ reviewMode=false; qList=pickWeighted(currentWords(),QPER); qIdx=0; session={correct:0,combo:0,maxCombo:0,newMastered:0,total:qList.length}; document.getElementById('qTotal').textContent=qList.length; show('study'); nextQ(); }
+  function startStudy(){ reviewMode=false; requeued={}; qList=pickWeighted(currentWords(),QPER); qIdx=0; session={correct:0,combo:0,maxCombo:0,newMastered:0,total:qList.length}; document.getElementById('qTotal').textContent=qList.length; show('study'); nextQ(); }
   function escJa(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;'); }
   function splitSenses(s){ return (s||'').split(/[，、,]/).map(function(x){ return x.trim(); }).filter(Boolean); }
   // 各いみの ふりがなを その漢字の 真上に（ruby）。コンマで 行を わける
@@ -841,7 +852,7 @@ window._eigoPetInit = function() {
   function choiceHtml(w){ var lng=(w[1]||'').length>9?' long':''; return '<span class="base'+lng+'">'+rubyHTML(w[1],w[2])+'</span>'; }
   function firstSenseKana(w){ var s=(w[2]||w[1]||''); return s.split(/[\u3001,\uff0c]/)[0].trim(); }
   function easyText(w){ var k=(w[0]||''); var e=(typeof EASY!=='undefined')?(EASY[k]||EASY[k.toLowerCase()]):null; return e||firstSenseKana(w); }
-  function showEasy(w){ var box=document.getElementById('easyHint'); box.innerHTML='<div class="ehlabel">やさしいいみ</div><div class="ehmean">'+escJa(easyText(w))+'</div>'; box.style.display='block'; try{ box.scrollIntoView({behavior:'smooth',block:'center'}); }catch(e){ try{ box.scrollIntoView(); }catch(_){} } }
+  function showEasy(w,noScroll){ var box=document.getElementById('easyHint'); box.innerHTML='<div class="ehlabel">やさしいいみ</div><div class="ehmean">'+escJa(easyText(w))+'</div>'; box.style.display='block'; if(noScroll) return; try{ box.scrollIntoView({behavior:'smooth',block:'center'}); }catch(e){ try{ box.scrollIntoView(); }catch(_){} } }
   function attachLongPress(el,cb){
     var t=null, longFired=false, touched=false;
     function start(){ longFired=false; el._lp=false; clearTimeout(t); t=setTimeout(function(){ longFired=true; el._lp=true; el._lpAt=Date.now(); cb(); },500); }
@@ -888,8 +899,7 @@ window._eigoPetInit = function() {
       qw.innerHTML='<div class="qmain">'+rubyHTML(kanji,yom)+'</div>';
       qw.classList.toggle('long', kanji.length>6);
       if(hint) hint.textContent='もんだいを ながおしで やさしいいみ';
-      var poolR=currentWords().filter(function(w){ return w[0]!==en&&w[1]!==correct[1]; });
-      shuffle([correct].concat(shuffle(poolR).slice(0,3))).forEach(function(o){ mkBtn(o,'<span class="base'+((o[0]||'').length>9?' long':'')+'">'+escJa(o[0])+'</span>'); });
+      shuffle([correct].concat(pickDistractors(correct,3))).forEach(function(o){ mkBtn(o,'<span class="base'+((o[0]||'').length>9?' long':'')+'">'+escJa(o[0])+'</span>'); });
     } else if(isSpell){
       // おとを きいて＋いみを みて 英語スペルを にゅうりょく
       prompt.textContent='きいて スペルを かこう';
@@ -907,8 +917,7 @@ window._eigoPetInit = function() {
       prompt.textContent='この えいごの いみは？';
       qw.textContent=en; qw.classList.toggle('long', en.length>12);
       if(hint) hint.textContent='ながおしすると やさしいいみ';
-      var pool=currentWords().filter(function(w){ return w[0]!==en&&w[1]!==correct[1]; });
-      shuffle([correct].concat(shuffle(pool).slice(0,3))).forEach(function(o){ mkBtn(o,choiceHtml(o)); });
+      shuffle([correct].concat(pickDistractors(correct,3))).forEach(function(o){ mkBtn(o,choiceHtml(o)); });
       speak(en);
     }
   }
@@ -930,7 +939,7 @@ window._eigoPetInit = function() {
       if(qMissed){ document.getElementById('reward').textContent='かけたね！ つぎは いちどで せいかい しよう'; showEasy(curWord); save(); showNext(); return; } // まちがえてからの正解は ごほうびなし
       awardCorrect(curWord[0]); }
     else { qMissed=true; spellMiss++; session.combo=0; onAnswer(curWord[0],false); save(); sfx('wrong'); // まちがい＝この時点で「にがて・ふくしゅうゆき」に記録
-      if(spellMiss>=2){ inp.disabled=true; var sb=document.getElementById('spellSubmit'); if(sb) sb.disabled=true; speak(curWord[0]); document.getElementById('reward').textContent='ざんねん… こたえは「'+curWord[0]+'」　ふくしゅうに いれたよ'; showEasy(curWord); showNext(); } // 2回まちがい＝確定・答え表示
+      if(spellMiss>=2){ inp.disabled=true; var sb=document.getElementById('spellSubmit'); if(sb) sb.disabled=true; speak(curWord[0]); requeueMissed(curWord); document.getElementById('reward').textContent='ざんねん… こたえは「'+curWord[0]+'」　ふくしゅうに いれたよ'; showEasy(curWord); showNext(); } // 2回まちがい＝確定・答え表示
       else { document.getElementById('reward').textContent='おしい！ もう1かい かいてみよう（タイプミス？）'; try{ inp.focus(); inp.select(); }catch(e){} } }
   }
   function recordLearned(en){ if(state.todayDate!==today()){ state.todayDate=today(); state.todayWords=[]; } var k=en.toLowerCase(), already=state.todayWords.indexOf(k)>=0; if(!already) state.todayWords.push(k); if(!already&&state.todayWords.length===state.dailyGoal){ onGoalReached(); } }
@@ -957,12 +966,16 @@ window._eigoPetInit = function() {
       btn.classList.add('ok'); if(_cb0) _cb0.style.pointerEvents='none';
       awardCorrect(en);
     } else {
-      // まちがい → すぐ 正しいこたえを 見せて 復習。総当たりできないよう 選択肢を ロックし、つぎへ で すすむ
+      // まちがい → 正しいこたえを 見せ、②「せいかいを タップ」で 能動的に確認してから すすむ。①同セッションで 再出題
       btn.classList.add('ng'); if(_cb0) _cb0.style.pointerEvents='none';
-      if(_cb0){ var cs=_cb0.querySelectorAll('.ch'); for(var i=0;i<cs.length;i++){ if(cs[i]._isCorrect) cs[i].classList.add('ok'); } } // 正解を みどりで しめす
       session.combo=0; onAnswer(en,false); save(); sfx('wrong'); speak(en); // 正しい はつおんを きかせる
-      document.getElementById('reward').textContent='ざんねん… こたえは これ！ ふくしゅうに いれたよ';
-      showEasy(curWord); showNext();
+      requeueMissed(curWord);
+      showEasy(curWord,true); // 選択肢を 見える位置に のこす（スクロールしない）
+      document.getElementById('reward').textContent='ざんねん… せいかい（みどり）を タップしてね';
+      var dk=document.getElementById('dontKnow'); if(dk) dk.style.display='none';
+      if(_cb0){ var cs=_cb0.querySelectorAll('.ch'); for(var i=0;i<cs.length;i++){ var c=cs[i];
+        if(c._isCorrect){ c.classList.add('ok','tapnext'); c.style.pointerEvents='auto'; c.onclick=function(){ this.classList.remove('tapnext'); document.getElementById('reward').textContent='こたえは これ！ ふくしゅうに いれたよ'; showNext(); var nb=document.getElementById('nextBtn'); if(nb) try{ nb.scrollIntoView({behavior:'smooth',block:'center'}); }catch(e){} }; }
+        else { c.classList.add('dim'); } } }
     } }
   function finishStudy(){ updateStudyProg();
     var sc=document.getElementById('sdCorrect'); if(sc) sc.textContent=(session.correct||0)+' / '+(session.total||qList.length);
@@ -985,12 +998,12 @@ window._eigoPetInit = function() {
   (function(){ var sb=document.getElementById('spellSubmit'); if(sb) sb.onclick=submitSpell; var si=document.getElementById('spellInput'); if(si){ si.addEventListener('keydown',function(e){ if(e.key==='Enter'){ e.preventDefault(); submitSpell(); } }); si.addEventListener('input',updateSpellBars); } var qw=document.getElementById('qword'); if(qw) attachLongPress(qw,function(){ if(curWord && (qMode==='reverse'||qMode==='spell')) showEasy(curWord); }); })();
   document.getElementById('dontKnow').onclick=function(){
     if(!curWord) return;
-    if(qMode==='spell'){ var inp=document.getElementById('spellInput'); if(inp&&inp.disabled) return; if(inp) inp.disabled=true; var sb2=document.getElementById('spellSubmit'); if(sb2) sb2.disabled=true; qMissed=true; onAnswer(curWord[0],false); save(); speak(curWord[0]); document.getElementById('reward').textContent='こたえ：'+curWord[0]; showEasy(curWord); showNext(); return; }
+    if(qMode==='spell'){ var inp=document.getElementById('spellInput'); if(inp&&inp.disabled) return; if(inp) inp.disabled=true; var sb2=document.getElementById('spellSubmit'); if(sb2) sb2.disabled=true; qMissed=true; onAnswer(curWord[0],false); save(); speak(curWord[0]); requeueMissed(curWord); document.getElementById('reward').textContent='こたえ：'+curWord[0]; showEasy(curWord); showNext(); return; }
     var box=document.getElementById('choices');
     if(box.style.pointerEvents==='none') return; // すでに回答済み
     box.style.pointerEvents='none';
     var btns=box.querySelectorAll('.ch'); for(var i=0;i<btns.length;i++){ if(btns[i]._isCorrect) btns[i].classList.add('ok'); }
-    qMissed=true; onAnswer(curWord[0],false); save(); speak(curWord[0]); // わからない＝復習まちへ、正しい発音を きかせる
+    qMissed=true; onAnswer(curWord[0],false); save(); speak(curWord[0]); requeueMissed(curWord); // わからない＝復習まちへ、正しい発音を きかせる
     document.getElementById('reward').textContent='こたえ：'+(qMode==='reverse'?curWord[0]:curWord[1]);
     showEasy(curWord); showNext();
   };
