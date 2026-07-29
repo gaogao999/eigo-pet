@@ -741,14 +741,14 @@ window._eigoPetInit = function() {
   /* ---- games ---- */
   var game=null;
   function drawPetCanvas(ctx,map,ox,oy,cell){ for(var y=0;y<map.length;y++) for(var x=0;x<map[y].length;x++){ var c=map[y][x]; if(PAL[c]){ ctx.fillStyle=PAL[c]; ctx.fillRect(ox+x*cell,oy+y*cell,cell,cell); } } }
-  function drawPetSprite(ctx,g,ox,oy){ if(g.img&&g.img.complete&&g.img.naturalWidth){ ctx.imageSmoothingEnabled=false; ctx.drawImage(g.img,ox,oy,g.petW,g.petH); } else if(g.map){ drawPetCanvas(ctx,g.map,ox,oy,g.cell); } }
+  function drawPetSprite(ctx,g,ox,oy,squash){ if(g.img&&g.img.complete&&g.img.naturalWidth){ ctx.imageSmoothingEnabled=false; if(squash){ ctx.drawImage(g.img,ox-2,oy+Math.round(g.petH*0.35),Math.round(g.petW*1.12),Math.round(g.petH*0.65)); } else { ctx.drawImage(g.img,ox,oy,g.petW,g.petH); } } else if(g.map){ drawPetCanvas(ctx,g.map,ox,oy+(squash?Math.round(g.petH*0.3):0),g.cell); } } // squash=しゃがみ（ひらたく）
   function gameSetup(title,instr,btn){ show('game'); document.getElementById('gover').style.display='none'; document.getElementById('gTitle').textContent=title; document.getElementById('gInstr').textContent=instr; document.getElementById('gJump').textContent=btn; var cv=document.getElementById('gcanvas'); var info=petInfo(); var img=info.img?getImg(info.img):null; var map=petMap(),cell=3; var pw=img?40:Math.max.apply(null,map.map(function(r){ return r.length; }))*cell, ph=img?40:map.length*cell; return { cv:cv,ctx:cv.getContext('2d'),W:cv.width,H:cv.height,map:map,cell:cell,img:img,petW:pw,petH:ph }; }
-  function startGame(){ var s=gameSetup('ジャンプゲーム','タップで ジャンプ！ しょうがいぶつを よけよう','ジャンプ'); var groundY=s.H-26,petW=s.petW,petH=s.petH; if(game) cancelAnimationFrame(game.raf); game={ mode:'jump',ctx:s.ctx,W:s.W,H:s.H,groundY:groundY,map:s.map,cell:s.cell,img:s.img,petW:petW,petH:petH,px:34,py:groundY-petH,vy:0,onGround:true,jumps:0,obs:[],items:[],pops:[],speed:2.6,t:0,score:0,over:false,raf:0 }; loopGame(); }
-  function jump(){ if(game&&!game.over&&game.jumps<2){ game.vy=-10.4; game.jumps++; game.onGround=false; } } // 重力アップに合わせて 跳ぶ力も キビキビ
-  function startSeaGame(){ var s=gameSetup('うみゲーム','タップで うく！ いわの あいだを とおろう','うく'); var petW=s.petW,petH=s.petH; if(game) cancelAnimationFrame(game.raf); game={ mode:'sea',ctx:s.ctx,W:s.W,H:s.H,map:s.map,cell:s.cell,img:s.img,petW:petW,petH:petH,px:40,py:Math.round(s.H/2-petH/2),vy:0,obs:[],items:[],pops:[],gap:Math.round(petH*2.8),speed:2.2,t:0,score:0,over:false,raf:0 }; loopSea(); }
+  function startGame(){ var s=gameSetup('ジャンプゲーム','ながおしで 大ジャンプ・みじかく おすと 小ジャンプ！ ひくい とりは しゃがんで よけよう','ジャンプ'); var groundY=s.H-26,petW=s.petW,petH=s.petH; if(game) cancelAnimationFrame(game.raf); game={ mode:'jump',ctx:s.ctx,W:s.W,H:s.H,groundY:groundY,map:s.map,cell:s.cell,img:s.img,petW:petW,petH:petH,px:34,py:groundY-petH,vy:0,onGround:true,jumps:0,duck:false,night:false,obs:[],items:[],pops:[],speed:2.4,t:0,score:0,over:false,raf:0 }; var gd=document.getElementById('gDuck'); if(gd) gd.style.display='block'; loopGame(); }
+  function jump(){ var g=game; if(g&&!g.over&&!g.duck&&g.jumps<2){ g.vy=-10.4; g.jumps++; g.onGround=false; if(state.sound) tone(620,0,0.05,'square'); } } // しゃがみ中は とべない
+  function startSeaGame(){ var s=gameSetup('うみゲーム','タップで うく！ いわの あいだを とおろう','うく'); var petW=s.petW,petH=s.petH; if(game) cancelAnimationFrame(game.raf); game={ mode:'sea',ctx:s.ctx,W:s.W,H:s.H,map:s.map,cell:s.cell,img:s.img,petW:petW,petH:petH,px:40,py:Math.round(s.H/2-petH/2),vy:0,obs:[],items:[],pops:[],gap:Math.round(petH*2.8),speed:2.2,t:0,score:0,over:false,raf:0 }; var gd=document.getElementById('gDuck'); if(gd) gd.style.display='none'; loopSea(); }
   function gpop(g,x,y,txt){ (g.pops=g.pops||[]).push({x:x,y:y,t:0,txt:txt}); }
   function drawPops(g,ctx){ if(!g.pops||!g.pops.length) return; g.pops.forEach(function(p){ p.t++; p.y-=0.6; }); g.pops=g.pops.filter(function(p){ return p.t<45; }); ctx.font='bold 11px sans-serif'; g.pops.forEach(function(p){ ctx.fillStyle='rgba(234,88,12,'+(1-p.t/45).toFixed(2)+')'; ctx.fillText(p.txt,p.x,p.y); }); }
-  function floatUp(){ if(game&&!game.over&&game.mode==='sea'){ game.vy=-3.6; } }
+  function floatUp(){ if(game&&!game.over&&game.mode==='sea'){ game.vy=-3.6; if(state.sound) tone(500,0,0.05,'square'); } }
   function loopSea(){ var g=game; if(!g||g.over) return; g.t++; g.speed+=0.0012;
     if(g.t>90 && (g.obs.length===0||(g.W-g.obs[g.obs.length-1].x)>(155+Math.random()*70))){ var gw=16+Math.floor(Math.random()*6); var og=Math.max(Math.round(g.petH*2.0), g.gap-Math.floor(g.t/150)); g.gateN=(g.gateN||0)+1; var gy=(g.gateN<=3)?Math.round((g.H-og)/2+(Math.random()*30-15)):(24+Math.floor(Math.random()*Math.max(1,g.H-og-48))); var nob={x:g.W,w:gw,gy:gy,og:og}; if(g.gateN>4&&Math.random()<0.5){ nob.dv=(Math.random()<0.5?-1:1)*(0.15+Math.random()*0.15); } g.obs.push(nob); if(Math.random()<0.75){ g.items.push({x:g.W+78+Math.random()*44,y:16+Math.random()*(g.H-40)}); } } // 最初の3枚は 中央よりで やさしく。5枚目からは うごく岩も。あいだに 真珠
     g.obs.forEach(function(o){ o.x-=g.speed; if(o.dv){ o.gy+=o.dv; var gp0=o.og||g.gap; if(o.gy<10||o.gy>g.H-gp0-10) o.dv=-o.dv; } }); g.obs=g.obs.filter(function(o){ return o.x+o.w>-4; }); // うごく いわ
@@ -759,7 +759,7 @@ window._eigoPetInit = function() {
     var pl=g.px+5,pr=g.px+g.petW-5,pt=g.py+3,pb=g.py+g.petH-3;
     for(var oi=0;oi<g.obs.length;oi++){ var o=g.obs[oi]; var gp=o.og||g.gap;
       if(pl<o.x+o.w&&pr>o.x){ if(pt<o.gy||pb>o.gy+gp){ endGame(); return; } }
-      if(!o.passed && o.x+o.w<g.px){ o.passed=true; g.score+=5; gpop(g,o.x+o.w,o.gy+((o.og||g.gap)/2),'+5'); } // いわを 通過で +5
+      if(!o.passed && o.x+o.w<g.px){ o.passed=true; g.score+=5; gpop(g,o.x+o.w,o.gy+((o.og||g.gap)/2),'+5'); if(state.sound) tone(880,0,0.07); } // いわを 通過で +5
     }
     g.items.forEach(function(it){ if(!it.got && pl<it.x+7&&pr>it.x && pt<it.y+7&&pb>it.y){ it.got=true; g.score+=5; gpop(g,it.x,it.y,'+5'); sfx('correct'); } }); // 真珠ゲット
     var ctx=g.ctx; ctx.fillStyle='#5fb0e8'; ctx.fillRect(0,0,g.W,g.H);
@@ -776,14 +776,17 @@ window._eigoPetInit = function() {
     ctx.fillStyle='#bfe3f7'; ctx.fillRect(8,14,16,3); ctx.fillRect(g.W-60,28,16,3); ctx.fillRect(g.W-120,10,16,3);
     g.obs.forEach(function(o){ var gp=o.og||g.gap; ctx.fillStyle='#3b8a5a'; ctx.fillRect(o.x,0,o.w,o.gy); ctx.fillRect(o.x,o.gy+gp,o.w,g.H-(o.gy+gp)); ctx.fillStyle='#2e6e47'; ctx.fillRect(o.x,o.gy-3,o.w,3); ctx.fillRect(o.x,o.gy+gp,o.w,3); });
     g.items.forEach(function(it){ ctx.fillStyle='#ffffff'; ctx.fillRect(it.x,it.y,7,7); ctx.fillStyle='#ffd9ec'; ctx.fillRect(it.x+1,it.y+1,2,2); }); // 真珠
+    if(g.t<=92){ ctx.font='bold 44px sans-serif'; ctx.fillStyle='#ffffff'; ctx.fillText(String(3-Math.floor(g.t/31)),g.W/2-13,g.H/2+15); } // 3・2・1
     drawPops(g,ctx);
     drawPetSprite(ctx,g,g.px,Math.round(g.py)); document.getElementById('gscore').textContent=g.score; g.raf=requestAnimationFrame(loopSea); }
   function gameInput(){ if(!game||game.over) return; if(game.mode==='sea') floatUp(); else jump(); }
+  function gameRelease(){ var g=game; if(g&&!g.over&&g.mode!=='sea'&&g.vy<-4) g.vy=-4; } // はやく はなすと 小ジャンプ（恐竜ゲーム風の可変ジャンプ）
   function loopGame(){ var g=game; if(!g||g.over) return; g.t++; g.speed+=0.0018; // だんだん はやく
-    if(g.score>0 && g.score%50===0 && g.mile!==g.score){ g.mile=g.score; g.speed+=0.25; sfx('unlock'); } // 50点ごとに スピードアップ
-    if(g.obs.length===0||(g.W-g.obs[g.obs.length-1].x)>(Math.max(100,150-g.t*0.02)+Math.random()*110)){ // かんかくも だんだん せまく
-      var fly=(g.t>250 && Math.random()<0.28);
-      if(fly){ g.obs.push({x:g.W,w:16,h:12,fly:true}); } // とりは あたまの うえ：ジャンプすると あぶない
+    if(g.score>0 && g.score%50===0 && g.mile!==g.score){ g.mile=g.score; g.speed+=0.25; g.night=!g.night; sfx('unlock'); } // 50点ごとに スピードアップ＆昼⇄夜
+    if(g.t>90 && (g.obs.length===0||(g.W-g.obs[g.obs.length-1].x)>(Math.max(100,150-g.t*0.02)+Math.random()*110))){ // かんかくも だんだん せまく
+      var r0=Math.random();
+      if(g.t>250 && r0<0.2){ g.obs.push({x:g.W,w:16,h:12,fly:true}); } // たかい とり：ジャンプすると あぶない
+      else if(g.t>450 && r0<0.36){ g.obs.push({x:g.W,w:16,h:10,low:true}); } // ひくい とり：しゃがむか 大ジャンプで よける
       else {
         g.obs.push({x:g.W,w:14+Math.floor(Math.random()*8),h:18+Math.floor(Math.random()*(22+Math.min(16,g.t/240)))}); // だんだん たかく
         if(g.t>400 && Math.random()<0.3){ g.obs.push({x:g.W+22+Math.random()*10,w:12+Math.floor(Math.random()*6),h:16+Math.floor(Math.random()*14)}); } // サボテンの むれ（恐竜ゲーム風）
@@ -795,7 +798,8 @@ window._eigoPetInit = function() {
     if(g.py>=g.groundY-g.petH){ g.py=g.groundY-g.petH; g.vy=0; g.onGround=true; g.jumps=0; }
     var pl=g.px+5,pr=g.px+g.petW-5;
     for(var oi=0;oi<g.obs.length;oi++){ var o=g.obs[oi]; var ol=o.x,orr=o.x+o.w;
-      if(!o.passed && orr<pl){ o.passed=true; g.score+=5; gpop(g,g.px+g.petW+2,g.py-4,'+5'); } // よけたら +5
+      if(!o.passed && orr<pl){ o.passed=true; g.score+=5; gpop(g,g.px+g.petW+2,g.py-4,'+5'); if(state.sound) tone(880,0,0.07); } // よけたら +5
+      if(o.low){ var lbT=g.groundY-g.petH+2, lbB=lbT+o.h; var petTop=(g.duck&&g.onGround)?(g.py+g.petH*0.45):(g.py+3); if(pl<orr&&pr>ol && petTop<lbB && g.py+g.petH>lbT){ endGame(); return; } continue; } // ひくい とり：しゃがめば あたまの上を とんでいく
       if(o.fly){ var fb=g.groundY-g.petH-8, ft=fb-o.h; if(pl<orr&&pr>ol && g.py<fb && g.py+g.petH>ft && g.py+4<fb){ endGame(); return; } continue; } // ジャンプ中だけ あたる
       var top=g.groundY-o.h;
       if(pl<orr&&pr>ol){ if(g.vy>=0&&prevFeet<=top+6&&g.py+g.petH>=top){ g.py=top-g.petH; g.vy=0; g.onGround=true; g.jumps=0; } else if(g.py+g.petH>top){ endGame(); return; } } }
@@ -803,21 +807,35 @@ window._eigoPetInit = function() {
     var pt2=g.py+2,pb2=g.py+g.petH;
     g.items.forEach(function(it){ if(!it.got && pl<it.x+9&&pr>it.x && pt2<it.y+9&&pb2>it.y){ it.got=true; g.score+=5; gpop(g,it.x,it.y,'+5'); sfx('correct'); } }); // ⭐ゲット
     var ctx=g.ctx; ctx.clearRect(0,0,g.W,g.H);
-    // くも（うしろで ゆっくり ながれる）と 地面の こいし で スピード感
+    // 昼⇄夜パレット（50点ごとに 切りかわる・恐竜ゲーム風）
+    var pal=g.night?{cloud:'#303a5c',ground:'#3a4056',gline:'#9aa2bd',stone:'#5a6180',txt:'#f4f6ff'}:{cloud:'#efe7d3',ground:'#e0d3b0',gline:'#4a3526',stone:'#c8b790',txt:'#4a3526'};
+    if(g.night){ ctx.fillStyle='#1d2438'; ctx.fillRect(0,0,g.W,g.H); ctx.fillStyle='#cdd6f4'; ctx.fillRect(30,18,2,2); ctx.fillRect(90,40,2,2); ctx.fillRect(150,12,2,2); ctx.fillRect(210,30,2,2); ctx.fillRect(280,20,2,2); ctx.fillRect(60,55,2,2); ctx.fillStyle='#e8ecff'; ctx.fillRect(300,10,8,8); } // よる：ほし と つき
     if(!g.deco){ g.deco={cl:[],st:[]}; }
     if(g.t%140===0) g.deco.cl.push({x:g.W+10,y:8+Math.random()*50});
     if(g.t%30===0) g.deco.st.push({x:g.W,y:g.groundY+6+Math.random()*12});
-    ctx.fillStyle='#efe7d3'; g.deco.cl.forEach(function(c){ c.x-=g.speed*0.35; ctx.fillRect(c.x,c.y,26,7); ctx.fillRect(c.x+5,c.y-4,14,5); }); g.deco.cl=g.deco.cl.filter(function(c){ return c.x>-30; });
-    ctx.fillStyle='#e0d3b0'; ctx.fillRect(0,g.groundY,g.W,g.H-g.groundY); ctx.fillStyle='#4a3526'; ctx.fillRect(0,g.groundY,g.W,2);
-    ctx.fillStyle='#c8b790'; g.deco.st.forEach(function(s2){ s2.x-=g.speed; ctx.fillRect(s2.x,s2.y,5,2); }); g.deco.st=g.deco.st.filter(function(s2){ return s2.x>-6; });
+    ctx.fillStyle=pal.cloud; g.deco.cl.forEach(function(c){ c.x-=g.speed*0.35; ctx.fillRect(c.x,c.y,26,7); ctx.fillRect(c.x+5,c.y-4,14,5); }); g.deco.cl=g.deco.cl.filter(function(c){ return c.x>-30; });
+    ctx.fillStyle=pal.ground; ctx.fillRect(0,g.groundY,g.W,g.H-g.groundY); ctx.fillStyle=pal.gline; ctx.fillRect(0,g.groundY,g.W,2);
+    ctx.fillStyle=pal.stone; g.deco.st.forEach(function(s2){ s2.x-=g.speed; ctx.fillRect(s2.x,s2.y,5,2); }); g.deco.st=g.deco.st.filter(function(s2){ return s2.x>-6; });
     g.obs.forEach(function(o){ if(o.fly){ var fb=g.groundY-g.petH-8, ft=fb-o.h; ctx.fillStyle='#5b6470'; ctx.fillRect(o.x,ft,o.w,o.h); var wing=(Math.floor(g.t/12)%2===0); ctx.fillStyle='#2f3640'; if(wing){ ctx.fillRect(o.x+2,ft-4,5,4); ctx.fillRect(o.x+9,ft-4,5,4); } else { ctx.fillRect(o.x+2,ft+o.h,5,4); ctx.fillRect(o.x+9,ft+o.h,5,4); } } // はばたく とり
+      else if(o.low){ var lbT=g.groundY-g.petH+2; ctx.fillStyle='#7c5cd6'; ctx.fillRect(o.x,lbT,o.w,o.h); var w2=(Math.floor(g.t/12)%2===0); ctx.fillStyle='#5a3fb0'; if(w2){ ctx.fillRect(o.x+2,lbT-4,5,4); ctx.fillRect(o.x+9,lbT-4,5,4); } else { ctx.fillRect(o.x+2,lbT+o.h,5,4); ctx.fillRect(o.x+9,lbT+o.h,5,4); } } // ひくい とり（むらさき＝しゃがみボタンの いろ）
       else { ctx.fillStyle='#2f7d4f'; ctx.fillRect(o.x,g.groundY-o.h,o.w,o.h); ctx.fillStyle='#1e5e3a'; ctx.fillRect(o.x,g.groundY-o.h,o.w,2); ctx.fillStyle='#3f9a64'; ctx.fillRect(o.x+2,g.groundY-o.h+3,2,Math.max(2,o.h-6)); } }); // サボテン風
     ctx.fillStyle='#f6c445'; g.items.forEach(function(it){ ctx.fillRect(it.x+3,it.y,3,9); ctx.fillRect(it.x,it.y+3,9,3); ctx.fillStyle='#fde68a'; ctx.fillRect(it.x+3,it.y+3,3,3); ctx.fillStyle='#f6c445'; }); // ⭐
+    if(g.t<=92){ ctx.font='bold 44px sans-serif'; ctx.fillStyle=pal.txt; ctx.fillText(String(3-Math.floor(g.t/31)),g.W/2-13,g.H/2+15); } // 3・2・1
     drawPops(g,ctx);
-    drawPetSprite(ctx,g,g.px,Math.round(g.py)); document.getElementById('gscore').textContent=g.score; g.raf=requestAnimationFrame(loopGame); }
-  function endGame(){ var g=game; g.over=true; cancelAnimationFrame(g.raf); var sc=g.score; var happyGain=Math.min(25,2+Math.floor(sc/5)); state.happy=Math.min(100,state.happy+happyGain); addXp(5); if(sc>(state.gameHi||0)) state.gameHi=sc; save(); document.getElementById('goverScore').textContent='スコア '+sc+'（さいこう '+state.gameHi+'）'; document.getElementById('goverReward').textContent='ごきげん +'+happyGain+' ／ うんどうした！'; document.getElementById('gover').style.display='flex'; } // えさ報酬なし（えさは べんきょうで）
+    drawPetSprite(ctx,g,g.px,Math.round(g.py),g.duck&&g.onGround); document.getElementById('gscore').textContent=g.score; g.raf=requestAnimationFrame(loopGame); }
+  function endGame(){ var g=game; g.over=true; cancelAnimationFrame(g.raf); var sc=g.score; var happyGain=Math.min(25,2+Math.floor(sc/5)); state.happy=Math.min(100,state.happy+happyGain); addXp(5); if(sc>(state.gameHi||0)) state.gameHi=sc; save(); var medal=sc>=60?'🥇':sc>=30?'🥈':sc>=10?'🥉':''; document.getElementById('goverScore').textContent=(medal?medal+' ':'')+'スコア '+sc+'（さいこう '+state.gameHi+'）'; document.getElementById('goverReward').textContent='ごきげん +'+happyGain+' ／ うんどうした！'; document.getElementById('gover').style.display='flex'; } // えさ報酬なし（えさは べんきょうで）
   function leaveGame(){ if(game){ game.over=true; cancelAnimationFrame(game.raf); } show('home'); render(); }
-  (function(){ var cv=document.getElementById('gcanvas'); cv.addEventListener('pointerdown',function(e){ e.preventDefault(); gameInput(); }); document.getElementById('gJump').onclick=gameInput; document.getElementById('gRetry').onclick=function(){ if(state.food<=0){ leaveGame(); bubble('えさが なくなった！べんきょうで あつめよう'); return; } consumePlay(); if(game&&game.mode==='sea') startSeaGame(); else startGame(); }; document.getElementById('gHome').onclick=leaveGame; document.getElementById('backGame').onclick=leaveGame; })();
+  (function(){ var cv=document.getElementById('gcanvas');
+    cv.addEventListener('pointerdown',function(e){ e.preventDefault(); gameInput(); });
+    cv.addEventListener('pointerup',gameRelease); cv.addEventListener('pointercancel',gameRelease);
+    var gj=document.getElementById('gJump');
+    gj.addEventListener('pointerdown',function(e){ e.preventDefault(); gameInput(); });
+    gj.addEventListener('pointerup',gameRelease); gj.addEventListener('pointercancel',gameRelease); gj.addEventListener('pointerleave',gameRelease);
+    var gd=document.getElementById('gDuck');
+    if(gd){ var don=function(e){ e.preventDefault(); if(game&&!game.over) game.duck=true; }, doff=function(){ if(game) game.duck=false; };
+      gd.addEventListener('pointerdown',don); gd.addEventListener('pointerup',doff); gd.addEventListener('pointerleave',doff); gd.addEventListener('pointercancel',doff); }
+    document.getElementById('gRetry').onclick=function(){ if(state.food<=0){ leaveGame(); bubble('えさが なくなった！べんきょうで あつめよう'); return; } consumePlay(); if(game&&game.mode==='sea') startSeaGame(); else startGame(); };
+    document.getElementById('gHome').onclick=leaveGame; document.getElementById('backGame').onclick=leaveGame; })();
 
   /* ---- study ---- */
   var session, qIdx, qList;

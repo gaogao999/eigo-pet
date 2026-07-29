@@ -497,7 +497,10 @@ if(window.caches){caches.keys().then(function(ks){ks.forEach(function(k){caches.
       </div>
     </div>
   </div>
-  <button id="gJump" style="width:100%;margin-top:12px;padding:16px;font-size:18px;font-weight:900;background:linear-gradient(135deg,#29a65e,#5cde94);color:#fff;border:none;border-radius:10px;cursor:pointer;font-family:inherit;box-shadow:0 3px 10px rgba(41,166,94,.3);">ジャンプ</button>
+  <div style="display:flex;gap:10px;margin-top:12px;">
+    <button id="gDuck" style="display:none;flex:1;padding:16px;font-size:16px;font-weight:900;background:linear-gradient(135deg,#7c5cd6,#a78bfa);color:#fff;border:none;border-radius:10px;cursor:pointer;font-family:inherit;box-shadow:0 3px 10px rgba(124,92,214,.3);touch-action:none;">しゃがむ</button>
+    <button id="gJump" style="flex:2;padding:16px;font-size:18px;font-weight:900;background:linear-gradient(135deg,#29a65e,#5cde94);color:#fff;border:none;border-radius:10px;cursor:pointer;font-family:inherit;box-shadow:0 3px 10px rgba(41,166,94,.3);touch-action:none;">ジャンプ</button>
+  </div>
 </section>
 
 <!-- Goal celebration -->
