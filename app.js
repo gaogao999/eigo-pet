@@ -653,12 +653,13 @@ window._eigoPetInit = function() {
     var html='';
     for(var i=0;i<list.length;i++){
       var w=list[i], pos=POS_JA[w[3]]||w[3]||'';
-      var yomi=w[2]?'<span class="wlyomi">'+escJa(w[2])+'</span>':'';
+      var wlp=tildePair(w[1],w[2]); // 助詞ではじまる訳は「～」つき表示（よみ側も そろえる）
+      var yomi=w[2]?'<span class="wlyomi">'+escJa(wlp[1].join('，'))+'</span>':'';
       var ez=EZ[w[0]]||EZ[w[0].toLowerCase()];
       var easyLine=ez?'<div class="wleasy">やさしく：'+escJa(ez)+'</div>':'';
       var r=state.learn[w[0].toLowerCase()], review=!!(r&&r.w&&!r.m), mastered=!!(r&&r.m);
       var badge=mastered?'<span class="wlmast">✓おぼえた</span>':(review?'<span class="wlwrong">🔁ふくしゅう</span>':'');
-      html+='<div class="wlrow'+(review?' iswrong':'')+'"><div class="wltop"><div class="wlen">'+escJa(w[0])+(pos?'<span class="wlpos">'+pos+'</span>':'')+badge+'</div><div class="wlja">'+yomi+'<span>'+escJa(w[1])+'</span></div></div>'+easyLine+'</div>';
+      html+='<div class="wlrow'+(review?' iswrong':'')+'"><div class="wltop"><div class="wlen">'+escJa(w[0])+(pos?'<span class="wlpos">'+pos+'</span>':'')+badge+'</div><div class="wlja">'+yomi+'<span>'+escJa(wlp[0].join('，'))+'</span></div></div>'+easyLine+'</div>';
     }
     document.getElementById('wlCount').textContent=list.length+'ご ／ おぼえた '+masteredCount()+' ／ ふくしゅうまち '+reviewCount();
     document.getElementById('wlList').innerHTML=html;
@@ -850,7 +851,29 @@ window._eigoPetInit = function() {
   function escJa(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;'); }
   function splitSenses(s){ return (s||'').split(/[，、,]/).map(function(x){ return x.trim(); }).filter(Boolean); }
   // 各いみの ふりがなを その漢字の 真上に（ruby）。コンマで 行を わける
-  function rubyHTML(kanjiStr,yomiStr){ var ks=splitSenses(kanjiStr), ys=splitSenses(yomiStr); return ks.map(function(k,i){ var y=ys[i]; return y?('<ruby>'+escJa(k)+'<rt>'+escJa(y)+'</rt></ruby>'):escJa(k); }).join('，<br>'); }
+  // 助詞ではじまる訳に「～」をつけて分かりやすく（例：をし続ける → ～をし続ける）
+  //   「を」は日本語の語頭に来ないので つねに助詞。ほかの助詞は 直後が漢字のときだけ
+  //   （「とても」「がん」「へや」「かつて」などの ふつうの語を まちがえて 変えないため）
+  var TILDE_KANJI=/[一-鿿]/, TILDE_MULTI=['から','より','について','における'], TILDE_ONE=['に','の','へ','で','と','が','は','も'];
+  function needsTilde(ja){
+    if(!ja || /^[～〜]/.test(ja)) return false;
+    if(ja.charAt(0)==='を') return true;
+    for(var i=0;i<TILDE_MULTI.length;i++){ var m=TILDE_MULTI[i]; if(ja.indexOf(m)===0 && TILDE_KANJI.test(ja.charAt(m.length))) return true; }
+    for(var j=0;j<TILDE_ONE.length;j++){ if(ja.charAt(0)===TILDE_ONE[j] && TILDE_KANJI.test(ja.charAt(1))) return true; }
+    return false;
+  }
+  // いみ ごとに 判定して「～」をつける。漢字側で きめて、よみにも 同じだけ つける（ルビが ずれないように）
+  function tildePair(kanjiStr,yomiStr){
+    var ks=splitSenses(kanjiStr), ys=splitSenses(yomiStr), ko=[], yo=[];
+    for(var i=0;i<ks.length;i++){ var k=ks[i], y=ys[i];
+      if(needsTilde(k)){ k='～'+k; if(y) y='～'+y; }
+      ko.push(k); if(y!==undefined) yo.push(y); }
+    return [ko,yo];
+  }
+  function jaT(ja){ return tildePair(ja,'')[0].join('，')||ja; } // プレーン表示用（WORDBANKは書きかえない）
+  function rubyHTML(kanjiStr,yomiStr){
+    var pr=tildePair(kanjiStr,yomiStr), ks=pr[0], ys=pr[1];
+    return ks.map(function(k,i){ var y=ys[i]; return y?('<ruby>'+escJa(k)+'<rt>'+escJa(y)+'</rt></ruby>'):escJa(k); }).join('，<br>'); }
   function choiceHtml(w){ var lng=(w[1]||'').length>9?' long':''; return '<span class="base'+lng+'">'+rubyHTML(w[1],w[2])+'</span>'; }
   function firstSenseKana(w){ var s=(w[2]||w[1]||''); return s.split(/[\u3001,\uff0c]/)[0].trim(); }
   function easyText(w){ var k=(w[0]||''); var e=(typeof EASY!=='undefined')?(EASY[k]||EASY[k.toLowerCase()]):null; return e||firstSenseKana(w); }
@@ -1006,7 +1029,7 @@ window._eigoPetInit = function() {
     box.style.pointerEvents='none';
     var btns=box.querySelectorAll('.ch'); for(var i=0;i<btns.length;i++){ if(btns[i]._isCorrect) btns[i].classList.add('ok'); }
     qMissed=true; onAnswer(curWord[0],false); save(); speak(curWord[0]); requeueMissed(curWord); // わからない＝復習まちへ、正しい発音を きかせる
-    document.getElementById('reward').textContent='こたえ：'+(qMode==='reverse'?curWord[0]:curWord[1]);
+    document.getElementById('reward').textContent='こたえ：'+(qMode==='reverse'?curWord[0]:jaT(curWord[1]));
     showEasy(curWord); showNext();
   };
 
