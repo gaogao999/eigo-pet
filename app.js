@@ -441,6 +441,7 @@ window._eigoPetInit = function() {
     state.petNo=(state.petNo||1)+1; state.foodFrac=0; // 新しい個体No.（連番）
     state.hunger=80; state.happy=80; state.dirty=false; state.dirtySince=null; state.poopDate=null; state.poopBits=0; state.weight=5;
     state.careMiss=0; state.disciplineMiss=0; state.wagamama=false; state.gamesPlayed=0; state.genCorrect=0; state.sleepCount=0;
+    state.discipline=50; // すなおさは まんなか(50)から スタート（前の子から 引きつがない）
     state.lastPlay=Date.now(); state.mischiefAt=null; state.mischiefDate=null; state.mischiefN=0;
     state.babyType=null; state.childType=null; state.youngType=null; state.adultType=null;
     state.sick=false; state.sickSince=null; state.starveSince=null; state._deathCause=null; state.lifespanDays=12+Math.floor(Math.random()*3);
