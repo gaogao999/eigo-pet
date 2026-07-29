@@ -139,7 +139,7 @@ window._eigoPetInit = function() {
     play:  { label:'あそびずき',  hint:'ミニゲームで 100かい あそぶと なりやすい',                 test:function(s){ return (s.gamesPlayed||0)>=100; } },
     study: { label:'べんきょうか', hint:'この子で 200もん せいかいすると なりやすい',              test:function(s){ return (s.genCorrect||0)>=200; } },
     sleep: { label:'ねぼすけ',    hint:'よく ねかせる（20かい すいみん）と なりやすい',            test:function(s){ return (s.sleepCount||0)>=20; } },
-    disc:  { label:'おぎょうぎ◎',  hint:'しつけを きちんと（ミス0）すると なりやすい',              test:function(s){ return (s.disciplineMiss||0)===0 && s.discipline>=60; } },
+    disc:  { label:'おぎょうぎ◎',  hint:'すなおさを たかく（しつけミス0）たもつと なりやすい',              test:function(s){ return (s.disciplineMiss||0)===0 && s.discipline>=60; } },
     wild:  { label:'やんちゃ',    hint:'わがままを ほうっておく（しつけミス3+）と なりやすい',       test:function(s){ return (s.disciplineMiss||0)>=3; } },
     happy: { label:'ごきげん屋',  hint:'ごきげんを たかく（80+）たもつと なりやすい',              test:function(s){ return s.happy>=80; } },
     streak:{ label:'まいにちさん', hint:'7日 れんぞくで もくひょうたっせいすると なりやすい',        test:function(s){ return (s.streak||0)>=7; } }
@@ -523,7 +523,7 @@ window._eigoPetInit = function() {
     if(sm){ var sulk=(typeof isSulking==='function')&&isSulking()&&!state.sick;
       sm.style.display=sulk?'block':'none';
       if(sulk){ var why=document.getElementById('sulkwhy');
-        if(why) why.textContent=(sulkReason()==='disc')?'しつけが たりない→しつけて！':'あそんでない→あそぼう！'; } }
+        if(why) why.textContent=(sulkReason()==='disc')?'すなおさが ひくい→あそぼう！':'あそんでない→あそぼう！'; } }
     document.getElementById('medCnt').textContent=state.sick?('えさ'+MED_COST+'で なおす'):('げんき／えさ'+MED_COST);
     document.querySelectorAll('.gbtn').forEach(function(b){ b.classList.toggle('sel',b.dataset.g===state.grade); });
     drawPet();
@@ -599,14 +599,15 @@ window._eigoPetInit = function() {
 
   /* ---- care ---- */
   document.getElementById('bFeed').onclick=function(){ if(state.lv<2){ bubble("タマゴは まだ たべられないよ"); return; } if(state.hunger>=99){ bubble("おなか いっぱい！"); return; } if(state.food<=0){ bubble("べんきょうして えさをあつめよう"); return; } state.food--; state.hunger=Math.min(100,state.hunger+25); if(state.hunger>0) state.starveSince=null; state.happy=Math.min(100,state.happy+5); state.weight+=1; addXp(5); bubble("もぐもぐ"); cheer(); save(); render(); };
-  document.getElementById('bSnack').onclick=function(){ if(state.lv<2){ bubble("タマゴは まだ たべられないよ"); return; } if(state.happy>=85){ bubble("もう ごきげん！ おかしは たまに ね"); return; } state.happy=Math.min(100,state.happy+14); state.weight+=3; bubble("おいしい！でも たいじゅう+"); cheer(); save(); render(); };
+  document.getElementById('bSnack').onclick=function(){ if(state.lv<2){ bubble("タマゴは まだ たべられないよ"); return; } if(state.happy>=85){ bubble("もう ごきげん！ おかしは たまに ね"); return; } state.hunger=Math.min(100,state.hunger+8); if(state.hunger>0) state.starveSince=null; state.happy=Math.min(100,state.happy+10); state.weight+=3; bubble("おいしい！でも たいじゅう+"); cheer(); save(); render(); };
   function makeDirty(){ if(!state.dirty){ state.dirty=true; state.dirtySince=Date.now(); } }
   document.getElementById('bPlay').onclick=function(){ if(state.food<=0){ bubble("べんきょうして えさを あつめよう"); return; } show('gameSelect'); };
-  function consumePlay(){ state.food--; state.weight=Math.max(5,state.weight-2); state.hunger=Math.max(0,state.hunger-4); state.gamesPlayed=(state.gamesPlayed||0)+1; state.lastPlay=Date.now(); state.happy=Math.min(100,state.happy+6); save(); } // あそぶと 運動：体重-2・おなか-4
+  function consumePlay(){ state.food--; state.weight=Math.max(5,state.weight-2); state.hunger=Math.max(0,state.hunger-4); state.gamesPlayed=(state.gamesPlayed||0)+1; state.lastPlay=Date.now(); state.happy=Math.min(100,state.happy+6); state.discipline=Math.min(100,state.discipline+3); save(); } // あそぶと なつく＝すなおさ+3 // あそぶと 運動：体重-2・おなか-4
   document.getElementById('backSelect').onclick=function(){ show('home'); render(); };
   document.getElementById('selJump').onclick=function(){ if(state.food<=0){ bubble('えさが たりない'); return; } consumePlay(); startGame(); };
   document.getElementById('selSea').onclick=function(){ if(state.food<=0){ bubble('えさが たりない'); return; } consumePlay(); startSeaGame(); };
-  document.getElementById('bScold').onclick=function(){ if(state.wagamama){ state.wagamama=false; state.discipline=Math.min(100,state.discipline+12); clearTimeout(wagaTimer); bubble("いいこ だね！"); cheer(); } else { state.discipline=Math.max(0,state.discipline-6); bubble("いまは しからないで…"); } save(); render(); };
+  // しつけは「わがまま・悪さ」のタイミングだけ有効。すなおさが上がる。ミスると ごきげんが さがる
+  document.getElementById('bScold').onclick=function(){ if(state.wagamama){ state.wagamama=false; state.discipline=Math.min(100,state.discipline+12); clearTimeout(wagaTimer); bubble("いいこ だね！ すなおさ+"); cheer(); } else { state.happy=Math.max(0,state.happy-8); bubble("いまは しからないで… ごきげん-"); } save(); render(); };
   var flushing=false;
   document.getElementById('bClean').onclick=function(){ if(flushing) return; if(state.dirty){ flushing=true; var p=document.getElementById('poop'), fl=document.getElementById('flush'); p.classList.add('flushing'); fl.classList.add('on'); bubble("ザブーン！"); sfx('flush'); setTimeout(function(){ p.classList.remove('flushing'); fl.classList.remove('on'); flushing=false; state.dirty=false; state.dirtySince=null; state.happy=Math.min(100,state.happy+10); bubble("ぴかぴか"); save(); render(); },1000); } else bubble("きれいだよ"); };
   var MED_COST=20;
@@ -1041,7 +1042,7 @@ window._eigoPetInit = function() {
   };
 
   /* ---- すねる・いたずら ---- */
-  // かまってあげない（あそばない）／しつけが ひくいと ふてくされて、えさを ちらかす
+  // かまってあげない（あそばない）／すなおさが ひくいと ふてくされて、えさを ちらかす
   var SULK_IDLE_H=24, MISCHIEF_COOL=60*60000, MISCHIEF_MAX=4; // 24時間あそばない / 1時間に1回まで / 1日4回まで
   function playIdleH(){ return (Date.now()-(state.lastPlay||state.born||Date.now()))/3600000; }
   function isSulking(){ return state.lv>=2 && !state._farewell && (playIdleH()>=SULK_IDLE_H || state.discipline<30); }
@@ -1064,7 +1065,7 @@ window._eigoPetInit = function() {
   var wagaTimer=null;
   function homeVisible(){ return document.getElementById('home').classList.contains('on')&&!document.hidden; }
   function triggerWagamama(){ if(state.wagamama||state.lv<2) return; if(typeof wakePet==='function') wakePet(); state.wagamama=true; render(); bubble("！ かまって！"); clearTimeout(wagaTimer); wagaTimer=setTimeout(function(){ if(state.wagamama){ state.wagamama=false; state.disciplineMiss++; state.discipline=Math.max(0,state.discipline-4); save(); render(); } },22000); }
-  // しつけ(discipline)が ひくいほど わがままが おおく、たかいほど おだやかに（しつけを あげる意味）
+  // すなおさ(discipline)が ひくいほど わがままが おおく、たかいほど おだやかに
   setInterval(function(){ if(homeVisible()&&!state.wagamama){ var ch=state.discipline<40?0.42:(state.discipline>=70?0.15:0.28); if(Math.random()<ch) triggerWagamama(); } },60000);
 
   /* ---- 躍動感（ホームでの ふるまい：おさんぽ・おひるね） ---- */
