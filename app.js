@@ -182,8 +182,11 @@ window._eigoPetInit = function() {
     'めっこ':'effort','めらめら':'effort',                                             // この子で50問せいかい
     'ちゃめ':'lazy','くろだま':'lazy'                                                  // せわミス3+
   };
-  var AFF_BOOST=8;
-  function affinityWeight(id){ var a=AFFINITY[id]; if(!a) return 1; var t=TRAITS[a]; return (t&&t.test(state))?AFF_BOOST:1; }
+  // 条件を みたすと えらばれやすくなる（確定では ない）。
+  //   そのヤング専用の子は 狙いが よく効き、ふたつのヤングから なれる共有の子は ひかえめ
+  var AFF_BOOST_ONLY=12, AFF_BOOST_SHARE=5;
+  var SHARED_IDS=(function(){ var o={}; ['ab','bc','cd','ad'].forEach(function(k){ LIN_GROUPS[k].forEach(function(id){ o[id]=true; }); }); return o; })();
+  function affinityWeight(id){ var a=AFFINITY[id]; if(!a) return 1; var t=TRAITS[a]; if(!(t&&t.test(state))) return 1; return SHARED_IDS[id]?AFF_BOOST_SHARE:AFF_BOOST_ONLY; }
   function affinityLabel(id){ var a=AFFINITY[id]; return a&&TRAITS[a]?TRAITS[a].label:''; }
   function affinityHint(id){ var a=AFFINITY[id]; return a&&TRAITS[a]?TRAITS[a].hint:''; }
   var ADULTS = (function(){ var o={}; Object.keys(ADULT_TIERS).forEach(function(t){ ADULT_TIERS[t].forEach(function(id){ o[id]={ img:id, name:dispName(id), desc:ADULT_DESC[id]||'', tier:t, rare:(RARE_ADULTS.indexOf(id)>=0) }; }); }); return o; })();
