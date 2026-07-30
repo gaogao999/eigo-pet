@@ -173,8 +173,8 @@ window._eigoPetInit = function() {
   function genMetDays(){ try{ var b=dayStr(new Date(state.born||Date.now())); return (state.metDates||[]).filter(function(d){ return d>=b; }).length; }catch(e){ return (state.metDates||[]).length; } }
   function careTierIndex(){ var gm=genMetDays(); return gm>=3?3:gm>=2?2:gm>=1?1:0; }
   function earnedTierKey(){ if((state.careMiss+state.disciplineMiss)>=8) return 'wild'; return TIER_ORDER[careTierIndex()]; } // がんばりで きまる「本命」ランク（表示・予告用）
-  // ヤングの姿は 確率制：本命ランクが いちばん でやすく、とおいランクほど でにくい（本命75%・となり19%・2つ先5%・3つ先1%）
-  function rollYoungTier(){ var ei=TIER_ORDER.indexOf(earnedTierKey()); var ws=TIER_ORDER.map(function(k,i){ return 8/Math.pow(4,Math.abs(i-ei)); }); var tot=0,i; for(i=0;i<ws.length;i++) tot+=ws[i]; var r=Math.random()*tot; for(i=0;i<ws.length;i++){ r-=ws[i]; if(r<=0) return TIER_ORDER[i]; } return TIER_ORDER[ei]; }
+  // ヤングの姿は 確率制：本命ランクが いちばん でやすく、1段はなれるごとに 半分（本命53〜64%・となり22〜27%）
+  function rollYoungTier(){ var ei=TIER_ORDER.indexOf(earnedTierKey()); var ws=TIER_ORDER.map(function(k,i){ return 4/Math.pow(2,Math.abs(i-ei)); }); var tot=0,i; for(i=0;i<ws.length;i++) tot+=ws[i]; var r=Math.random()*tot; for(i=0;i<ws.length;i++){ r-=ws[i]; if(r<=0) return TIER_ORDER[i]; } return TIER_ORDER[ei]; }
   function youngInfo() { return YOUNGS[state.youngType] || YOUNGS.normal; }
   function adultById(id){ return ADULTS[id] || (id&&LEGACY_ADULT[id]&&ADULTS[LEGACY_ADULT[id]]) || ADULTS[ADULT_TIERS.normal[0]]; }
   function adultInfo() { return adultById(state.adultType); }
