@@ -135,10 +135,10 @@ window._eigoPetInit = function() {
   // 育て方の こだわり（相性）：体重・あそび・べんきょう・ねむり・しつけ 等で なりやすい子が かわる＝進化への 重みづけ
   var TRAITS = {
     heavy: { label:'おもい子',   hint:'ごはん・おかしで おもく（たいじゅう25+）すると なりやすい', test:function(s){ return s.weight>=25; } },
-    light: { label:'かるい子',   hint:'おかしを ひかえて あそぶ（たいじゅう6-）と なりやすい',      test:function(s){ return s.weight<=6; } },
+    light: { label:'かるい子',   hint:'おかしを ひかえて あそぶ（たいじゅう5）と なりやすい',       test:function(s){ return s.weight<=5; } },
     play:  { label:'あそびずき',  hint:'ミニゲームで 50かい あそぶと なりやすい',                  test:function(s){ return (s.gamesPlayed||0)>=50; } },
     study: { label:'べんきょうか', hint:'この子で 100もん せいかいすると なりやすい',              test:function(s){ return (s.genCorrect||0)>=100; } },
-    sleep: { label:'ねぼすけ',    hint:'よく ねかせる（20かい すいみん）と なりやすい',            test:function(s){ return (s.sleepCount||0)>=20; } },
+    sleep: { label:'ねぼすけ',    hint:'よく ねかせる（10かい すいみん）と なりやすい',            test:function(s){ return (s.sleepCount||0)>=10; } },
     disc:  { label:'おぎょうぎ◎',  hint:'すなおさを 70いじょうに たもつと なりやすい',               test:function(s){ return s.discipline>=70; } },
     wild:  { label:'やんちゃ',    hint:'すなおさが 30いかだと なりやすい',                        test:function(s){ return s.discipline<=30; } },
     happy: { label:'ごきげん屋',  hint:'ごきげんを たかく（80+）たもつと なりやすい',              test:function(s){ return s.happy>=80; } },
