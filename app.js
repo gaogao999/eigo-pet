@@ -156,20 +156,31 @@ window._eigoPetInit = function() {
     disc:  { label:'おぎょうぎ◎',  hint:'すなおさを 70いじょうに たもつと なりやすい',               test:function(s){ return s.discipline>=70; } },
     wild:  { label:'やんちゃ',    hint:'すなおさが 30いかだと なりやすい',                        test:function(s){ return s.discipline<=30; } },
     happy: { label:'ごきげん屋',  hint:'ごきげんを たかく（80+）たもつと なりやすい',              test:function(s){ return s.happy>=80; } },
-    streak:{ label:'まいにちさん', hint:'7日 れんぞくで もくひょうたっせいすると なりやすい',        test:function(s){ return (s.streak||0)>=7; } }
+    streak:{ label:'まいにちさん', hint:'7日 れんぞくで もくひょうたっせいすると なりやすい',        test:function(s){ return (s.streak||0)>=7; } },
+    full:  { label:'まんぷく',    hint:'おなかを 80いじょうに たもつと なりやすい',                 test:function(s){ return s.hunger>=80; } },
+    tidy:  { label:'せわ上手',    hint:'せわミス 0かいで そだてると なりやすい',                    test:function(s){ return (s.careMiss||0)===0; } },
+    effort:{ label:'がんばりや',  hint:'この子で 50もん せいかいすると なりやすい',                 test:function(s){ return (s.genCorrect||0)>=50; } },
+    lazy:  { label:'ずぼら',      hint:'せわミスが 3かい いじょうだと なりやすい',                  test:function(s){ return (s.careMiss||0)>=3; } }
   };
   var AFFINITY = {
-    // 特殊条件（実績系）は 1匹ずつ：名前のイメージに いちばん合う子へ
-    'はんば':'heavy',      // ハンバーガー＝おもい子
-    'おばけ':'light',      // おばけ＝ふわふわ かるい子（レア枠のなかで おばけが でやすくなる）
-    'げーむ':'play',       // あそびずき
-    'がくがく':'study',    // べんきょうか
-    'ねむね':'sleep',      // ねぼすけ
-    'おひさま':'streak',   // まいにちさん
-    // 一般条件（ステータス系）は 複数のまま
-    'にんじゃ':'disc','めっこ':'disc',
-    'めらめら':'wild','ちゃめ':'wild','くろだま':'wild',
-    'どきどき':'happy','うらら':'happy','ぷくたま':'happy','かぶら':'happy'
+    // ★レア6種＝特殊条件（実績系）。1匹ずつ
+    'はんば':'heavy',      // おもい子（体重25+）
+    'おばけ':'light',      // かるい子（体重5）
+    'げーむ':'play',       // あそびずき（ゲーム50回）
+    'がくがく':'study',    // べんきょうか（100問）
+    'ねむね':'sleep',      // ねぼすけ（すいみん10回）
+    'おひさま':'streak',   // まいにちさん（7日連続）
+    // 通常20種＝一般条件（ステータス系）7軸。
+    //   ヤング専用3種は ごきげん屋／おぎょうぎ◎／やんちゃ を1つずつ、
+    //   ペア共有は まんぷく・せわ上手（⭐◎ と ○△ 側）／ がんばりや・ずぼら（◎○ と △⭐ 側）
+    //   → どのヤングでも 進化先7種の条件が すべて別になる
+    'みらたま':'happy','うらら':'happy','どきどき':'happy','かぶら':'happy',           // ごきげん80+
+    'にんじゃ':'disc','はがた':'disc','うさたま':'disc','ぴよたま':'disc',              // すなおさ70+
+    'ぴこぴこ':'wild','ばぶたま':'wild','たまぱ':'wild','くちぱ':'wild',               // すなおさ30-
+    'ぷくたま':'full','もぐもぐ':'full',                                               // おなか80+
+    'ぴねむ':'tidy','ぴな':'tidy',                                                     // せわミス0
+    'めっこ':'effort','めらめら':'effort',                                             // この子で50問せいかい
+    'ちゃめ':'lazy','くろだま':'lazy'                                                  // せわミス3+
   };
   var AFF_BOOST=8;
   function affinityWeight(id){ var a=AFFINITY[id]; if(!a) return 1; var t=TRAITS[a]; return (t&&t.test(state))?AFF_BOOST:1; }
