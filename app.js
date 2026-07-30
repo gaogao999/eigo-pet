@@ -94,14 +94,28 @@ window._eigoPetInit = function() {
   };
   // けいふ：ヤング1種ごとに「見た目が似ている」アダルト6種へ進化する（レアは どのヤングからでも）
   // star=すいすいたま(あお) / good=しろころ(しろ・ふしぎ) / normal=もふたま(どうぶつ) / wild=くさたま(しぜん・たべもの)
-  var LINEAGE = {
-    star:   ['みらたま','ぴこぴこ','にんじゃ','ぷくたま','ぴねむ','げーむ'],
-    good:   ['はがた','ばぶたま','うらら','おひさま','ねむね','がくがく'],
-    normal: ['うさたま','どきどき','たまぱ','めっこ','もぐもぐ','ちゃめ'],
-    wild:   ['かぶら','ぴよたま','くちぱ','はんば','ぴな','めらめら']
+  // ヤング4種を A=すいすいたま⭐ / B=しろころ◎ / C=もふたま○ / D=くさたま△ とし、
+  // 「そのヤング専用3種」＋「となりあうヤングと共有する2種×2組」＝ 1ヤングにつき7種へ進化する
+  var LIN_GROUPS = {
+    onlyA: ['みらたま','ぴこぴこ','にんじゃ'],   // ⭐だけ
+    onlyB: ['はがた','ばぶたま','うらら'],       // ◎だけ
+    onlyC: ['うさたま','どきどき','たまぱ'],     // ○だけ
+    onlyD: ['かぶら','ぴよたま','くちぱ'],       // △だけ
+    ab:    ['ぷくたま','ぴねむ'],                // ⭐と◎ の どちらからでも
+    bc:    ['めっこ','ちゃめ'],                  // ◎と○ の どちらからでも
+    cd:    ['もぐもぐ','ぴな'],                  // ○と△ の どちらからでも
+    ad:    ['めらめら','くろだま']               // △と⭐ の どちらからでも
   };
-  var RARE_ADULTS = ['くろだま','おばけ']; // じょうずに育てた子に まれに（どの系統からでも）。サボりでは出ない
-  var RARE_CHANCE = 0.07;                  // レアが出る かくりつ（お世話が よい子のみ）
+  var LINEAGE = {
+    star:   LIN_GROUPS.onlyA.concat(LIN_GROUPS.ab, LIN_GROUPS.ad),
+    good:   LIN_GROUPS.onlyB.concat(LIN_GROUPS.ab, LIN_GROUPS.bc),
+    normal: LIN_GROUPS.onlyC.concat(LIN_GROUPS.bc, LIN_GROUPS.cd),
+    wild:   LIN_GROUPS.onlyD.concat(LIN_GROUPS.cd, LIN_GROUPS.ad)
+  };
+  // ★レア＝特殊条件（実績）の6種。どのヤングからでも、条件を みたすほど 出やすい
+  var RARE_ADULTS = ['げーむ','がくがく','ねむね','おひさま','はんば','おばけ'];
+  var RARE_CHANCE = 0.08;          // レアの きほんかくりつ
+  var RARE_CHANCE_SPECIAL = 0.35;  // 特殊条件を ひとつでも みたしていると ぐっと上がる
   var TIER_LABEL = { star:'⭐さいこう', good:'◎よいこ', normal:'○ふつう', wild:'△わんぱく' };
   var FAMILY_NAME = { star:'すいすいたま系（あお・メカ）', good:'しろころ系（しろ・ふしぎ）', normal:'もふたま系（どうぶつ）', wild:'くさたま系（しぜん・たべもの）' };
   var ADULT_DESC = {
@@ -161,7 +175,7 @@ window._eigoPetInit = function() {
   function affinityWeight(id){ var a=AFFINITY[id]; if(!a) return 1; var t=TRAITS[a]; return (t&&t.test(state))?AFF_BOOST:1; }
   function affinityLabel(id){ var a=AFFINITY[id]; return a&&TRAITS[a]?TRAITS[a].label:''; }
   function affinityHint(id){ var a=AFFINITY[id]; return a&&TRAITS[a]?TRAITS[a].hint:''; }
-  var ADULTS = (function(){ var o={}; Object.keys(ADULT_TIERS).forEach(function(t){ ADULT_TIERS[t].forEach(function(id){ o[id]={ img:id, name:dispName(id), desc:ADULT_DESC[id]||'', tier:t, rare:(t==='devil') }; }); }); return o; })();
+  var ADULTS = (function(){ var o={}; Object.keys(ADULT_TIERS).forEach(function(t){ ADULT_TIERS[t].forEach(function(id){ o[id]={ img:id, name:dispName(id), desc:ADULT_DESC[id]||'', tier:t, rare:(RARE_ADULTS.indexOf(id)>=0) }; }); }); return o; })();
   // きゅうバージョンの セーブ（tier_parity / devil）との ごかんマップ
   var LEGACY_ADULT = { star_e:'おひさま',star_o:'みらたま',good_e:'どきどき',good_o:'はがた',normal_e:'はんば',normal_o:'もぐもぐ',wild_e:'めらめら',wild_o:'ちゃめ',devil:'くろだま' };
   function normAdult(id){ return ADULTS[id]?id:(LEGACY_ADULT[id]||id); }
@@ -190,9 +204,12 @@ window._eigoPetInit = function() {
     var r=Math.random()*tot, acc=0; for(i=0;i<pool.length;i++){ acc+=wt[i]; if(r<=acc) return pool[i]; }
     return pool[pool.length-1];
   }
+  var SPECIAL_TRAITS=['heavy','light','play','study','sleep','streak'];
+  function metSpecial(){ return SPECIAL_TRAITS.some(function(k){ var t=TRAITS[k]; return !!(t&&t.test(state)); }); }
+  function rareChance(){ return metSpecial()?RARE_CHANCE_SPECIAL:RARE_CHANCE; }
   function pickAdultType(){
     var yt=state.youngType||earnedTierKey();
-    if(careMissTotal()<=2 && Math.random()<RARE_CHANCE){ return pickWeightedAdult(RARE_ADULTS); }
+    if(careMissTotal()<=2 && Math.random()<rareChance()){ return pickWeightedAdult(RARE_ADULTS); }
     return pickWeightedAdult(LINEAGE[yt]||LINEAGE.normal);
   }
   function petInfo(){ if(state.lv>=5) return adultInfo(); if(state.lv>=4) return youngInfo(); if(state.lv>=3) return childInfo(); if(state.lv>=2) return babyInfo(); return EGG_INFO; }
@@ -641,14 +658,23 @@ window._eigoPetInit = function() {
     var allAdults=[]; Object.keys(ADULT_TIERS).forEach(function(t){ ADULT_TIERS[t].forEach(function(id){ allAdults.push(id); }); });
     var rev=state.keifuRevealed||[], revealed={}, totalRev=0;
     allAdults.forEach(function(id){ if(col[id]||rev.indexOf(id)>=0){ revealed[id]=true; totalRev++; } });
-    tree+='<div class="keifuHint"><div style="font-size:12px;font-weight:800;color:var(--ink);line-height:1.5;">そだてかたの ヒント <b>'+totalRev+' / '+allAdults.length+'</b><br><span style="font-size:11px;color:var(--mut);font-weight:700;">すきな「？」を タップ＋🍚'+HINT_COST+' で すがたが わかるよ</span></div></div>';
+    tree+='<div class="keifuHint"><div style="font-size:12px;font-weight:800;color:var(--ink);line-height:1.5;">そだてかたの ヒント <b>'+totalRev+' / '+allAdults.length+'</b><br><span style="font-size:11px;color:var(--mut);font-weight:700;">すきな「？」を タップ＋🍚'+HINT_COST+' で すがたが わかるよ<br><span style="color:#7c5cd6;">⇄マーク</span>は もういっぽうの ヤングからも なれる子</span></div></div>';
     var lockNode=function(id){ return '<button class="tnode small lock" data-id="'+id+'"><div class="tsprite">？</div><div class="tlabel">🍚×'+HINT_COST+'</div></button>'; };
     // ヤング1種ごとに「ヤング → アダルト6種」を 矢印つきの1行で 表示（レアは どのヤングからでも）
     var lineTiers=[['star','⭐さいこう'],['good','◎よいこ'],['normal','○ふつう'],['wild','△わんぱく']];
+    var SHARE_LABEL={}; // どのヤングと 共有しているか（けいふに 表示）
+    (function(){ var m=[['ab','star','good'],['bc','good','normal'],['cd','normal','wild'],['ad','wild','star']];
+      m.forEach(function(p){ LIN_GROUPS[p[0]].forEach(function(id){ SHARE_LABEL[id]=[p[1],p[2]]; }); }); })();
+    var TIER_MARK={star:'⭐',good:'◎',normal:'○',wild:'△'};
     lineTiers.forEach(function(t){ var y=YOUNGS[t[0]];
-      tree+='<div class="tiertag">おせわ '+t[1]+' → '+FAMILY_NAME[t[0]]+'</div><div class="lrow"><div class="lfrom">'+tnode(y,y.name,true)+'</div><div class="larrow">→</div><div class="lgrid">'+LINEAGE[t[0]].map(function(id){ return revealed[id]?tnode(ADULTS[id],ADULTS[id].name,true):lockNode(id); }).join('')+'</div></div>';
+      tree+='<div class="tiertag">おせわ '+t[1]+' → '+FAMILY_NAME[t[0]]+'</div><div class="lrow"><div class="lfrom">'+tnode(y,y.name,true)+'</div><div class="larrow">→</div><div class="lgrid">'+LINEAGE[t[0]].map(function(id){
+        if(!revealed[id]) return lockNode(id);
+        var sh=SHARE_LABEL[id], nm=ADULTS[id].name;
+        if(sh){ var other=(sh[0]===t[0])?sh[1]:sh[0]; nm+='<span style="color:#7c5cd6;font-size:9px;"> ⇄'+TIER_MARK[other]+'</span>'; } // 共有マーク
+        return tnode(ADULTS[id],nm,true);
+      }).join('')+'</div></div>';
     });
-    tree+='<div class="tiertag">★レア（じょうずに そだてた ごほうび）</div><div class="lrow"><div class="lfrom" style="font-size:11px;font-weight:800;color:var(--mut);text-align:center;line-height:1.5;">どの系統<br>からでも<br><span style="font-size:10px;">(まれに)</span></div><div class="larrow">→</div><div class="lgrid">'+RARE_ADULTS.map(function(id){ return revealed[id]?tnode(ADULTS[id],ADULTS[id].name,true):lockNode(id); }).join('')+'</div></div>';
+    tree+='<div class="tiertag">★レア（とくべつな そだてかたで）</div><div class="lrow"><div class="lfrom" style="font-size:11px;font-weight:800;color:var(--mut);text-align:center;line-height:1.5;">どの系統<br>からでも<br><span style="font-size:10px;">(とくべつ条件で<br>でやすく)</span></div><div class="larrow">→</div><div class="lgrid">'+RARE_ADULTS.map(function(id){ return revealed[id]?tnode(ADULTS[id],ADULTS[id].name,true):lockNode(id); }).join('')+'</div></div>';
     if((state.memories||[]).length){
       var mh='<div class="gstage">おもいで（これまでの子）</div>';
       state.memories.forEach(function(m){ var ai=adultById(m.adultType); mh+='<div class="gcard" style="display:flex;gap:12px;align-items:center;text-align:left;margin-bottom:8px;"><div style="flex:none;">'+spriteHTML(ai,3)+'</div><div><div class="gname">'+m.name+'（'+(m.adultName||ai.name)+'）</div><div class="gdesc">'+m.days+'日 いっしょ ／ '+m.died+' たびだち ／ おぼえた '+m.learned+'こ</div></div></div>'; });
