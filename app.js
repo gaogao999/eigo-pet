@@ -145,15 +145,17 @@ window._eigoPetInit = function() {
     streak:{ label:'まいにちさん', hint:'7日 れんぞくで もくひょうたっせいすると なりやすい',        test:function(s){ return (s.streak||0)>=7; } }
   };
   var AFFINITY = {
-    'ぴこぴこ':'heavy','もぐもぐ':'heavy','くちぱ':'heavy','はんば':'heavy',
-    'おばけ':'light','ぴな':'light','はがた':'light','うさたま':'light',
-    'げーむ':'play','たまぱ':'play',
-    'がくがく':'study','みらたま':'study',
-    'ぴねむ':'sleep','ねむね':'sleep','ばぶたま':'sleep',
+    // 特殊条件（実績系）は 1匹ずつ：名前のイメージに いちばん合う子へ
+    'はんば':'heavy',      // ハンバーガー＝おもい子
+    'うさたま':'light',    // うさぎ＝かるい子
+    'げーむ':'play',       // あそびずき
+    'がくがく':'study',    // べんきょうか
+    'ぴねむ':'sleep',      // ねぼすけ
+    'おひさま':'streak',   // まいにちさん
+    // 一般条件（ステータス系）は 複数のまま
     'にんじゃ':'disc','めっこ':'disc',
     'めらめら':'wild','ちゃめ':'wild','くろだま':'wild',
-    'どきどき':'happy','うらら':'happy','ぷくたま':'happy','かぶら':'happy',
-    'おひさま':'streak','ぴよたま':'streak'
+    'どきどき':'happy','うらら':'happy','ぷくたま':'happy','かぶら':'happy'
   };
   var AFF_BOOST=4;
   function affinityWeight(id){ var a=AFFINITY[id]; if(!a) return 1; var t=TRAITS[a]; return (t&&t.test(state))?AFF_BOOST:1; }
