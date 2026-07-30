@@ -601,12 +601,12 @@ window._eigoPetInit = function() {
     if(fc){
       if(state.lv>=5){ var ai=adultInfo(); fc.innerHTML=spriteHTML(ai,3); document.getElementById('fcTitle').textContent='そだった アダルト'; document.getElementById('fcName').textContent=ai.name; document.getElementById('fcMsg').textContent='りっぱに そだったね！'; }
       else { var tier2=predictedTier(), pa=ADULTS[predictedAdultKey()]; fc.innerHTML=spriteHTML(pa,3);
-        document.getElementById('fcTitle').textContent='いまの ペースだと… '+(FAMILY_NAME[tier2]||'');
+        document.getElementById('fcTitle').textContent='いまの ペースなら… '+(FAMILY_NAME[tier2]||'')+' に なりやすい';
         document.getElementById('fcName').textContent=pa.name+' など';
         var met=genMetDays(), miss=careMissTotal(), needS=Math.max(0,3-met);
         var base='ランク：'+TIER_LABEL[tier2]+'（もくひょうたっせい '+met+'日／せわ・しつけミス '+miss+'かい）';
         var tail=(tier2==='star')?' さいこう！この ちょうしで！':(' さいこうまで あと '+needS+'日 たっせい');
-        document.getElementById('fcMsg').textContent=base+'。'+tail+' ／ ★レアは とくべつな そだてかたで'; }
+        document.getElementById('fcMsg').textContent=base+'。'+tail+' ／ ほかの系統に なることも あるよ ／ ★レアは とくべつな そだてかたで'; }
     }
     var nd=document.getElementById('nudge');
     if(nd){ if(done>=goal){ nd.style.display='none'; } else { nd.style.display='block'; nd.textContent=done>0?('きょうは あと '+(goal-done)+'こ！ がくしゅうしよう →'):('きょうの べんきょうを はじめよう！ →'); } }
