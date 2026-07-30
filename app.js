@@ -606,7 +606,7 @@ window._eigoPetInit = function() {
         var met=genMetDays(), miss=careMissTotal(), needS=Math.max(0,3-met);
         var base='ランク：'+TIER_LABEL[tier2]+'（もくひょうたっせい '+met+'日／せわ・しつけミス '+miss+'かい）';
         var tail=(tier2==='star')?' さいこう！この ちょうしで！':(' さいこうまで あと '+needS+'日 たっせい');
-        document.getElementById('fcMsg').textContent=base+'。'+tail+' ／ ミスを へらすと レアも！'; }
+        document.getElementById('fcMsg').textContent=base+'。'+tail+' ／ ★レアは とくべつな そだてかたで'; }
     }
     var nd=document.getElementById('nudge');
     if(nd){ if(done>=goal){ nd.style.display='none'; } else { nd.style.display='block'; nd.textContent=done>0?('きょうは あと '+(goal-done)+'こ！ がくしゅうしよう →'):('きょうの べんきょうを はじめよう！ →'); } }
@@ -665,8 +665,8 @@ window._eigoPetInit = function() {
     var tree='<div style="display:flex;align-items:center;justify-content:center;gap:8px;margin:2px 0 4px;">'+tnode(EGG_INFO,'タマゴ',true)+'<span class="larrow">→</span>'+tnode(BABIES.a,BABIES.a.name,true)+'<span class="larrow">→</span>'+tnode(CHILDREN.a,CHILDREN.a.name,true)+'</div><div class="tarrow">↓</div>';
     var ytiers=[['star','⭐さいこう'],['good','◎よいこ'],['normal','○ふつう'],['wild','△わんぱく']];
     var nowTier=predictedTier();
-    tree+='<div class="keifuHint" style="background:#eff6ff;border-color:#bfdbfe;"><div style="font-size:12px;font-weight:800;color:var(--ink);line-height:1.6;">いまの ランク：<b style="color:#2563eb;">'+TIER_LABEL[nowTier]+'</b>（もくひょうたっせい '+genMetDays()+'日／せわ・しつけミス '+careMissTotal()+'かい）<br><span style="font-size:11px;color:var(--mut);font-weight:700;">たっせい日が おおいほど 上の系統へ。ミスを へらすと まれに ★レア（サボりでは 出ない）</span></div></div>';
-    tree+='<div class="tiertag">ヤング（おせわランクで きまる）</div><div class="tgrid4">'+ytiers.map(function(t){ return tnode(YOUNGS[t[0]],YOUNGS[t[0]].name,true); }).join('')+'</div><div class="tarrow">↓</div>';
+    tree+='<div class="keifuHint" style="background:#eff6ff;border-color:#bfdbfe;"><div style="font-size:12px;font-weight:800;color:var(--ink);line-height:1.6;">いまの ランク：<b style="color:#2563eb;">'+TIER_LABEL[nowTier]+'</b>（もくひょうたっせい '+genMetDays()+'日／せわ・しつけミス '+careMissTotal()+'かい）<br><span style="font-size:11px;color:var(--mut);font-weight:700;">たっせい日が おおいほど 上の系統に なりやすく（かくりつ）。★レアは とくべつな そだてかたで（せわ・しつけミス 3かい いじょうだと 出ない）</span></div></div>';
+    tree+='<div class="tiertag">ヤング（おせわランクで なりやすさが かわる）</div><div class="tgrid4">'+ytiers.map(function(t){ return tnode(YOUNGS[t[0]],YOUNGS[t[0]].name,true); }).join('')+'</div><div class="tarrow">↓</div>';
     // アダルト：入手ずみは無料表示。それ以外は「？」を自分でタップ＋えさ で 1体ずつ ひらける
     var HINT_COST=50;
     var allAdults=[]; Object.keys(ADULT_TIERS).forEach(function(t){ ADULT_TIERS[t].forEach(function(id){ allAdults.push(id); }); });
