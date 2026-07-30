@@ -136,11 +136,11 @@ window._eigoPetInit = function() {
   var TRAITS = {
     heavy: { label:'おもい子',   hint:'ごはん・おかしで おもく（たいじゅう25+）すると なりやすい', test:function(s){ return s.weight>=25; } },
     light: { label:'かるい子',   hint:'ミニゲームで かるく（たいじゅう12-）すると なりやすい',      test:function(s){ return s.weight<=12; } },
-    play:  { label:'あそびずき',  hint:'ミニゲームで 100かい あそぶと なりやすい',                 test:function(s){ return (s.gamesPlayed||0)>=100; } },
+    play:  { label:'あそびずき',  hint:'ミニゲームで 50かい あそぶと なりやすい',                  test:function(s){ return (s.gamesPlayed||0)>=50; } },
     study: { label:'べんきょうか', hint:'この子で 200もん せいかいすると なりやすい',              test:function(s){ return (s.genCorrect||0)>=200; } },
     sleep: { label:'ねぼすけ',    hint:'よく ねかせる（20かい すいみん）と なりやすい',            test:function(s){ return (s.sleepCount||0)>=20; } },
-    disc:  { label:'おぎょうぎ◎',  hint:'すなおさを たかく（しつけミス0）たもつと なりやすい',              test:function(s){ return (s.disciplineMiss||0)===0 && s.discipline>=60; } },
-    wild:  { label:'やんちゃ',    hint:'わがままを ほうっておく（しつけミス3+）と なりやすい',       test:function(s){ return (s.disciplineMiss||0)>=3; } },
+    disc:  { label:'おぎょうぎ◎',  hint:'すなおさを 70いじょうに たもつと なりやすい',               test:function(s){ return s.discipline>=70; } },
+    wild:  { label:'やんちゃ',    hint:'すなおさが 30いかだと なりやすい',                        test:function(s){ return s.discipline<=30; } },
     happy: { label:'ごきげん屋',  hint:'ごきげんを たかく（80+）たもつと なりやすい',              test:function(s){ return s.happy>=80; } },
     streak:{ label:'まいにちさん', hint:'7日 れんぞくで もくひょうたっせいすると なりやすい',        test:function(s){ return (s.streak||0)>=7; } }
   };
