@@ -135,7 +135,7 @@ window._eigoPetInit = function() {
   // 育て方の こだわり（相性）：体重・あそび・べんきょう・ねむり・しつけ 等で なりやすい子が かわる＝進化への 重みづけ
   var TRAITS = {
     heavy: { label:'おもい子',   hint:'ごはん・おかしで おもく（たいじゅう25+）すると なりやすい', test:function(s){ return s.weight>=25; } },
-    light: { label:'かるい子',   hint:'ミニゲームで かるく（たいじゅう12-）すると なりやすい',      test:function(s){ return s.weight<=12; } },
+    light: { label:'かるい子',   hint:'ミニゲームで かるく（たいじゅう8-）すると なりやすい',       test:function(s){ return s.weight<=8; } },
     play:  { label:'あそびずき',  hint:'ミニゲームで 50かい あそぶと なりやすい',                  test:function(s){ return (s.gamesPlayed||0)>=50; } },
     study: { label:'べんきょうか', hint:'この子で 200もん せいかいすると なりやすい',              test:function(s){ return (s.genCorrect||0)>=200; } },
     sleep: { label:'ねぼすけ',    hint:'よく ねかせる（20かい すいみん）と なりやすい',            test:function(s){ return (s.sleepCount||0)>=20; } },
