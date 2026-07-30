@@ -157,7 +157,7 @@ window._eigoPetInit = function() {
     'めらめら':'wild','ちゃめ':'wild','くろだま':'wild',
     'どきどき':'happy','うらら':'happy','ぷくたま':'happy','かぶら':'happy'
   };
-  var AFF_BOOST=4;
+  var AFF_BOOST=8;
   function affinityWeight(id){ var a=AFFINITY[id]; if(!a) return 1; var t=TRAITS[a]; return (t&&t.test(state))?AFF_BOOST:1; }
   function affinityLabel(id){ var a=AFFINITY[id]; return a&&TRAITS[a]?TRAITS[a].label:''; }
   function affinityHint(id){ var a=AFFINITY[id]; return a&&TRAITS[a]?TRAITS[a].hint:''; }
