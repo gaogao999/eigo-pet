@@ -172,12 +172,14 @@ window._eigoPetInit = function() {
   // ランクは「その世代（生まれてから）の もくひょうたっせい日数」で判定（累積でないので 世代ごとに変わり 図鑑が埋まる）
   function genMetDays(){ try{ var b=dayStr(new Date(state.born||Date.now())); return (state.metDates||[]).filter(function(d){ return d>=b; }).length; }catch(e){ return (state.metDates||[]).length; } }
   function careTierIndex(){ var gm=genMetDays(); return gm>=3?3:gm>=2?2:gm>=1?1:0; }
-  function youngTierKey(){ if((state.careMiss+state.disciplineMiss)>=8) return 'wild'; return TIER_ORDER[careTierIndex()]; } // ヤングは 4ランク（devilは wild あつかい）
+  function earnedTierKey(){ if((state.careMiss+state.disciplineMiss)>=8) return 'wild'; return TIER_ORDER[careTierIndex()]; } // がんばりで きまる「本命」ランク（表示・予告用）
+  // ヤングの姿は 確率制：本命ランクが いちばん でやすく、とおいランクほど でにくい（本命75%・となり19%・2つ先5%・3つ先1%）
+  function rollYoungTier(){ var ei=TIER_ORDER.indexOf(earnedTierKey()); var ws=TIER_ORDER.map(function(k,i){ return 8/Math.pow(4,Math.abs(i-ei)); }); var tot=0,i; for(i=0;i<ws.length;i++) tot+=ws[i]; var r=Math.random()*tot; for(i=0;i<ws.length;i++){ r-=ws[i]; if(r<=0) return TIER_ORDER[i]; } return TIER_ORDER[ei]; }
   function youngInfo() { return YOUNGS[state.youngType] || YOUNGS.normal; }
   function adultById(id){ return ADULTS[id] || (id&&LEGACY_ADULT[id]&&ADULTS[LEGACY_ADULT[id]]) || ADULTS[ADULT_TIERS.normal[0]]; }
   function adultInfo() { return adultById(state.adultType); }
   function careMissTotal(){ return (state.careMiss||0)+(state.disciplineMiss||0); }
-  function predictedTier(){ return youngTierKey(); } // いまの おせわランク（系統）。レアは予告しない
+  function predictedTier(){ return earnedTierKey(); } // いまの おせわランク（本命）。実際の姿は 確率で 前後する
   function predictedAdultKey(){ var t=predictedTier(); return (LINEAGE[t]||LINEAGE.normal)[0]; }
   // アダルト確定：いまの ヤング(=おせわランク)の 系統から、見た目の似た6種のどれかに進化。
   // レアは「じょうずに育てた子（ミスが少ない）」だけ 低確率で（どの系統からでも）。サボりでは出ない。
@@ -187,7 +189,7 @@ window._eigoPetInit = function() {
     return pool[pool.length-1];
   }
   function pickAdultType(){
-    var yt=state.youngType||youngTierKey();
+    var yt=state.youngType||earnedTierKey();
     if(careMissTotal()<=2 && Math.random()<RARE_CHANCE){ return pickWeightedAdult(RARE_ADULTS); }
     return pickWeightedAdult(LINEAGE[yt]||LINEAGE.normal);
   }
@@ -367,7 +369,7 @@ window._eigoPetInit = function() {
       state.lv++; state.stageSince=Date.now();
       if(state.lv===2&&!state.babyType){ state.babyType='a'; }
       else if(state.lv===3&&!state.childType){ state.childType='a'; }
-      else if(state.lv===4&&!state.youngType){ state.youngType=youngTierKey(); }
+      else if(state.lv===4&&!state.youngType){ state.youngType=rollYoungTier(); } // 本命ランクを軸に 抽選
       else if(state.lv===5&&!state.adultType){ state.adultType=pickAdultType(); }
       bubble(stageName()+"になった！"); sfx('fanfare'); save();
       if(typeof render==='function') render();
