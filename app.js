@@ -212,7 +212,11 @@ window._eigoPetInit = function() {
   // ヤングに なったあとは 系統が かくてい（pickAdultType と 同じ見かた）。それまでは がんばりで きまる 本命ランク
   function isYoungFixed(){ return state.lv>=4 && !!state.youngType; }
   function predictedTier(){ return isYoungFixed() ? state.youngType : earnedTierKey(); }
-  function predictedAdultKey(){ var t=predictedTier(); return (LINEAGE[t]||LINEAGE.normal)[0]; }
+  // いま こだわり条件を みたしていて いちばん なりやすい子。だれも みたしていなければ boosted=false
+  function predictedAdult(){ var pool=LINEAGE[predictedTier()]||LINEAGE.normal, best=pool[0], bw=1;
+    pool.forEach(function(id){ var w=affinityWeight(id); if(w>bw){ bw=w; best=id; } });
+    return { key:best, boosted:bw>1 }; }
+  function predictedAdultKey(){ return predictedAdult().key; }
   // アダルト確定：いまの ヤング(=おせわランク)の 系統から、見た目の似た6種のどれかに進化。
   // レアは「じょうずに育てた子（ミスが少ない）」だけ 低確率で（どの系統からでも）。サボりでは出ない。
   function pickWeightedAdult(pool){ // 育て方の こだわり(相性)で 重みづけして 1体えらぶ
@@ -602,14 +606,14 @@ window._eigoPetInit = function() {
     if(fc){
       if(state.lv>=5){ var ai=adultInfo(); fc.innerHTML=spriteHTML(ai,3); document.getElementById('fcTitle').textContent='そだった アダルト'; document.getElementById('fcName').textContent=ai.name; document.getElementById('fcMsg').textContent='りっぱに そだったね！'; }
       else { var tier2=predictedTier(), pa=ADULTS[predictedAdultKey()]; fc.innerHTML=spriteHTML(pa,3);
-        var miss=careMissTotal();
+        var miss=careMissTotal(), pd=predictedAdult();
         if(isYoungFixed()){ // すでに ヤング＝系統は かくてい。あとは そだてかたで どの子に なるか
           document.getElementById('fcTitle').textContent='この子は… '+(FAMILY_NAME[tier2]||'')+' へ';
-          document.getElementById('fcName').textContent=pa.name+' など 7しゅるい';
+          document.getElementById('fcName').textContent=pd.boosted?(pa.name+' に なりやすい'):'7しゅるいの どれか';
           document.getElementById('fcMsg').textContent='ヤングの すがたで 系統は きまったよ。どの子に なるかは そだてかた しだい（ずかんの 🌱ヒント） ／ ★レアは とくべつな そだてかたで（せわ・しつけミス '+miss+'かい／3かい いじょうだと 出ない）';
         } else {
           document.getElementById('fcTitle').textContent='いまの ペースなら… '+(FAMILY_NAME[tier2]||'')+' に なりやすい';
-          document.getElementById('fcName').textContent=pa.name+' など';
+          document.getElementById('fcName').textContent=pd.boosted?(pa.name+' に なりやすい'):'7しゅるいの どれか';
           var met=genMetDays(), needS=Math.max(0,3-met);
           var base='ランク：'+TIER_LABEL[tier2]+'（もくひょうたっせい '+met+'日／せわ・しつけミス '+miss+'かい）';
           var tail=(tier2==='star')?' さいこう！この ちょうしで！':(' さいこうまで あと '+needS+'日 たっせい');
