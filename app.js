@@ -557,11 +557,10 @@ window._eigoPetInit = function() {
     document.getElementById('poop').style.display=state.dirty?'block':'none';
     document.getElementById('wagamark').style.display=(state.wagamama&&state.lv>=2)?'block':'none';
     document.getElementById('sickmark').style.display=state.sick?'block':'none';
-    var sm=document.getElementById('sulkmark');            // すねている とき。理由は「あそんでない」ときだけ 見せる
+    var sm=document.getElementById('sulkmark');            // すねている ときは バッジだけ（理由の文言は 出さない）
     if(sm){ var sulk=(typeof isSulking==='function')&&isSulking()&&!state.sick;
       sm.style.display=sulk?'block':'none';
-      if(sulk){ var why=document.getElementById('sulkwhy');
-        if(why){ var showWhy=(sulkReason()!=='disc'); why.textContent=showWhy?'あそんでない→あそぼう！':''; why.style.display=showWhy?'inline-block':'none'; } } }
+      var why=document.getElementById('sulkwhy'); if(why){ why.textContent=''; why.style.display='none'; } }
     document.getElementById('medCnt').textContent=state.sick?('えさ'+MED_COST+'で なおす'):('げんき／えさ'+MED_COST);
     document.querySelectorAll('.gbtn').forEach(function(b){ b.classList.toggle('sel',b.dataset.g===state.grade); });
     drawPet();
