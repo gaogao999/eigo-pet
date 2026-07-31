@@ -1010,7 +1010,7 @@ window._eigoPetInit = function() {
     var box=document.getElementById('choices'); box.innerHTML=''; box.style.pointerEvents='';
     var spellArea=document.getElementById('spellArea'); var isSpell=(qMode==='spell');
     box.style.display=isSpell?'none':'grid'; if(spellArea) spellArea.style.display=isSpell?'block':'none';
-    var mkBtn=function(o,html){ var b=document.createElement('button'); b.className='ch'; b.innerHTML=html; if(o===correct) b._isCorrect=true; b.onclick=function(){ /* 長押し直後(700ms)のクリックだけ無視。古いフラグ残りでタップが押せなくなるのを防ぐ */ if(b._lp){ b._lp=false; if(Date.now()-(b._lpAt||0)<700) return; } answer(b,o===correct,en); }; if(qMode!=='reverse') attachLongPress(b,function(){ showEasy(o); }); box.appendChild(b); }; // 逆引きは 選択肢が英語＝長押しで答えが分かるので 無効
+    var mkBtn=function(o,html){ var b=document.createElement('button'); b.className='ch'; b.innerHTML=html; b._word=o; if(o===correct) b._isCorrect=true; b.onclick=function(){ /* 長押し直後(700ms)のクリックだけ無視。古いフラグ残りでタップが押せなくなるのを防ぐ */ if(b._lp){ b._lp=false; if(Date.now()-(b._lpAt||0)<700) return; } answer(b,o===correct,en); }; if(qMode!=='reverse') attachLongPress(b,function(){ showEasy(o); }); box.appendChild(b); }; // 逆引きは 選択肢が英語＝長押しで答えが分かるので 無効
     var speakBtn=document.getElementById('speak'); if(speakBtn) speakBtn.style.display=(qMode==='reverse')?'none':'inline-flex'; // 逆引きは 答え(英語)を読み上げないよう きくボタンを隠す
     if(qMode==='reverse'){
       // いみ（漢字＋ふりがな）→ えいごを えらぶ
@@ -1091,7 +1091,13 @@ window._eigoPetInit = function() {
       session.combo=0; onAnswer(en,false); save(); sfx('wrong'); speak(en); // 正しい はつおんを きかせる
       requeueMissed(curWord);
       showEasy(curWord,true); // 選択肢を 見える位置に のこす（スクロールしない）
-      document.getElementById('reward').textContent='ざんねん… せいかい（みどり）を タップしてね';
+      var pickedInfo='';                                   // えらんだ ほうの 単語も おしえる（1問で 2語 おぼえられる）
+      var pw=btn._word;
+      if(pw && pw!==curWord){
+        if(qMode==='reverse') pickedInfo='えらんだ「'+escJa(pw[0])+'」は '+escJa(splitSenses(pw[1])[0]||pw[1])+' だよ';
+        else pickedInfo='えらんだ いみは「'+escJa(pw[0])+'」だよ';
+      }
+      document.getElementById('reward').innerHTML=(pickedInfo?'<span style="font-size:12px;color:#7c5cd6;font-weight:800;">'+pickedInfo+'</span><br>':'')+'ざんねん… せいかい（みどり）を タップしてね';
       var dk=document.getElementById('dontKnow'); if(dk) dk.style.display='none';
       if(_cb0){ var cs=_cb0.querySelectorAll('.ch'); for(var i=0;i<cs.length;i++){ var c=cs[i];
         if(c._isCorrect){ c.classList.add('ok','tapnext'); c.style.pointerEvents='auto'; c.onclick=function(){ this.classList.remove('tapnext'); document.getElementById('reward').textContent='こたえは これ！ ふくしゅうに いれたよ'; showNext(); var nb=document.getElementById('nextBtn'); if(nb) try{ nb.scrollIntoView({behavior:'smooth',block:'center'}); }catch(e){} }; }
