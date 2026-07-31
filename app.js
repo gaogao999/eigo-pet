@@ -149,7 +149,7 @@ window._eigoPetInit = function() {
   // 育て方の こだわり（相性）：体重・あそび・べんきょう・ねむり・しつけ 等で なりやすい子が かわる＝進化への 重みづけ
   var TRAITS = {
     heavy: { label:'おもい子',   hint:'おかしを たくさん あげて おもく（たいじゅう25+）すると なりやすい', test:function(s){ return s.weight>=25; } },
-    light: { label:'かるい子',   hint:'おかしを ひかえて よく あそぶ（たいじゅう8-）と なりやすい', test:function(s){ return s.weight<=8; } },
+    light: { label:'かるい子',   hint:'おかしを ひかえて よく あそぶ（たいじゅう5）と なりやすい',  test:function(s){ return s.weight<=5; } },
     play:  { label:'あそびずき',  hint:'ミニゲームで 50かい あそぶと なりやすい',                  test:function(s){ return (s.gamesPlayed||0)>=50; } },
     study: { label:'べんきょうか', hint:'この子で 100もん せいかいすると なりやすい',              test:function(s){ return (s.genCorrect||0)>=100; } },
     sleep: { label:'ねぼすけ',    hint:'よく ねかせる（10かい すいみん）と なりやすい',            test:function(s){ return (s.sleepCount||0)>=10; } },
@@ -647,10 +647,10 @@ window._eigoPetInit = function() {
 
   /* ---- care ---- */
   document.getElementById('bFeed').onclick=function(){ if(state.lv<2){ bubble("タマゴは まだ たべられないよ"); return; } if(state.hunger>=99){ bubble("おなか いっぱい！"); return; } if(state.food<=0){ bubble("べんきょうして えさをあつめよう"); return; } state.food--; state.hunger=Math.min(100,state.hunger+20); if(state.hunger>0) state.starveSince=null; state.happy=Math.min(100,state.happy+5); state.weight+=2; addXp(5); bubble("もぐもぐ"); cheer(); save(); render(); };
-  document.getElementById('bSnack').onclick=function(){ if(state.lv<2){ bubble("タマゴは まだ たべられないよ"); return; } if(state.happy>=99.5){ /* 見た目が まんたん(四捨五入で100)の あいだは あげられない */ bubble("ごきげん まんたん！ おかしは また こんど ね"); return; } state.hunger=Math.min(100,state.hunger+3); if(state.hunger>0) state.starveSince=null; state.happy=Math.min(100,state.happy+10); state.weight+=2; bubble("おいしい！でも たいじゅう+"); cheer(); save(); render(); };
+  document.getElementById('bSnack').onclick=function(){ if(state.lv<2){ bubble("タマゴは まだ たべられないよ"); return; } if(state.happy>=99.5){ /* 見た目が まんたん(四捨五入で100)の あいだは あげられない */ bubble("ごきげん まんたん！ おかしは また こんど ね"); return; } state.hunger=Math.min(100,state.hunger+3); if(state.hunger>0) state.starveSince=null; state.happy=Math.min(100,state.happy+10); state.weight+=4; bubble("おいしい！でも たいじゅう++"); cheer(); save(); render(); };
   function makeDirty(){ if(!state.dirty){ state.dirty=true; state.dirtySince=Date.now(); } }
   document.getElementById('bPlay').onclick=function(){ if(state.food<=0){ bubble("べんきょうして えさを あつめよう"); return; } show('gameSelect'); };
-  function consumePlay(){ state.food--; state.weight=Math.max(5,state.weight-1); state.hunger=Math.max(0,state.hunger-4); state.gamesPlayed=(state.gamesPlayed||0)+1; state.lastPlay=Date.now(); state.happy=Math.min(100,state.happy+6); state.discipline=Math.min(100,state.discipline+3); save(); } // あそぶと なつく＝すなおさ+3 // あそぶと 運動：体重-2・おなか-4
+  function consumePlay(){ state.food--; state.weight=Math.max(5,state.weight-2); state.hunger=Math.max(0,state.hunger-4); state.gamesPlayed=(state.gamesPlayed||0)+1; state.lastPlay=Date.now(); state.happy=Math.min(100,state.happy+6); state.discipline=Math.min(100,state.discipline+3); save(); } // あそぶと なつく＝すなおさ+3 // あそぶと 運動：体重-2・おなか-4
   document.getElementById('backSelect').onclick=function(){ show('home'); render(); };
   document.getElementById('selJump').onclick=function(){ if(state.food<=0){ bubble('えさが たりない'); return; } consumePlay(); startGame(); };
   document.getElementById('selSea').onclick=function(){ if(state.food<=0){ bubble('えさが たりない'); return; } consumePlay(); startSeaGame(); };
