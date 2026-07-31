@@ -522,7 +522,7 @@ window._eigoPetInit = function() {
     if(mo){ var bo=state._lastBuyout||{baht:0,food:0};
       if(!neglect && bo.baht>0){
         mo.style.display='block';
-        mo.innerHTML='そだてきった ごほうび！ のこった えさ '+bo.food+'こ ぶんの おこづかい<br><span style="font-size:30px;color:#ea580c;">฿'+bo.baht+'</span>'
+        mo.innerHTML='そだてきった ごほうび！ のこった えさ '+escJa(String(bo.food))+'こ ぶんの おこづかい<br><span style="font-size:30px;color:#ea580c;">฿'+escJa(String(bo.baht))+'</span>'
           +((bo.bonus>0)?'<br><span style="font-size:12px;color:#16a34a;font-weight:800;">（がんばりボーナス +฿'+bo.bonus+' こみ）</span>':'')
           +'<div style="margin-top:8px;padding:8px;background:#fffbeb;border:2px dashed #f59e0b;border-radius:8px;font-size:13px;color:#92400e;">👨‍👩‍👧 おとうさん・おかあさんに<br>この ฿'+bo.baht+' を みせてね！</div>';
       }
@@ -703,7 +703,7 @@ window._eigoPetInit = function() {
     tree+='<div class="tiertag">★レア（とくべつな そだてかたで）</div><div class="lrow"><div class="lfrom" style="font-size:11px;font-weight:800;color:var(--mut);text-align:center;line-height:1.5;">どの系統<br>からでも<br><span style="font-size:10px;">(とくべつ条件で<br>でやすく)</span></div><div class="larrow">→</div><div class="lgrid">'+RARE_ADULTS.map(function(id){ return revealed[id]?tnode(ADULTS[id],ADULTS[id].name,true):lockNode(id); }).join('')+'</div></div>';
     if((state.memories||[]).length){
       var mh='<div class="gstage">おもいで（これまでの子）</div>';
-      state.memories.forEach(function(m){ var ai=adultById(m.adultType); mh+='<div class="gcard" style="display:flex;gap:12px;align-items:center;text-align:left;margin-bottom:8px;"><div style="flex:none;">'+spriteHTML(ai,3)+'</div><div><div class="gname">'+m.name+'（'+(m.adultName||ai.name)+'）</div><div class="gdesc">'+m.days+'日 いっしょ ／ '+m.died+' たびだち ／ おぼえた '+m.learned+'こ</div></div></div>'; });
+      state.memories.forEach(function(m){ var ai=adultById(m.adultType); mh+='<div class="gcard" style="display:flex;gap:12px;align-items:center;text-align:left;margin-bottom:8px;"><div style="flex:none;">'+spriteHTML(ai,3)+'</div><div><div class="gname">'+escJa(m.name)+'（'+escJa(m.adultName||ai.name)+'）</div><div class="gdesc">'+escJa(String(m.days))+'日 いっしょ ／ '+escJa(String(m.died))+' たびだち ／ おぼえた '+escJa(String(m.learned))+'こ</div></div></div>'; });
       tree=mh+'<div class="gstage">しんかの けいふ</div>'+tree;
     }
     document.getElementById('adminTree').innerHTML=tree;
@@ -750,10 +750,11 @@ window._eigoPetInit = function() {
     var log=document.getElementById('okLog');
     if(log){ var L=state.moneyLog||[];
       if(!L.length){ log.innerHTML='<div style="font-size:12px;color:var(--mut);font-weight:700;text-align:center;padding:12px;">まだ ありません</div>'; }
-      else { log.innerHTML=L.map(function(e){ return '<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 12px;border:2px solid var(--bdr);border-radius:8px;margin-bottom:6px;font-size:12px;font-weight:700;color:var(--ink);"><span>'+e.date+' <span style="color:var(--mut);">'+(e.name||'')+' えさ'+e.food+'</span></span><span style="color:#ea580c;font-weight:900;">＋฿'+e.baht+'</span></div>'; }).join(''); }
+      else { log.innerHTML=L.map(function(e){ return '<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 12px;border:2px solid var(--bdr);border-radius:8px;margin-bottom:6px;font-size:12px;font-weight:700;color:var(--ink);"><span>'+escJa(String(e.date))+' <span style="color:var(--mut);">'+escJa(e.name||'')+' えさ'+escJa(String(e.food))+'</span></span><span style="color:#ea580c;font-weight:900;">＋฿'+escJa(String(e.baht))+'</span></div>'; }).join(''); }
     }
   }
-  function tierRowHTML(cap,rate){ var inp='padding:7px;border:2px solid var(--bdr);border-radius:8px;font-size:14px;font-family:inherit;text-align:center;background:var(--card);color:var(--ink);';
+  function numAttr(v){ var n=parseInt(v,10); return (isFinite(n)&&n>0)?String(Math.min(99999,n)):''; } // 属性に入れる値は 数値だけに正規化
+  function tierRowHTML(cap,rate){ cap=numAttr(cap); rate=numAttr(rate); var inp='padding:7px;border:2px solid var(--bdr);border-radius:8px;font-size:14px;font-family:inherit;text-align:center;background:var(--card);color:var(--ink);';
     return '<div class="oktier" style="display:flex;align-items:center;gap:5px;margin-bottom:6px;font-size:13px;font-weight:700;color:var(--ink);">฿<input class="okTierCap" type="number" min="1" max="99999" value="'+(cap||'')+'" style="width:64px;'+inp+'"> まで<span style="margin-left:auto;">えさ</span><input class="okTierRate" type="number" min="1" max="99999" value="'+(rate||'')+'" style="width:54px;'+inp+'">＝฿1<button class="okTierDel" type="button" style="border:none;background:none;color:#dc2626;font-size:16px;font-weight:900;cursor:pointer;font-family:inherit;padding:0 2px;">✕</button></div>'; }
   function readTiers(){ var arr=[]; document.querySelectorAll('#okTiers .oktier').forEach(function(r){ var cap=parseInt(r.querySelector('.okTierCap').value,10), rate=parseInt(r.querySelector('.okTierRate').value,10); if(cap>=1&&rate>=1) arr.push({cap:cap,rate:rate}); }); arr.sort(function(a,b){ return a.cap-b.cap; }); var out=[],prev=0; arr.forEach(function(t){ if(t.cap>prev){ out.push(t); prev=t.cap; } }); return out.length?out:DEFAULT_TIERS.slice(); }
   (function(){
@@ -943,7 +944,7 @@ window._eigoPetInit = function() {
   }
   function pickWeighted(words,n){ var used={}, chosen=[], wt=words.map(qWeight); for(var s=0;s<n;s++){ var total=0,i; for(i=0;i<words.length;i++){ if(!used[i]) total+=wt[i]; } if(total<=0) break; var rnd=Math.random()*total, acc=0, idx=-1; for(i=0;i<words.length;i++){ if(used[i])continue; acc+=wt[i]; if(rnd<=acc){ idx=i; break; } } if(idx<0){ for(i=0;i<words.length;i++){ if(!used[i]){ idx=i; break; } } } if(idx<0) break; used[idx]=true; chosen.push(words[idx]); } return chosen; }
   function startStudy(){ reviewMode=false; requeued={}; qList=pickWeighted(currentWords(),QPER); qIdx=0; session={correct:0,combo:0,maxCombo:0,newMastered:0,total:qList.length}; document.getElementById('qTotal').textContent=qList.length; show('study'); nextQ(); }
-  function escJa(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;'); }
+  function escJa(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); } // HTMLに入れる文字列は かならず これを通す
   function splitSenses(s){ return (s||'').split(/[，、,]/).map(function(x){ return x.trim(); }).filter(Boolean); }
   // 各いみの ふりがなを その漢字の 真上に（ruby）。コンマで 行を わける
   // 助詞ではじまる訳に「～」をつけて分かりやすく（例：をし続ける → ～をし続ける）
@@ -1116,7 +1117,7 @@ window._eigoPetInit = function() {
   function pickerVoices(){ var vs=enVoices(); var picks=[]; VOICE_NAMES.forEach(function(nm){ var v=vs.find(function(vv){ return vv.name.indexOf(nm)>=0; }); if(v) picks.push(v); }); return picks; }
   function pickVoice(){ var pv=pickerVoices(); if(pv.length){ if(state.voiceName){ var sv=pv.find(function(v){ return v.name===state.voiceName; }); if(sv) return sv; } return pv[0]; } var vs=enVoices(); if(!vs.length) return null; return vs.find(function(v){ return /en[-_]US/i.test(v.lang); })||vs[0]; }
   function ensureVoice(){ if(!enVoice) enVoice=pickVoice(); return enVoice; }
-  function renderVoicePicker(){ var sel=document.getElementById('voiceSel'); if(sel){ var pv=pickerVoices(), cur=ensureVoice(); if(!pv.length){ sel.innerHTML='<option>（このタブレットには えいご音声が ありません）</option>'; sel.disabled=true; } else { sel.disabled=false; sel.innerHTML=pv.map(function(v){ return '<option value="'+v.name.replace(/"/g,'&quot;')+'"'+(cur&&v.name===cur.name?' selected':'')+'>'+v.name+'</option>'; }).join(''); } } var rs=document.getElementById('rateSel'); if(rs){ var r=String(state.speechRate||0.8); Array.prototype.forEach.call(rs.options,function(o){ o.selected=(o.value===r); }); } }
+  function renderVoicePicker(){ var sel=document.getElementById('voiceSel'); if(sel){ var pv=pickerVoices(), cur=ensureVoice(); if(!pv.length){ sel.innerHTML='<option>（このタブレットには えいご音声が ありません）</option>'; sel.disabled=true; } else { sel.disabled=false; sel.innerHTML=pv.map(function(v){ return '<option value="'+v.name.replace(/"/g,'&quot;')+'"'+(cur&&v.name===cur.name?' selected':'')+'>'+escJa(v.name)+'</option>'; }).join(''); } } var rs=document.getElementById('rateSel'); if(rs){ var r=String(state.speechRate||0.8); Array.prototype.forEach.call(rs.options,function(o){ o.selected=(o.value===r); }); } }
   if(window.speechSynthesis){ speechSynthesis.onvoiceschanged=function(){ enVoice=pickVoice(); renderVoicePicker(); }; ensureVoice(); }
   (function(){ var sel=document.getElementById('voiceSel'); if(sel) sel.onchange=function(){ state.voiceName=sel.value; enVoice=enVoices().find(function(v){ return v.name===sel.value; })||null; save(); speak('Hello!'); }; var rs=document.getElementById('rateSel'); if(rs) rs.onchange=function(){ state.speechRate=parseFloat(rs.value)||0.8; save(); speak('Hello! Good job!'); }; var tb=document.getElementById('voiceTest'); if(tb) tb.onclick=function(){ speak('Hello! Good job!'); }; renderVoicePicker(); })();
   function speak(en){ try{ if(!window.speechSynthesis) return; var u=new SpeechSynthesisUtterance(en); var v=ensureVoice(); if(v){ u.voice=v; u.lang=v.lang; } else { u.lang='en-US'; } u.rate=state.speechRate||0.8; u.pitch=1.0; speechSynthesis.cancel(); speechSynthesis.speak(u); }catch(e){} }
