@@ -851,14 +851,14 @@ window._eigoPetInit = function() {
     var s=gameSetup('だいぼうけん','◀▶で うごく／ジャンプ ながおしで たかく！ てきは ふんで やっつけ、？ブロックから キノコで スーパーに！','ジャンプ');
     if(game) cancelAnimationFrame(game.raf);
     game={ mode:'mario',ctx:s.ctx,W:s.W,H:s.H,img:s.img,map:null,cell:s.cell,
-      petW:20,petH:20,left:false,right:false,jump:false,jumpHeld:0,
+      petW:20,petH:20,left:false,right:false,jump:false,skid:0,
       hp:3,maxhp:3,inv:0,coinN:0,stage:0,maxStage:STAGES.length,big:false,items:[],shells:[],flag:0,
       t:0,score:0,over:false,banner:0,bannerTxt:'',raf:0 };
     buildStage(game,0); loopMario();
   }
   function mvSet(k,v){ var g=game; if(!g||g.over||g.mode!=='mario') return;
     if(k==='L') g.left=v; else if(k==='R') g.right=v;
-    else if(k==='J'){ if(v&&g.onGround&&g.t>90){ g.vy=-7.2; g.onGround=false; g.jumpHeld=10; if(state.sound) tone(620,0,0.06,'square'); } if(!v) g.jumpHeld=0; g.jump=v; }
+    else if(k==='J'){ if(v&&g.onGround&&g.t>90){ g.vy=-(6.6+Math.abs(g.vx)*0.42); g.onGround=false; if(state.sound) tone(560+Math.abs(g.vx)*40,0,0.06,'square'); } g.jump=v; }
   }
   function marioClear(){ var g=game; if(g.cleared) return; g.cleared=true; g.score+=50+g.hp*10;
     if(state.sound){ tone(660,0,0.1); tone(880,0.1,0.12); tone(1180,0.22,0.16); }
@@ -876,12 +876,17 @@ window._eigoPetInit = function() {
     var counting=g.t<=90;
     if(!counting&&!g.cleared){
       // よこ移動
-      var acc=g.left?-0.42:(g.right?0.42:0);
-      if(acc!==0){ g.vx+=acc; g.face=acc<0?-1:1; } else { g.vx*=0.82; if(Math.abs(g.vx)<0.06) g.vx=0; }
-      if(g.vx>2.6) g.vx=2.6; if(g.vx<-2.6) g.vx=-2.6;
-      // ジャンプの ながおしで たかく
-      if(g.jump&&g.jumpHeld>0){ g.vy-=0.20; g.jumpHeld--; }
-      g.vy+=0.46; if(g.vy>8) g.vy=8;
+      var dir=g.left?-1:(g.right?1:0);
+      var ACC=g.onGround?0.30:0.20, FRIC=g.onGround?0.86:0.98, SKID=0.52;   // 空中は 効きが よわく 慣性が のこる
+      if(dir!==0){
+        if(g.vx*dir<0){ g.vx+=dir*SKID; g.skid=6; }                          // ぎゃく方向＝ブレーキ（スキッド）
+        else g.vx+=dir*ACC;
+        g.face=dir;
+      } else { g.vx*=FRIC; if(Math.abs(g.vx)<0.08) g.vx=0; }
+      if(g.skid>0) g.skid--;
+      if(g.vx>3.0) g.vx=3.0; if(g.vx<-3.0) g.vx=-3.0;
+      // 上昇ちゅうに ボタンを おしていると 重力が よわい＝ながく おすほど たかく とべる（原作どおり）
+      g.vy+=(g.jump&&g.vy<0)?0.40:0.75; if(g.vy>9) g.vy=9;
       // よこ判定
       var nx=g.px+g.vx, top=g.py+2, bot=g.py+g.petH-2;
       if(g.vx>0){ if(solidAt(g,nx+g.petW,top)||solidAt(g,nx+g.petW,bot)){ nx=Math.floor((nx+g.petW)/TS)*TS-g.petW-0.01; g.vx=0; } }
@@ -898,7 +903,7 @@ window._eigoPetInit = function() {
           if(hc==='M'){ setTile(g,hx,hy,'X'); g.items.push({kind:'mush',x:hx*TS+2,y:hy*TS-14,vx:0.7,vy:0}); if(state.sound) tone(700,0,0.1); }
           else if(hc==='?'){ setTile(g,hx,hy,'X'); g.coinN++; g.score+=10; gpop(g,hx*TS+6,hy*TS,'+10'); if(state.sound) tone(1046,0,0.08); }
           else if(hc==='#'&&g.big){ setTile(g,hx,hy,' '); g.score+=5; gpop(g,hx*TS+4,hy*TS,'+5'); if(state.sound) tone(240,0,0.07,'square'); }
-          ny=(hy+1)*TS+0.01; g.vy=0; g.jumpHeld=0; } }
+          ny=(hy+1)*TS+0.01; g.vy=0; } }
       g.py=ny;
       // あなに おちた
       if(g.py>g.rows*TS+20){
@@ -1011,6 +1016,7 @@ window._eigoPetInit = function() {
     if(!(g.inv>0&&Math.floor(g.t/4)%2===0)){
       drawPetSprite(ctx,{img:g.img,map:null,cell:g.cell,petW:g.big?26:g.petW,petH:g.petH},Math.round(g.px-cam),Math.round(g.py));
       if(g.big){ ctx.fillStyle='#f6c445'; ctx.fillRect(Math.round(g.px-cam)+2,Math.round(g.py)-5,4,3); ctx.fillRect(Math.round(g.px-cam)+20,Math.round(g.py)-5,4,3); } }
+    if(g.skid>0&&g.onGround){ ctx.fillStyle='rgba(255,255,255,.75)'; var sx=Math.round(g.px-cam)+(g.face>0?-4:g.petW); ctx.fillRect(sx,Math.round(g.py)+g.petH-5,4,3); ctx.fillRect(sx+(g.face>0?-4:4),Math.round(g.py)+g.petH-8,3,3); }
     // HUD
     for(var i=0;i<g.maxhp;i++){ ctx.fillStyle=i<g.hp?'#ef4444':'rgba(0,0,0,.2)'; heartMark(ctx,12+i*13,14,4); }
     ctx.fillStyle='rgba(0,0,0,.45)'; ctx.fillRect(g.W-92,7,80,12);
