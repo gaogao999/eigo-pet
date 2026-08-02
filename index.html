@@ -474,6 +474,8 @@ if(window.caches){caches.keys().then(function(ks){ks.forEach(function(k){caches.
   </div>
   <p style="text-align:center;font-size:13px;color:var(--mut);font-weight:700;margin:0 0 24px;">あそぶ（えさ1）</p>
   <button id="selJump" style="width:100%;border:none;border-radius:12px;padding:22px;font-size:19px;font-weight:900;background:linear-gradient(135deg,#f472b6,#fb9ed0);color:#fff;cursor:pointer;font-family:inherit;box-shadow:0 3px 14px rgba(244,114,182,.35);">だいぼうけん</button>
+  <button id="selMetalA" style="width:100%;margin-top:12px;border:none;border-radius:12px;padding:22px;font-size:19px;font-weight:900;background:linear-gradient(135deg,#5c6b4a,#8a9a6b);color:#fff;cursor:pointer;font-family:inherit;box-shadow:0 3px 14px rgba(92,107,74,.35);">メタルアサルト<div style="font-size:11px;font-weight:700;opacity:.85;margin-top:4px;">アーケード：ようさいを こうりゃく</div></button>
+  <button id="selMetalS" style="width:100%;margin-top:12px;border:none;border-radius:12px;padding:18px;font-size:16px;font-weight:900;background:linear-gradient(135deg,#7a5c3a,#b08a5c);color:#fff;cursor:pointer;font-family:inherit;box-shadow:0 3px 14px rgba(122,92,58,.3);">メタルアサルト サバイバル<div style="font-size:11px;font-weight:700;opacity:.85;margin-top:4px;">どこまで たおせるか（スコアは べつ）</div></button>
 </section>
 
 <!-- GAME -->
@@ -496,11 +498,15 @@ if(window.caches){caches.keys().then(function(ks){ks.forEach(function(k){caches.
       </div>
     </div>
   </div>
-  <div style="display:flex;gap:6px;margin-top:12px;">
+  <div id="ctlMario" style="display:flex;gap:6px;margin-top:12px;">
     <button id="gLeft" style="flex:1;padding:18px 0;font-size:22px;font-weight:900;background:linear-gradient(135deg,#7c5cd6,#a78bfa);color:#fff;border:none;border-radius:10px;cursor:pointer;font-family:inherit;box-shadow:0 3px 10px rgba(124,92,214,.3);touch-action:none;user-select:none;">◀</button>
     <button id="gRight" style="flex:1;padding:18px 0;font-size:22px;font-weight:900;background:linear-gradient(135deg,#7c5cd6,#a78bfa);color:#fff;border:none;border-radius:10px;cursor:pointer;font-family:inherit;box-shadow:0 3px 10px rgba(124,92,214,.3);touch-action:none;user-select:none;">▶</button>
     <button id="gDash" style="flex:1.1;padding:18px 0;font-size:14px;font-weight:900;background:linear-gradient(135deg,#ef7d3a,#fbbf6b);color:#fff;border:none;border-radius:10px;cursor:pointer;font-family:inherit;box-shadow:0 3px 10px rgba(239,125,58,.3);touch-action:none;user-select:none;">ダッシュ</button>
     <button id="gJump" style="flex:1.3;padding:18px 0;font-size:15px;font-weight:900;background:linear-gradient(135deg,#29a65e,#5cde94);color:#fff;border:none;border-radius:10px;cursor:pointer;font-family:inherit;box-shadow:0 3px 10px rgba(41,166,94,.3);touch-action:none;user-select:none;">ジャンプ</button>
+  </div>
+  <div id="ctlMetal" style="display:none;flex-direction:column;gap:6px;margin-top:12px;">
+    <div style="display:flex;gap:6px;"><button id="mLeft" style="flex:1;padding:16px 0;font-size:22px;font-weight:900;background:linear-gradient(135deg,#7c5cd6,#a78bfa);color:#fff;border:none;border-radius:10px;cursor:pointer;font-family:inherit;touch-action:none;user-select:none;">◀</button><button id="mDown" style="flex:1.3;padding:16px 0;font-size:13px;font-weight:900;background:linear-gradient(135deg,#64748b,#94a3b8);color:#fff;border:none;border-radius:10px;cursor:pointer;font-family:inherit;touch-action:none;user-select:none;">▼ ふせる</button><button id="mUp" style="flex:1.3;padding:16px 0;font-size:13px;font-weight:900;background:linear-gradient(135deg,#64748b,#94a3b8);color:#fff;border:none;border-radius:10px;cursor:pointer;font-family:inherit;touch-action:none;user-select:none;">▲ うえ</button><button id="mRight" style="flex:1;padding:16px 0;font-size:22px;font-weight:900;background:linear-gradient(135deg,#7c5cd6,#a78bfa);color:#fff;border:none;border-radius:10px;cursor:pointer;font-family:inherit;touch-action:none;user-select:none;">▶</button></div>
+    <div style="display:flex;gap:6px;"><button id="mJump" style="flex:1;padding:16px 0;font-size:14px;font-weight:900;background:linear-gradient(135deg,#29a65e,#5cde94);color:#fff;border:none;border-radius:10px;cursor:pointer;font-family:inherit;touch-action:none;user-select:none;">ジャンプ</button><button id="mFire" style="flex:1.4;padding:16px 0;font-size:17px;font-weight:900;background:linear-gradient(135deg,#c0392b,#ef7d5c);color:#fff;border:none;border-radius:10px;cursor:pointer;font-family:inherit;touch-action:none;user-select:none;">うつ</button><button id="mBomb" style="flex:1;padding:16px 0;font-size:13px;font-weight:900;background:linear-gradient(135deg,#b7791f,#f0b429);color:#fff;border:none;border-radius:10px;cursor:pointer;font-family:inherit;touch-action:none;user-select:none;">ばくだん</button></div>
   </div>
 </section>
 
