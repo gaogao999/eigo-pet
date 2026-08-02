@@ -1334,6 +1334,11 @@ window._eigoPetInit = function() {
     var title=document.querySelector('#gover>div'); if(title) title.textContent=won?'ぜんステージ クリア！🎉':'ゲームオーバー';
     document.getElementById('goverScore').textContent=(medal?medal+' ':'')+'スコア '+sc+'（さいこう '+(state.gameHi||0)+'）';
     document.getElementById('goverReward').textContent='ごきげん +'+happyGain+' ／ '+(won?'ぜんぶ クリア！':'ステージ '+(g.stage+1)+' まで');
+    var reached=Math.floor(Number(state.marioStage)||0);
+    setRetryButtons(reached>0&&!won
+      ? [{label:'ステージ '+(reached+1)+' から',cost:RETRY_COST,fn:function(){ startMario(); }},
+         {label:'1面から',cost:1,fn:function(){ startMario(0); }}]
+      : [{label:'1面から',cost:1,fn:function(){ startMario(0); }},null]);
     document.getElementById('gover').style.display='flex';
   }
   /* ================= メタルアサルト（METAL ASSAULT） =================
@@ -1766,6 +1771,8 @@ window._eigoPetInit = function() {
     document.getElementById('goverScore').textContent=(medal?medal+' ':'')+'スコア '+sc+'（さいこう '+(state[key]||0)+'）';
     document.getElementById('goverReward').textContent='ごきげん +'+happyGain+' ／ たおした数 '+g.kills+
       (g.sub==='surv'?(' ／ ウェーブ '+g.wave):'');
+    var sub=g.sub;
+    setRetryButtons([{label:'もういちど',cost:1,fn:function(){ startMetal(sub); }},null]);
     document.getElementById('gover').style.display='flex';
   }
 
@@ -2034,6 +2041,22 @@ window._eigoPetInit = function() {
   function padLabels(kind){ var L=PAD_LABEL[kind]||PAD_LABEL.mario;
     ['A','B','X','Y'].forEach(function(k){ var el=document.getElementById('lbl'+k); if(el) el.textContent=L[k]; }); }
 
+  /* やりなおしボタン：死んだ場所から つづける＝えさ10／さいしょから＝えさ1 */
+  function setRetryButtons(list){
+    var ids=['gRetry','gRetry2'];
+    for(var i=0;i<ids.length;i++){
+      var el=document.getElementById(ids[i]), o=list[i];
+      if(!el) continue;
+      if(!o){ el.style.display='none'; continue; }
+      el.style.display='inline-block';
+      el.textContent=o.label+'（えさ'+o.cost+'）';
+      el.style.opacity=(state.food<o.cost)?'0.5':'1';
+      (function(o){ el.onclick=function(){
+        if(state.food<o.cost){ leaveGame(); bubble('えさが '+o.cost+'こ ひつよう だよ。べんきょうで あつめよう'); return; }
+        consumePlay(o.cost); o.fn(); }; })(o);
+    }
+  }
+
   function leaveGame(){ if(game){ game.over=true; cancelAnimationFrame(game.raf); } show('home'); render(); }
   (function(){
     var padOwner={};                                          // ゆび(pointerId) ごとの 持ち主ボタン
@@ -2053,10 +2076,6 @@ window._eigoPetInit = function() {
     var KMAP={ArrowLeft:'L',ArrowRight:'R',ArrowUp:'U',ArrowDown:'D',KeyZ:'B',KeyX:'A',KeyA:'Y',KeyS:'X',Space:'B'};
     ['keydown','keyup'].forEach(function(ev){ document.addEventListener(ev,function(e){
       if(!game||game.over) return; var k=KMAP[e.code]; if(!k) return; e.preventDefault(); padSet(k,ev==='keydown'); }); });
-    document.getElementById('gRetry').onclick=function(){
-      var c=RETRY_COST;                                        // やられてから 再開するのは えさ10
-      if(state.food<c){ leaveGame(); bubble('えさが '+c+'こ ひつよう だよ。べんきょうで あつめよう'); return; }
-      consumePlay(c); (window.__lastRetry?window.__lastRetry():startMario)(); };
     document.getElementById('gHome').onclick=leaveGame; document.getElementById('backGame').onclick=leaveGame; })();
 
   /* ---- study ---- */

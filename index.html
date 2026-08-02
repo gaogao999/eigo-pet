@@ -498,8 +498,9 @@ if(window.caches){caches.keys().then(function(ks){ks.forEach(function(k){caches.
       <div style="font-size:20px;font-weight:900;color:var(--ink);">ゲームオーバー</div>
       <div id="goverScore" style="font-size:14px;font-weight:700;color:var(--mut);"></div>
       <div id="goverReward" style="font-size:14px;font-weight:800;color:var(--g);"></div>
-      <div style="display:flex;gap:10px;">
-        <button id="gRetry" style="background:var(--g);border:none;border-radius:8px;padding:12px 20px;font-size:14px;font-weight:800;color:#fff;cursor:pointer;font-family:inherit;">もういちど（えさ10）</button>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;">
+        <button id="gRetry" style="background:var(--g);border:none;border-radius:8px;padding:12px 18px;font-size:13px;font-weight:800;color:#fff;cursor:pointer;font-family:inherit;">もういちど</button>
+        <button id="gRetry2" style="display:none;background:#d9578f;border:none;border-radius:8px;padding:12px 18px;font-size:13px;font-weight:800;color:#fff;cursor:pointer;font-family:inherit;">1面から</button>
         <button id="gHome" style="background:var(--gl);border:2px solid var(--bdr);border-radius:8px;padding:12px 20px;font-size:14px;font-weight:800;color:var(--g);cursor:pointer;font-family:inherit;">もどる</button>
       </div>
     </div>
