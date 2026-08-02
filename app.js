@@ -805,6 +805,14 @@ window._eigoPetInit = function() {
   /* ===== マリオ風 よこスクロール アクション =====
      タイル: # れんが / ? はてなブロック / o コイン / E てき / F ゴール旗 / _ 地面 / (空白)あな   */
   var TS=16; // タイルの大きさ
+  // ── 初代スーパーマリオの うごきの 数値（1フレームあたり／16pxタイル基準）──
+  var MV_WALK=1.5, MV_RUN=2.5;                       // 歩き・走りの さいこう速度
+  var ACC_WALK=0.0369, ACC_RUN=0.0556;               // 加速（毎フレーム たす量）
+  var ACC_FRIC=0.0369, ACC_SKID=0.1016;              // 減速・ブレーキ
+  var MAX_FALL=4.5;                                  // 落下速度の 上限
+  // ジャンプ：走行スピードで 初速と 重力の 組が かわる（おそい／ふつう／はやい）
+  var JUMP_V0=[4.0,4.0,5.0];
+  var GRAV=[[0.125,0.4375],[0.1171875,0.375],[0.15625,0.5625]];   // [おしている間, はなした/落下中]
   var STAGES=[
    // row0-3=空／row4=?ブロック・コイン（下をあるける）／row5=足場（とび乗る）／row6=てき・土管／row7=地面
    ["",
@@ -859,7 +867,7 @@ window._eigoPetInit = function() {
   }
   function mvSet(k,v){ var g=game; if(!g||g.over||g.mode!=='mario') return;
     if(k==='L') g.left=v; else if(k==='R') g.right=v; else if(k==='D') g.dash=v;
-    else if(k==='J'){ if(v&&g.onGround&&g.t>90){ g.vy=-(6.6+Math.abs(g.vx)*0.42); g.onGround=false; if(state.sound) tone(560+Math.abs(g.vx)*40,0,0.06,'square'); } g.jump=v; }
+    else if(k==='J'){ if(v&&g.onGround&&g.t>90){ var sp=Math.abs(g.vx); g.gband=sp>=2.0?2:(sp>=1.0?1:0); g.vy=-JUMP_V0[g.gband]; g.onGround=false; if(state.sound) tone(560+Math.abs(g.vx)*40,0,0.06,'square'); } g.jump=v; }
   }
   function marioClear(){ var g=game; if(g.cleared) return; g.cleared=true; g.score+=50+g.hp*10;
     if(state.sound){ tone(660,0,0.1); tone(880,0.1,0.12); tone(1180,0.22,0.16); }
@@ -878,17 +886,25 @@ window._eigoPetInit = function() {
     if(!counting&&!g.cleared){
       // よこ移動
       var dir=g.left?-1:(g.right?1:0);
-      var MAXV=g.dash?3.0:1.8;                                              // ダッシュで 最高速アップ（本家：歩きは 走りの3/5）
-      var ACC=(g.onGround?0.30:0.20)*(g.dash?1.0:0.85), FRIC=g.onGround?0.86:0.98, SKID=0.52;   // 空中は 効きが よわく 慣性が のこる
+      // よこの うごきは 初代スーパーマリオと おなじ「毎フレーム 一定量を たしひき」する方式（かけ算の摩擦ではない）
+      var MAXV=g.dash?MV_RUN:MV_WALK;
+      var ACC=(Math.abs(g.vx)>=MV_WALK||g.dash)?ACC_RUN:ACC_WALK;
       if(dir!==0){
-        if(g.vx*dir<0){ g.vx+=dir*SKID; g.skid=6; }                          // ぎゃく方向＝ブレーキ（スキッド）
-        else g.vx+=dir*ACC;
+        if(g.vx*dir<0){                                                      // ぎゃく方向＝ブレーキ（スキッド）
+          g.vx+=dir*ACC_SKID; g.skid=6;
+          if(g.vx*dir>0&&Math.abs(g.vx)>MV_WALK) g.vx=dir*MV_WALK;           // 向きが変わった直後は 歩き速度から
+        } else g.vx+=dir*ACC;
         g.face=dir;
-      } else { g.vx*=FRIC; if(Math.abs(g.vx)<0.08) g.vx=0; }
+      } else if(g.onGround){                                                 // ボタンを はなすと 一定量ずつ 減速（空中は 慣性そのまま）
+        if(g.vx>0){ g.vx-=ACC_FRIC; if(g.vx<0) g.vx=0; }
+        else if(g.vx<0){ g.vx+=ACC_FRIC; if(g.vx>0) g.vx=0; }
+      }
       if(g.skid>0) g.skid--;
       if(g.vx>MAXV) g.vx=MAXV; if(g.vx<-MAXV) g.vx=-MAXV;
-      // 上昇ちゅうに ボタンを おしていると 重力が よわい＝ながく おすほど たかく とべる（原作どおり）
-      g.vy+=(g.jump&&g.vy<0)?0.40:0.75; if(g.vy>9) g.vy=9;
+      // 重力も原作方式：上昇ちゅうに ボタンを おしていると よわい重力、はなすか 落下中は つよい重力
+      // しかも ジャンプした ときの スピードで 重力の 組が かわる（はやいほど よく とぶ）
+      var gv=GRAV[g.gband||0];
+      g.vy+=(g.jump&&g.vy<0)?gv[0]:gv[1]; if(g.vy>MAX_FALL) g.vy=MAX_FALL;
       // よこ判定
       var nx=g.px+g.vx, top=g.py+2, bot=g.py+g.petH-2;
       if(g.vx>0){ if(solidAt(g,nx+g.petW,top)||solidAt(g,nx+g.petW,bot)){ nx=Math.floor((nx+g.petW)/TS)*TS-g.petW-0.01; g.vx=0; } }
