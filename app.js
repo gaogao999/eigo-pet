@@ -809,29 +809,29 @@ window._eigoPetInit = function() {
    ["                                                                                                            ",
     "                                                                                                            ",
     "                            o o o                                                                           ",
-    "                    ?      #####            o o                        ?  ?                                 ",
-    "              o                            ?                    o o                          o o o          ",
-    "         ?   ###        E           E     ###         E        #####        E        E      #####         F ",
+    "                    ?M     #####            o o                        ?  ?                                 ",
+    "              o                            ?#                   o o                          o o o          ",
+    "         ?   ###          G         P     ###             PP   #####       G                #####         F ",
     "                                                                                                            ",
-    "____________________________________     ______________________     _______________________________________"],
+    "____________________________________    ______________________    _______________________________________"],
    ["                                                                                                            ",
     "                     o o                                    o o o                                           ",
-    "            ?       #####          ?  ?                    #####            ?                               ",
+    "            ?M      #####          ?  ?                    #####            ?                               ",
     "                                                  o o                                   o o o               ",
-    "      o          E        E       ###       E    ###    E         E  E     ###         #####      E        F",
+    "      o     P      G          P   ###      K     ###          PP      G     ###         #####               F",
     "     ###                                                                                                    ",
     "                                                                                                            ",
-    "_____________________     ____________________     _________________________     __________________________"],
+    "_____________________    ____________________    _________________________    __________________________"],
    ["                                                                                                            ",
-    "        o o o                        ?  ?  ?                     o o o o                                    ",
+    "        o o o                        ?  ?M ?                     o o o o                                    ",
     "       #######                                                  ########              ?  ?                  ",
-    "                        o o o                 E    E                          o o                           ",
-    "   ?        E          #######    E          ###          E  E               ####       E   E   E          F",
+    "                        o o o                      G                          o o                           ",
+    "   ?M   P     G    PP  #######     K         P    ###        G      PP      ####       K        PP         F",
     "                                                                                                            ",
-    "         E                                          E                                                       ",
-    "________________   ____________________   ______________     ___________________     ______________________"]];
+    "                                                                                                            ",
+    "________________   ____________________   ______________    ___________________    ______________________"]];
   function tileAt(g,tx,ty){ var row=g.map[ty]; if(!row) return ' '; return row.charAt(tx)||' '; }
-  function solidCh(c){ return c==='#'||c==='_'||c==='?'||c==='X'; }
+  function solidCh(c){ return c==='#'||c==='_'||c==='?'||c==='X'||c==='P'||c==='M'; }
   function solidAt(g,px,py){ var tx=Math.floor(px/TS), ty=Math.floor(py/TS); if(ty<0) return false; if(ty>=g.map.length) return false; return solidCh(tileAt(g,tx,ty)); }
   function setTile(g,tx,ty,ch){ var row=g.map[ty]; if(!row) return; g.map[ty]=row.substring(0,tx)+ch+row.substring(tx+1); }
   function buildStage(g,n){
@@ -839,24 +839,26 @@ window._eigoPetInit = function() {
     g.map=raw.slice(); g.rows=g.map.length; g.cols=Math.max.apply(null,g.map.map(function(r){ return r.length; }));
     g.map=g.map.map(function(r){ while(r.length<g.cols) r+=' '; return r; });
     g.levelW=g.cols*TS; g.enemies=[]; g.coins=[]; g.goal=null; g.pops=[];
+    g.items=[]; g.shells=[];
     for(var y=0;y<g.rows;y++) for(var x=0;x<g.cols;x++){ var c=tileAt(g,x,y);
-      if(c==='E'){ g.enemies.push({x:x*TS+2,y:y*TS+2,w:12,h:12,vx:-0.55,alive:true,sq:0}); setTile(g,x,y,' '); }
+      if(c==='G'||c==='E'){ g.enemies.push({kind:'goomba',x:x*TS+2,y:y*TS+3,w:13,h:13,vx:-0.55,alive:true,sq:0}); setTile(g,x,y,' '); }
+      else if(c==='K'){ g.enemies.push({kind:'koopa',x:x*TS+2,y:y*TS-3,w:13,h:19,vx:-0.45,alive:true,sq:0}); setTile(g,x,y,' '); }
       else if(c==='o'){ g.coins.push({x:x*TS+8,y:y*TS+8,got:false}); setTile(g,x,y,' '); }
       else if(c==='F'){ g.goal={x:x*TS,y:y*TS}; setTile(g,x,y,' '); } }
-    g.px=TS*1.5; g.py=g.rows*TS-TS*2-20; g.vx=0; g.vy=0; g.onGround=false; g.cam=0; g.cleared=false; g.face=1;
+    g.px=TS*1.5; g.py=g.rows*TS-TS*2-24; g.vx=0; g.vy=0; g.onGround=false; g.cam=0; g.cleared=false; g.face=1; g.flag=0;
   }
   function startMario(){
-    var s=gameSetup('だいぼうけん','◀▶で うごく／ジャンプで とぶ・ながおしで たかく！ てきは ふんで やっつけよう','ジャンプ');
+    var s=gameSetup('だいぼうけん','◀▶で うごく／ジャンプ ながおしで たかく！ てきは ふんで やっつけ、？ブロックから キノコで スーパーに！','ジャンプ');
     if(game) cancelAnimationFrame(game.raf);
     game={ mode:'mario',ctx:s.ctx,W:s.W,H:s.H,img:s.img,map:null,cell:s.cell,
       petW:20,petH:20,left:false,right:false,jump:false,jumpHeld:0,
-      hp:3,maxhp:3,inv:0,coinN:0,stage:0,maxStage:STAGES.length,
+      hp:3,maxhp:3,inv:0,coinN:0,stage:0,maxStage:STAGES.length,big:false,items:[],shells:[],flag:0,
       t:0,score:0,over:false,banner:0,bannerTxt:'',raf:0 };
     buildStage(game,0); loopMario();
   }
   function mvSet(k,v){ var g=game; if(!g||g.over||g.mode!=='mario') return;
     if(k==='L') g.left=v; else if(k==='R') g.right=v;
-    else if(k==='J'){ if(v&&g.onGround&&g.t>90){ g.vy=-7.6; g.onGround=false; g.jumpHeld=12; if(state.sound) tone(620,0,0.06,'square'); } if(!v) g.jumpHeld=0; g.jump=v; }
+    else if(k==='J'){ if(v&&g.onGround&&g.t>90){ g.vy=-7.2; g.onGround=false; g.jumpHeld=10; if(state.sound) tone(620,0,0.06,'square'); } if(!v) g.jumpHeld=0; g.jump=v; }
   }
   function marioClear(){ var g=game; if(g.cleared) return; g.cleared=true; g.score+=50+g.hp*10;
     if(state.sound){ tone(660,0,0.1); tone(880,0.1,0.12); tone(1180,0.22,0.16); }
@@ -864,17 +866,21 @@ window._eigoPetInit = function() {
     g.bannerTxt='ステージ '+(g.stage+1)+' クリア！'; g.banner=110;
     setTimeout(function(){ if(game!==g||g.over) return; g.stage++; buildStage(g,g.stage); if(g.hp<g.maxhp) g.hp++; },1100);
   }
-  function marioHurt(g){ if(g.inv>0) return; g.hp--; g.inv=80; if(state.sound) tone(180,0,0.14,'square');
+  function marioHurt(g){ if(g.inv>0) return;
+    if(g.big){ g.big=false; g.petH=20; g.py+=8; g.inv=90; if(state.sound) tone(300,0,0.12,'square'); return; } // スーパー→ちいさく（原作どおり1回耐える）
+    g.hp--; g.inv=80; if(state.sound) tone(180,0,0.14,'square');
     if(g.hp<=0){ endGame(false); return; } g.vy=-4; }
+  function goBig(g){ if(g.big) return; g.big=true; g.petH=28; g.py-=8; g.score+=20; gpop(g,g.px,g.py,'スーパー！'); if(state.sound){ tone(660,0,0.07); tone(880,0.07,0.09); } }
   function loopMario(){ var g=game; if(!g||g.over) return; g.t++;
+    if(g.cleared&&g.flag<30) g.flag++;                    // はたが するする おりる
     var counting=g.t<=90;
     if(!counting&&!g.cleared){
       // よこ移動
       var acc=g.left?-0.42:(g.right?0.42:0);
       if(acc!==0){ g.vx+=acc; g.face=acc<0?-1:1; } else { g.vx*=0.82; if(Math.abs(g.vx)<0.06) g.vx=0; }
-      if(g.vx>2.3) g.vx=2.3; if(g.vx<-2.3) g.vx=-2.3;
+      if(g.vx>2.6) g.vx=2.6; if(g.vx<-2.6) g.vx=-2.6;
       // ジャンプの ながおしで たかく
-      if(g.jump&&g.jumpHeld>0){ g.vy-=0.42; g.jumpHeld--; }
+      if(g.jump&&g.jumpHeld>0){ g.vy-=0.20; g.jumpHeld--; }
       g.vy+=0.46; if(g.vy>8) g.vy=8;
       // よこ判定
       var nx=g.px+g.vx, top=g.py+2, bot=g.py+g.petH-2;
@@ -888,11 +894,20 @@ window._eigoPetInit = function() {
       if(g.vy>0){ if(solidAt(g,lx,ny+g.petH)||solidAt(g,rx,ny+g.petH)){ ny=Math.floor((ny+g.petH)/TS)*TS-g.petH-0.01; g.vy=0; g.onGround=true; } }
       else if(g.vy<0){ if(solidAt(g,lx,ny)||solidAt(g,rx,ny)){
           var hy=Math.floor(ny/TS), hx=Math.floor((g.px+g.petW/2)/TS);
-          if(tileAt(g,hx,hy)==='?'){ setTile(g,hx,hy,'X'); g.coinN++; g.score+=10; gpop(g,hx*TS+6,hy*TS,'+10'); if(state.sound) tone(1046,0,0.08); }
+          var hc=tileAt(g,hx,hy);
+          if(hc==='M'){ setTile(g,hx,hy,'X'); g.items.push({kind:'mush',x:hx*TS+2,y:hy*TS-14,vx:0.7,vy:0}); if(state.sound) tone(700,0,0.1); }
+          else if(hc==='?'){ setTile(g,hx,hy,'X'); g.coinN++; g.score+=10; gpop(g,hx*TS+6,hy*TS,'+10'); if(state.sound) tone(1046,0,0.08); }
+          else if(hc==='#'&&g.big){ setTile(g,hx,hy,' '); g.score+=5; gpop(g,hx*TS+4,hy*TS,'+5'); if(state.sound) tone(240,0,0.07,'square'); }
           ny=(hy+1)*TS+0.01; g.vy=0; g.jumpHeld=0; } }
       g.py=ny;
       // あなに おちた
-      if(g.py>g.rows*TS+20){ g.px=Math.max(TS,g.px-60); g.py=0; g.vy=0; marioHurt(g); if(g.over) return; }
+      if(g.py>g.rows*TS+20){
+        var btx=Math.floor(g.px/TS);
+        while(btx>1&&!solidCh(tileAt(g,btx,g.rows-1))) btx--;                    // 地面のある 手前の列を さがす
+        btx=Math.max(1,btx-3);                                                    // ふちから 3タイル 手前に もどす（すぐ また 落ちないように）
+        while(btx>1&&!solidCh(tileAt(g,btx,g.rows-1))) btx--;
+        g.px=btx*TS; g.py=(g.rows-1)*TS-g.petH-2; g.vx=0; g.vy=0;
+        marioHurt(g); if(g.over) return; }
       if(g.inv>0) g.inv--;
       // てき
       g.enemies.forEach(function(e){ if(!e.alive){ e.sq++; return; }
@@ -900,17 +915,40 @@ window._eigoPetInit = function() {
         if(solidAt(g,e.x+(e.vx>0?e.w:0),e.y+e.h/2)) e.vx=-e.vx;                 // かべで はんてん
         if(!solidAt(g,e.x+e.w/2,e.y+e.h+2)) e.vx=-e.vx;                          // はしで はんてん
         if(e.x<0){ e.x=0; e.vx=Math.abs(e.vx); } });
+      // こうら（ノコノコを ふむと でる）：うごいて てきを なぎたおす
+      g.shells.forEach(function(sh){ if(sh.vx!==0){ sh.x+=sh.vx;
+          if(solidAt(g,sh.x+(sh.vx>0?14:0),sh.y+7)) sh.vx=-sh.vx;
+          g.enemies.forEach(function(e2){ if(e2.alive&&Math.abs(e2.x-sh.x)<14&&Math.abs(e2.y-sh.y)<16){ e2.alive=false; e2.sq=0; g.score+=20; gpop(g,e2.x,e2.y,'+20'); if(state.sound) tone(1000,0,0.05); } }); }
+        if(!solidAt(g,sh.x+7,sh.y+16)) sh.y+=2; });
+      g.shells=g.shells.filter(function(sh){ return sh.x>g.cam-60&&sh.x<g.cam+g.W+60; });
+      // アイテム（キノコ）：ころがって おちる
+      g.items.forEach(function(it){ it.vy+=0.4; if(it.vy>5) it.vy=5;
+        var nyI=it.y+it.vy; if(solidAt(g,it.x+7,nyI+14)){ nyI=Math.floor((nyI+14)/TS)*TS-14-0.01; it.vy=0; } it.y=nyI;
+        it.x+=it.vx; if(solidAt(g,it.x+(it.vx>0?14:0),it.y+7)) it.vx=-it.vx; });
+      for(var mi=g.items.length-1;mi>=0;mi--){ var it=g.items[mi];
+        if(g.px+3<it.x+14&&g.px+g.petW-3>it.x&&g.py+g.petH>it.y&&g.py<it.y+14){ g.items.splice(mi,1); goBig(g); } }
       // てきとの あたり
       for(var i=0;i<g.enemies.length;i++){ var e=g.enemies[i]; if(!e.alive) continue;
         if(g.px+3<e.x+e.w&&g.px+g.petW-3>e.x&&g.py+g.petH>e.y&&g.py<e.y+e.h){
-          if(g.vy>0&&g.py+g.petH-e.y<12){ e.alive=false; e.sq=0; g.vy=-5.6; g.score+=10; gpop(g,e.x,e.y,'+10'); if(state.sound) tone(900,0,0.06); } // ふんだ
+          if(g.vy>0&&g.py+g.petH-e.y<14){ e.alive=false; e.sq=0; g.vy=-5.6;
+            if(e.kind==='koopa'){ g.shells.push({x:e.x,y:e.y+e.h-16,vx:0}); g.score+=10; gpop(g,e.x,e.y,'+10'); } // ノコノコ→こうら
+            else { g.score+=10; gpop(g,e.x,e.y,'+10'); }
+            if(state.sound) tone(900,0,0.06); } // ふんだ
           else { marioHurt(g); if(g.over) return; } } }
       g.enemies=g.enemies.filter(function(e){ return e.alive||e.sq<26; });
+      for(var sj=0;sj<g.shells.length;sj++){ var sh=g.shells[sj];
+        if(g.px+3<sh.x+14&&g.px+g.petW-3>sh.x&&g.py+g.petH>sh.y&&g.py<sh.y+16){
+          if(sh.vx===0){ sh.vx=(g.px+g.petW/2<sh.x+7)?3.4:-3.4; g.score+=10; gpop(g,sh.x,sh.y,'ケリ+10'); if(state.sound) tone(760,0,0.06); } // とまっている こうらを ける
+          else if(g.vy>0&&g.py+g.petH-sh.y<14){ sh.vx=0; g.vy=-5; }              // うごく こうらを ふんで とめる
+          else { marioHurt(g); if(g.over) return; } } }
       // コイン
       g.coins.forEach(function(c){ if(c.got) return;
         if(Math.abs(c.x-(g.px+g.petW/2))<12&&Math.abs(c.y-(g.py+g.petH/2))<14){ c.got=true; g.coinN++; g.score+=5; gpop(g,c.x,c.y,'+5'); if(state.sound) tone(1200,0,0.06); } });
       // ゴール
-      if(g.goal&&g.px+g.petW>g.goal.x&&g.px<g.goal.x+14&&g.py+g.petH>g.goal.y-40) marioClear();
+      if(g.goal&&g.px+g.petW>g.goal.x&&g.px<g.goal.x+16&&g.py+g.petH>g.goal.y-70){
+        var hRatio=Math.max(0,Math.min(1,(g.goal.y-(g.py+g.petH))/60));           // たかい ところで つかむほど ボーナス
+        g.flagBonus=[10,20,40,60,100][Math.min(4,Math.floor(hRatio*5))];
+        g.score+=g.flagBonus; gpop(g,g.px,g.py,'はた+'+g.flagBonus); marioClear(); }
       // カメラ
       var want=g.px-g.W*0.38; g.cam+=(want-g.cam)*0.16;
       if(g.cam<0) g.cam=0; if(g.cam>g.levelW-g.W) g.cam=g.levelW-g.W;
@@ -932,23 +970,47 @@ window._eigoPetInit = function() {
       if(ch==='_'){ ctx.fillStyle='#6cc06c'; ctx.fillRect(dx,dy,TS,TS); ctx.fillStyle='#4a9e4a'; ctx.fillRect(dx,dy,TS,4); ctx.fillStyle='#8b5a2b'; ctx.fillRect(dx,dy+4,TS,TS-4); }
       else if(ch==='#'){ ctx.fillStyle='#c9793a'; ctx.fillRect(dx,dy,TS,TS); ctx.fillStyle='#a35d28'; ctx.fillRect(dx,dy+7,TS,2); ctx.fillRect(dx+7,dy,2,7); ctx.fillRect(dx+3,dy+9,2,7); }
       else if(ch==='?'){ ctx.fillStyle='#f6c445'; ctx.fillRect(dx,dy,TS,TS); ctx.fillStyle='#d99a1c'; ctx.fillRect(dx,dy,TS,2); ctx.fillRect(dx,dy+TS-2,TS,2); ctx.fillStyle='#7a4a10'; ctx.fillRect(dx+5,dy+4,6,2); ctx.fillRect(dx+9,dy+6,2,3); ctx.fillRect(dx+7,dy+9,3,2); ctx.fillRect(dx+7,dy+12,3,2); }
+      else if(ch==='M'){ ctx.fillStyle='#f6c445'; ctx.fillRect(dx,dy,TS,TS); ctx.fillStyle='#d99a1c'; ctx.fillRect(dx,dy,TS,2); ctx.fillRect(dx,dy+TS-2,TS,2); ctx.fillStyle='#7a4a10'; ctx.fillRect(dx+5,dy+4,6,2); ctx.fillRect(dx+9,dy+6,2,3); ctx.fillRect(dx+7,dy+9,3,2); ctx.fillRect(dx+7,dy+12,3,2); }
+      else if(ch==='P'){ ctx.fillStyle='#3fa34d'; ctx.fillRect(dx,dy,TS,TS); ctx.fillStyle='#2d7a38'; ctx.fillRect(dx,dy,3,TS); ctx.fillStyle='#6fd07f'; ctx.fillRect(dx+4,dy,3,TS);
+        var above=tileAt(g,tx,ty-1); if(above!=='P'){ ctx.fillStyle='#3fa34d'; ctx.fillRect(dx-2,dy,TS+4,5); ctx.fillStyle='#2d7a38'; ctx.fillRect(dx-2,dy,TS+4,2); ctx.fillStyle='#6fd07f'; ctx.fillRect(dx+2,dy+2,3,3); } }
       else if(ch==='X'){ ctx.fillStyle='#a3762f'; ctx.fillRect(dx,dy,TS,TS); ctx.fillStyle='#87611f'; ctx.fillRect(dx+2,dy+2,TS-4,TS-4); } }
     // コイン
     g.coins.forEach(function(co){ if(co.got) return; var dx=co.x-cam; if(dx<-12||dx>g.W+12) return;
       var w=Math.abs(Math.sin(g.t*0.09))*5+2; ctx.fillStyle='#f6c445'; ctx.fillRect(dx-w/2,co.y-7,w,14); ctx.fillStyle='#fde68a'; ctx.fillRect(dx-w/4,co.y-4,Math.max(1,w/2),8); });
     // ゴール旗
-    if(g.goal){ var gx=g.goal.x-cam; if(gx>-30&&gx<g.W+30){ ctx.fillStyle='#eeeeee'; ctx.fillRect(gx+5,g.goal.y-42,3,42); ctx.fillStyle='#ef4444'; ctx.fillRect(gx+8,g.goal.y-40,18,12); ctx.fillStyle='#f6c445'; ctx.fillRect(gx+3,g.goal.y-46,7,5); } }
+    if(g.goal){ var gx=g.goal.x-cam; if(gx>-40&&gx<g.W+40){
+      ctx.fillStyle='#cfd8dc'; ctx.fillRect(gx+5,g.goal.y-70,3,70);                 // ポール
+      ctx.fillStyle='#f6c445'; ctx.fillRect(gx+3,g.goal.y-74,7,5);                  // てっぺんの たま
+      var fy=g.cleared? Math.min(g.goal.y-14, g.goal.y-70+g.flag*2) : (g.goal.y-64);
+      ctx.fillStyle='#2e9e4f'; ctx.beginPath(); ctx.moveTo(gx+8,fy); ctx.lineTo(gx+24,fy+6); ctx.lineTo(gx+8,fy+12); ctx.closePath(); ctx.fill(); // はた
+      ctx.fillStyle='#9e9e9e'; ctx.fillRect(gx-2,g.goal.y-2,14,18); } }              // だい
     // てき
     g.enemies.forEach(function(e){ var dx=e.x-cam; if(dx<-20||dx>g.W+20) return;
-      if(!e.alive){ ctx.fillStyle='#8a5a4a'; ctx.fillRect(dx,e.y+e.h-4,e.w,4); return; }
-      ctx.fillStyle='#e2725b'; ctx.fillRect(dx,e.y,e.w,e.h);
-      ctx.fillStyle='#a8422f'; ctx.fillRect(dx,e.y+e.h-3,e.w,3);
-      ctx.fillStyle='#fff'; ctx.fillRect(dx+2,e.y+3,3,3); ctx.fillRect(dx+7,e.y+3,3,3);
-      ctx.fillStyle='#000'; ctx.fillRect(dx+3,e.y+4,1,1); ctx.fillRect(dx+8,e.y+4,1,1);
-      var st=(Math.floor(g.t/8)%2===0); ctx.fillStyle='#a8422f'; ctx.fillRect(dx+(st?-2:e.w),e.y+e.h-5,2,4); });
+      if(!e.alive){ ctx.fillStyle=e.kind==='koopa'?'#3fa34d':'#8a5a4a'; ctx.fillRect(dx,e.y+e.h-4,e.w,4); return; }
+      var st=(Math.floor(g.t/8)%2===0);
+      if(e.kind==='koopa'){ // ノコノコ：みどりの こうら＋あたま
+        ctx.fillStyle='#3fa34d'; ctx.fillRect(dx,e.y+6,e.w,e.h-6); ctx.fillStyle='#2d7a38'; ctx.fillRect(dx+2,e.y+9,e.w-4,3);
+        ctx.fillStyle='#f6e05e'; ctx.fillRect(dx+2,e.y,9,7); ctx.fillStyle='#000'; ctx.fillRect(dx+7,e.y+2,1,2);
+        ctx.fillStyle='#f6e05e'; ctx.fillRect(dx+(st?0:e.w-3),e.y+e.h-3,3,3);
+      } else { // クリボー：ちゃいろい きのこ形
+        ctx.fillStyle='#8a5a2b'; ctx.fillRect(dx,e.y+1,e.w,8); ctx.fillRect(dx+2,e.y,e.w-4,2);
+        ctx.fillStyle='#f0d9b5'; ctx.fillRect(dx+1,e.y+9,e.w-2,3);
+        ctx.fillStyle='#fff'; ctx.fillRect(dx+2,e.y+3,4,4); ctx.fillRect(dx+7,e.y+3,4,4);
+        ctx.fillStyle='#000'; ctx.fillRect(dx+4,e.y+4,2,2); ctx.fillRect(dx+8,e.y+4,2,2);
+        ctx.fillStyle='#5c3a19'; ctx.fillRect(dx+(st?-1:e.w-2),e.y+e.h-3,3,3); } });
+    // こうら
+    g.shells.forEach(function(sh){ var dx=sh.x-cam; if(dx<-20||dx>g.W+20) return;
+      ctx.fillStyle='#3fa34d'; ctx.fillRect(dx,sh.y,14,14); ctx.fillStyle='#2d7a38'; ctx.fillRect(dx+2,sh.y+4,10,3); ctx.fillRect(dx+2,sh.y+8,10,2);
+      ctx.fillStyle='#f6e05e'; ctx.fillRect(dx+1,sh.y+11,12,3); });
+    // キノコ
+    g.items.forEach(function(it){ var dx=it.x-cam; if(dx<-20||dx>g.W+20) return;
+      ctx.fillStyle='#e2444d'; ctx.fillRect(dx,it.y,14,8); ctx.fillRect(dx+2,it.y-2,10,2);
+      ctx.fillStyle='#fff'; ctx.fillRect(dx+2,it.y+1,4,4); ctx.fillRect(dx+8,it.y+1,4,4); ctx.fillRect(dx,it.y+8,14,6);
+      ctx.fillStyle='#000'; ctx.fillRect(dx+3,it.y+10,2,2); ctx.fillRect(dx+9,it.y+10,2,2); });
     // プレイヤー
-    if(!(g.inv>0&&Math.floor(g.t/4)%2===0)){ var sq={img:g.img,map:g.map0,cell:g.cell,petW:g.petW,petH:g.petH};
-      drawPetSprite(ctx,{img:g.img,map:null,cell:g.cell,petW:g.petW,petH:g.petH},Math.round(g.px-cam),Math.round(g.py)); }
+    if(!(g.inv>0&&Math.floor(g.t/4)%2===0)){
+      drawPetSprite(ctx,{img:g.img,map:null,cell:g.cell,petW:g.big?26:g.petW,petH:g.petH},Math.round(g.px-cam),Math.round(g.py));
+      if(g.big){ ctx.fillStyle='#f6c445'; ctx.fillRect(Math.round(g.px-cam)+2,Math.round(g.py)-5,4,3); ctx.fillRect(Math.round(g.px-cam)+20,Math.round(g.py)-5,4,3); } }
     // HUD
     for(var i=0;i<g.maxhp;i++){ ctx.fillStyle=i<g.hp?'#ef4444':'rgba(0,0,0,.2)'; heartMark(ctx,12+i*13,14,4); }
     ctx.fillStyle='rgba(0,0,0,.45)'; ctx.fillRect(g.W-92,7,80,12);
