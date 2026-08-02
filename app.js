@@ -649,11 +649,10 @@ window._eigoPetInit = function() {
   document.getElementById('bFeed').onclick=function(){ if(state.lv<2){ bubble("タマゴは まだ たべられないよ"); return; } if(state.hunger>=99){ bubble("おなか いっぱい！"); return; } if(state.food<=0){ bubble("べんきょうして えさをあつめよう"); return; } state.food--; state.hunger=Math.min(100,state.hunger+20); if(state.hunger>0) state.starveSince=null; state.happy=Math.min(100,state.happy+5); state.weight+=2; addXp(5); bubble("もぐもぐ"); cheer(); save(); render(); };
   document.getElementById('bSnack').onclick=function(){ if(state.lv<2){ bubble("タマゴは まだ たべられないよ"); return; } if(state.happy>=99.5){ /* 見た目が まんたん(四捨五入で100)の あいだは あげられない */ bubble("ごきげん まんたん！ おかしは また こんど ね"); return; } state.hunger=Math.min(100,state.hunger+3); if(state.hunger>0) state.starveSince=null; state.happy=Math.min(100,state.happy+10); state.weight+=4; bubble("おいしい！でも たいじゅう++"); cheer(); save(); render(); };
   function makeDirty(){ if(!state.dirty){ state.dirty=true; state.dirtySince=Date.now(); } }
-  document.getElementById('bPlay').onclick=function(){ if(state.food<=0){ bubble("べんきょうして えさを あつめよう"); return; } show('gameSelect'); };
+  document.getElementById('bPlay').onclick=function(){ if(state.lv<2){ bubble("タマゴは まだ あそべないよ"); return; } if(state.food<=0){ bubble("べんきょうして えさを あつめよう"); return; } consumePlay(); startKirby(); };
   function consumePlay(){ state.food--; state.weight=Math.max(5,state.weight-1); state.hunger=Math.max(0,state.hunger-4); state.gamesPlayed=(state.gamesPlayed||0)+1; state.lastPlay=Date.now(); state.happy=Math.min(100,state.happy+6); state.discipline=Math.min(100,state.discipline+3); save(); } // あそぶと なつく＝すなおさ+3 // あそぶと 運動：体重-2・おなか-4
   document.getElementById('backSelect').onclick=function(){ show('home'); render(); };
-  document.getElementById('selJump').onclick=function(){ if(state.food<=0){ bubble('えさが たりない'); return; } consumePlay(); startGame(); };
-  document.getElementById('selSea').onclick=function(){ if(state.food<=0){ bubble('えさが たりない'); return; } consumePlay(); startSeaGame(); };
+  var selK=document.getElementById('selJump'); if(selK) selK.onclick=function(){ if(state.food<=0){ bubble('えさが たりない'); return; } consumePlay(); startKirby(); };
   // しつけは「わがまま・悪さ」のタイミングだけ有効。すなおさが上がる。ミスると ごきげんが さがる
   document.getElementById('bScold').onclick=function(){ if(state.wagamama){ state.wagamama=false; state.discipline=Math.min(100,state.discipline+12); clearTimeout(wagaTimer); bubble("いいこ だね！ すなおさ+"); cheer(); } else { state.happy=Math.max(0,state.happy-8); bubble("いまは しからないで… ごきげん-"); } save(); render(); };
   var flushing=false;
@@ -800,98 +799,97 @@ window._eigoPetInit = function() {
   function drawPetCanvas(ctx,map,ox,oy,cell){ for(var y=0;y<map.length;y++) for(var x=0;x<map[y].length;x++){ var c=map[y][x]; if(PAL[c]){ ctx.fillStyle=PAL[c]; ctx.fillRect(ox+x*cell,oy+y*cell,cell,cell); } } }
   function drawPetSprite(ctx,g,ox,oy,squash){ if(g.img&&g.img.complete&&g.img.naturalWidth){ ctx.imageSmoothingEnabled=false; if(squash){ ctx.drawImage(g.img,ox-2,oy+Math.round(g.petH*0.35),Math.round(g.petW*1.12),Math.round(g.petH*0.65)); } else { ctx.drawImage(g.img,ox,oy,g.petW,g.petH); } } else if(g.map){ drawPetCanvas(ctx,g.map,ox,oy+(squash?Math.round(g.petH*0.3):0),g.cell); } } // squash=しゃがみ（ひらたく）
   function gameSetup(title,instr,btn){ show('game'); document.getElementById('gover').style.display='none'; document.getElementById('gTitle').textContent=title; document.getElementById('gInstr').textContent=instr; document.getElementById('gJump').textContent=btn; var cv=document.getElementById('gcanvas'); var info=petInfo(); var img=info.img?getImg(info.img):null; var map=petMap(),cell=3; var pw=img?40:Math.max.apply(null,map.map(function(r){ return r.length; }))*cell, ph=img?40:map.length*cell; return { cv:cv,ctx:cv.getContext('2d'),W:cv.width,H:cv.height,map:map,cell:cell,img:img,petW:pw,petH:ph }; }
-  function startGame(){ var s=gameSetup('ジャンプゲーム','ながおしで 大ジャンプ・みじかく おすと 小ジャンプ！ ひくい とりは しゃがんで よけよう','ジャンプ'); var groundY=s.H-26,petW=s.petW,petH=s.petH; if(game) cancelAnimationFrame(game.raf); game={ mode:'jump',ctx:s.ctx,W:s.W,H:s.H,groundY:groundY,map:s.map,cell:s.cell,img:s.img,petW:petW,petH:petH,px:34,py:groundY-petH,vy:0,onGround:true,jumps:0,duck:false,night:false,obs:[],items:[],pops:[],speed:2.4,t:0,score:0,over:false,raf:0 }; var gd=document.getElementById('gDuck'); if(gd) gd.style.display='block'; loopGame(); }
-  function jump(){ var g=game; if(g&&!g.over&&!g.duck&&g.jumps<2){ g.vy=-10.4; g.jumps++; g.onGround=false; if(state.sound) tone(620,0,0.05,'square'); } } // しゃがみ中は とべない
-  function startSeaGame(){ var s=gameSetup('うみゲーム','タップで うく！ いわの あいだを とおろう','うく'); var petW=s.petW,petH=s.petH; if(game) cancelAnimationFrame(game.raf); game={ mode:'sea',ctx:s.ctx,W:s.W,H:s.H,map:s.map,cell:s.cell,img:s.img,petW:petW,petH:petH,px:40,py:Math.round(s.H/2-petH/2),vy:0,obs:[],items:[],pops:[],gap:Math.round(petH*2.8),speed:2.2,t:0,score:0,over:false,raf:0 }; var gd=document.getElementById('gDuck'); if(gd) gd.style.display='none'; loopSea(); }
   function gpop(g,x,y,txt){ (g.pops=g.pops||[]).push({x:x,y:y,t:0,txt:txt}); }
   function drawPops(g,ctx){ if(!g.pops||!g.pops.length) return; g.pops.forEach(function(p){ p.t++; p.y-=0.6; }); g.pops=g.pops.filter(function(p){ return p.t<45; }); ctx.font='bold 11px sans-serif'; g.pops.forEach(function(p){ ctx.fillStyle='rgba(234,88,12,'+(1-p.t/45).toFixed(2)+')'; ctx.fillText(p.txt,p.x,p.y); }); }
-  function floatUp(){ if(game&&!game.over&&game.mode==='sea'){ game.vy=-3.6; if(state.sound) tone(500,0,0.05,'square'); } }
-  function loopSea(){ var g=game; if(!g||g.over) return; g.t++; g.speed+=0.0012;
-    if(g.t>90 && (g.obs.length===0||(g.W-g.obs[g.obs.length-1].x)>(155+Math.random()*70))){ var gw=16+Math.floor(Math.random()*6); var og=Math.max(Math.round(g.petH*2.0), g.gap-Math.floor(g.t/150)); g.gateN=(g.gateN||0)+1; var gy=(g.gateN<=3)?Math.round((g.H-og)/2+(Math.random()*30-15)):(24+Math.floor(Math.random()*Math.max(1,g.H-og-48))); var nob={x:g.W,w:gw,gy:gy,og:og}; if(g.gateN>4&&Math.random()<0.5){ nob.dv=(Math.random()<0.5?-1:1)*(0.15+Math.random()*0.15); } g.obs.push(nob); if(Math.random()<0.75){ g.items.push({x:g.W+78+Math.random()*44,y:16+Math.random()*(g.H-40)}); } } // 最初の3枚は 中央よりで やさしく。5枚目からは うごく岩も。あいだに 真珠
-    g.obs.forEach(function(o){ o.x-=g.speed; if(o.dv){ o.gy+=o.dv; var gp0=o.og||g.gap; if(o.gy<10||o.gy>g.H-gp0-10) o.dv=-o.dv; } }); g.obs=g.obs.filter(function(o){ return o.x+o.w>-4; }); // うごく いわ
-    g.items.forEach(function(it){ it.x-=g.speed; }); g.items=g.items.filter(function(it){ return it.x>-10&&!it.got; });
-    // フラッピー系の ふんわり物理：おちるのは ゆっくり、さいこう速度つき
-    g.vy+=0.22; if(g.vy>3.6) g.vy=3.6; g.py+=g.vy;
-    if(g.py<0){ g.py=0; g.vy=0; } if(g.py+g.petH>g.H){ g.py=g.H-g.petH; g.vy=0; } // 上下の はしでは しなない（いわ だけが てき）
-    var pl=g.px+5,pr=g.px+g.petW-5,pt=g.py+3,pb=g.py+g.petH-3;
-    for(var oi=0;oi<g.obs.length;oi++){ var o=g.obs[oi]; var gp=o.og||g.gap;
-      if(pl<o.x+o.w&&pr>o.x){ if(pt<o.gy||pb>o.gy+gp){ endGame(); return; } }
-      if(!o.passed && o.x+o.w<g.px){ o.passed=true; g.score+=5; gpop(g,o.x+o.w,o.gy+((o.og||g.gap)/2),'+5'); if(state.sound) tone(880,0,0.07); } // いわを 通過で +5
+  function heartMark(ctx,x,y,r){ ctx.fillRect(x-r,y-r+1,r,r); ctx.fillRect(x,y-r+1,r,r); ctx.fillRect(x-r+1,y,2*r-2,r); ctx.fillRect(x-r+3,y+r-1,2*r-6,2); }
+  // ===== カービィ風ゲーム：ふわふわ とんで、てきを すいこんで はく =====
+  function startKirby(){
+    var s=gameSetup('ふわふわ アドベンチャー','ボタン ながおしで ふわふわ とぶ／「すいこむ」で てきを パクッ→もういちどで ほしを ペッ！','とぶ');
+    if(game) cancelAnimationFrame(game.raf);
+    var groundY=s.H-18, pw=Math.min(28,s.petW), ph=Math.min(28,s.petH);
+    var gd=document.getElementById('gDuck'); if(gd){ gd.style.display='block'; gd.textContent='すいこむ'; }
+    var gj=document.getElementById('gJump'); if(gj) gj.textContent='とぶ（おしっぱ）';
+    game={ mode:'kirby',ctx:s.ctx,W:s.W,H:s.H,groundY:groundY,img:s.img,map:s.map,cell:s.cell,petW:pw,petH:ph,
+      px:56,py:groundY-ph,vy:0,hold:false,mouth:false,inhaleT:0,face:1,
+      hp:5,maxhp:5,inv:0, enemies:[],stars:[],items:[],pops:[],deco:{cl:[]},
+      scroll:1.7,dist:0,goalDist:2000,stage:1,maxStage:3,door:null,
+      t:0,score:0,over:false,cleared:false,banner:0,bannerTxt:'',raf:0 };
+    loopKirby();
+  }
+  function kbHold(v){ var g=game; if(g&&!g.over&&g.mode==='kirby') g.hold=v; }
+  function kbInhale(){ var g=game; if(!g||g.over||g.mode!=='kirby'||g.t<=90) return;
+    if(g.mouth){ g.stars.push({x:g.px+g.petW,y:g.py+g.petH/2-4,vx:5.4}); g.mouth=false; if(state.sound) tone(880,0,0.06); }
+    else { g.inhaleT=14; var cx0=g.px+g.petW, cx1=cx0+48, cy=g.py+g.petH/2;
+      for(var i=0;i<g.enemies.length;i++){ var e=g.enemies[i]; if(e.x>cx0-8&&e.x<cx1&&Math.abs(e.y-cy)<24){ g.enemies.splice(i,1); g.mouth=true; g.score+=5; gpop(g,e.x,e.y,'+5'); if(state.sound) tone(520,0,0.06); return; } }
+      if(state.sound) tone(360,0,0.05); }
+  }
+  function clearStage(){ var g=game; if(g.cleared) return; g.cleared=true; g.score+=30+g.hp*4;
+    if(state.sound){ tone(660,0,0.1); tone(880,0.1,0.12); tone(1180,0.22,0.14); }
+    if(g.stage>=g.maxStage){ setTimeout(function(){ if(game===g&&!g.over) endGame(true); },700); return; }
+    g.bannerTxt='ステージ '+g.stage+' クリア！'; g.banner=100;
+    setTimeout(function(){ if(game!==g||g.over) return; g.stage++; g.dist=0; g.goalDist+=300; g.scroll+=0.35; g.door=null; g.cleared=false; g.enemies=[]; g.items=[]; g.stars=[]; g.mouth=false; if(g.hp<g.maxhp) g.hp++; g.px=56; g.py=g.groundY-g.petH; g.vy=0; },1000);
+  }
+  function loopKirby(){ var g=game; if(!g||g.over) return; g.t++;
+    var counting=g.t<=90;
+    if(!counting){
+      if(g.hold){ g.vy+=-0.42; if(g.vy<-2.7) g.vy=-2.7; } else { g.vy+=0.34; if(g.vy>3.9) g.vy=3.9; }
+      g.py+=g.vy; if(g.py<2){ g.py=2; g.vy=0; } if(g.py>g.groundY-g.petH){ g.py=g.groundY-g.petH; g.vy=0; }
+      if(g.inhaleT>0) g.inhaleT--; if(g.inv>0) g.inv--;
+      if(!g.cleared) g.dist+=g.scroll;
+      if(!g.door&&g.dist<g.goalDist&&g.t%Math.max(34,80-g.stage*9)===0){ var fly=Math.random()<0.45, ey=fly?(20+Math.random()*(g.groundY-70)):(g.groundY-16); g.enemies.push({x:g.W+12,y:ey,base:ey,w:16,h:16,fly:fly,ph:Math.random()*6,spd:0.3+Math.random()*0.5+g.stage*0.12}); }
+      if(!g.door&&g.t%150===40){ g.items.push({x:g.W+12,y:24+Math.random()*(g.groundY-56),kind:Math.random()<0.25?'heart':'fruit'}); }
+      if(!g.door&&g.dist>=g.goalDist){ g.door={x:g.W+24,y:g.groundY-40}; }
+      g.enemies.forEach(function(e){ e.x-=g.scroll+e.spd; if(e.fly) e.y=e.base+Math.sin((g.t+e.ph*10)*0.06)*12; });
+      g.enemies=g.enemies.filter(function(e){ return e.x>-20; });
+      g.items.forEach(function(it){ it.x-=g.scroll; }); g.items=g.items.filter(function(it){ return it.x>-16&&!it.got; });
+      g.stars.forEach(function(st){ st.x+=st.vx; }); g.stars=g.stars.filter(function(st){ return st.x<g.W+20; });
+      if(g.door&&!g.cleared){ g.door.x-=g.scroll; if(g.door.x<=g.px+6) clearStage(); }
+      for(var si=0;si<g.stars.length;si++){ var st=g.stars[si]; for(var ei=g.enemies.length-1;ei>=0;ei--){ var e=g.enemies[ei]; if(Math.abs(e.x-st.x)<12&&Math.abs(e.y-st.y)<14){ g.enemies.splice(ei,1); g.score+=5; gpop(g,e.x,e.y,'+5'); if(state.sound) tone(700,0,0.05); g.stars.splice(si,1); si--; break; } } }
+      if(g.inv<=0){ var pl=g.px+4,pr=g.px+g.petW-4,pt=g.py+4,pb=g.py+g.petH-4;
+        for(var k=0;k<g.enemies.length;k++){ var e2=g.enemies[k]; if(pl<e2.x+e2.w/2&&pr>e2.x-e2.w/2&&pt<e2.y+e2.h/2&&pb>e2.y-e2.h/2){ g.hp--; g.inv=72; if(state.sound) tone(180,0,0.13,'square'); g.enemies.splice(k,1); if(g.hp<=0){ endGame(false); return; } break; } } }
+      for(var m=g.items.length-1;m>=0;m--){ var it=g.items[m]; if(Math.abs(it.x-(g.px+g.petW/2))<15&&Math.abs(it.y-(g.py+g.petH/2))<17){ it.got=true; if(it.kind==='heart'){ if(g.hp<g.maxhp) g.hp++; gpop(g,it.x,it.y,'♥'); if(state.sound) tone(1046,0,0.08); } else { g.score+=3; gpop(g,it.x,it.y,'+3'); if(state.sound) tone(880,0,0.05); } } }
     }
-    g.items.forEach(function(it){ if(!it.got && pl<it.x+7&&pr>it.x && pt<it.y+7&&pb>it.y){ it.got=true; g.score+=5; gpop(g,it.x,it.y,'+5'); sfx('correct'); } }); // 真珠ゲット
-    var ctx=g.ctx; ctx.fillStyle='#5fb0e8'; ctx.fillRect(0,0,g.W,g.H);
-    // 背景の さかな と あわ
-    if(!g.deco){ g.deco={fish:[],bub:[]}; }
-    if(g.t%160===0) g.deco.fish.push({x:g.W+10,y:20+Math.random()*(g.H-60),v:0.8+Math.random()*0.7});
-    if(g.t%22===0) g.deco.bub.push({x:10+Math.random()*(g.W-20),y:g.H,v:0.5+Math.random()*0.6});
-    ctx.fillStyle='#8fd0f4';
-    g.deco.fish.forEach(function(f){ f.x-=f.v; ctx.fillRect(f.x,f.y,10,5); ctx.fillRect(f.x+10,f.y+1,3,3); });
-    g.deco.fish=g.deco.fish.filter(function(f){ return f.x>-16; });
-    ctx.fillStyle='#cfeafd';
-    g.deco.bub.forEach(function(bb){ bb.y-=bb.v; ctx.fillRect(bb.x,bb.y,3,3); });
-    g.deco.bub=g.deco.bub.filter(function(bb){ return bb.y>-4; });
-    ctx.fillStyle='#bfe3f7'; ctx.fillRect(8,14,16,3); ctx.fillRect(g.W-60,28,16,3); ctx.fillRect(g.W-120,10,16,3);
-    g.obs.forEach(function(o){ var gp=o.og||g.gap; ctx.fillStyle='#3b8a5a'; ctx.fillRect(o.x,0,o.w,o.gy); ctx.fillRect(o.x,o.gy+gp,o.w,g.H-(o.gy+gp)); ctx.fillStyle='#2e6e47'; ctx.fillRect(o.x,o.gy-3,o.w,3); ctx.fillRect(o.x,o.gy+gp,o.w,3); });
-    g.items.forEach(function(it){ ctx.fillStyle='#ffffff'; ctx.fillRect(it.x,it.y,7,7); ctx.fillStyle='#ffd9ec'; ctx.fillRect(it.x+1,it.y+1,2,2); }); // 真珠
-    if(g.t<=92){ ctx.font='bold 44px sans-serif'; ctx.fillStyle='#ffffff'; ctx.fillText(String(3-Math.floor(g.t/31)),g.W/2-13,g.H/2+15); } // 3・2・1
+    drawKirby(g,counting);
+    document.getElementById('gscore').textContent=g.score;
+    g.raf=requestAnimationFrame(loopKirby);
+  }
+  function drawKirby(g,counting){ var ctx=g.ctx;
+    ctx.fillStyle=['#bfe3ff','#ffe1c4','#e0d0ff'][(g.stage-1)%3]; ctx.fillRect(0,0,g.W,g.H);
+    if(g.t%150===0) g.deco.cl.push({x:g.W+10,y:10+Math.random()*40});
+    ctx.fillStyle='rgba(255,255,255,.7)'; g.deco.cl.forEach(function(c){ c.x-=g.scroll*0.3; ctx.fillRect(c.x,c.y,26,7); ctx.fillRect(c.x+6,c.y-4,14,5); }); g.deco.cl=g.deco.cl.filter(function(c){ return c.x>-30; });
+    ctx.fillStyle='#6cc06c'; ctx.fillRect(0,g.groundY,g.W,g.H-g.groundY); ctx.fillStyle='#4a9e4a'; ctx.fillRect(0,g.groundY,g.W,3);
+    var prog=Math.min(1,g.dist/g.goalDist); ctx.fillStyle='rgba(0,0,0,.15)'; ctx.fillRect(g.W-96,9,84,6); ctx.fillStyle='#ef7d3a'; ctx.fillRect(g.W-96,9,84*prog,6);
+    for(var i=0;i<g.maxhp;i++){ ctx.fillStyle=i<g.hp?'#ef4444':'rgba(0,0,0,.15)'; heartMark(ctx,12+i*13,16,4); }
+    if(g.door){ ctx.fillStyle='#7a4a24'; ctx.fillRect(g.door.x,g.door.y,20,40); ctx.fillStyle='#c98a4b'; ctx.fillRect(g.door.x+3,g.door.y+3,14,34); ctx.fillStyle='#f6c445'; ctx.fillRect(g.door.x+13,g.door.y+21,3,3); }
+    g.items.forEach(function(it){ if(it.kind==='heart'){ ctx.fillStyle='#ff6b8a'; heartMark(ctx,it.x,it.y,5); } else { ctx.fillStyle='#f6c445'; ctx.fillRect(it.x-4,it.y-4,8,8); ctx.fillStyle='#e0902a'; ctx.fillRect(it.x-1,it.y-6,2,3); } });
+    g.enemies.forEach(function(e){ ctx.fillStyle=e.fly?'#a06cd6':'#e2725b'; ctx.fillRect(e.x-e.w/2,e.y-e.h/2,e.w,e.h); ctx.fillStyle='#fff'; ctx.fillRect(e.x-4,e.y-3,3,3); ctx.fillRect(e.x+1,e.y-3,3,3); ctx.fillStyle='#000'; ctx.fillRect(e.x-3,e.y-2,1,1); ctx.fillRect(e.x+2,e.y-2,1,1);
+      if(e.fly){ var w=(Math.floor(g.t/6)%2===0); ctx.fillStyle='#7c4fd0'; if(w){ ctx.fillRect(e.x-e.w/2-3,e.y-4,3,3); ctx.fillRect(e.x+e.w/2,e.y-4,3,3); } else { ctx.fillRect(e.x-e.w/2-3,e.y+1,3,3); ctx.fillRect(e.x+e.w/2,e.y+1,3,3); } } });
+    if(g.inhaleT>0){ ctx.fillStyle='rgba(255,255,255,.5)'; ctx.beginPath(); ctx.moveTo(g.px+g.petW,g.py+g.petH/2); ctx.lineTo(g.px+g.petW+48,g.py-6); ctx.lineTo(g.px+g.petW+48,g.py+g.petH+6); ctx.closePath(); ctx.fill(); }
+    ctx.fillStyle='#ffe14d'; g.stars.forEach(function(st){ ctx.fillRect(st.x-1,st.y-5,3,11); ctx.fillRect(st.x-5,st.y-1,11,3); });
+    if(!(g.inv>0&&Math.floor(g.t/4)%2===0)) drawPetSprite(ctx,g,g.px,Math.round(g.py));
+    if(g.mouth){ ctx.fillStyle='#fff'; ctx.fillRect(g.px+g.petW-7,g.py+g.petH-9,7,7); ctx.fillStyle='#f6c445'; ctx.fillRect(g.px+g.petW-6,g.py+g.petH-8,5,5); }
     drawPops(g,ctx);
-    drawPetSprite(ctx,g,g.px,Math.round(g.py)); document.getElementById('gscore').textContent=g.score; g.raf=requestAnimationFrame(loopSea); }
-  function gameInput(){ if(!game||game.over) return; if(game.mode==='sea') floatUp(); else jump(); }
-  function gameRelease(){ var g=game; if(g&&!g.over&&g.mode!=='sea'&&g.vy<-4) g.vy=-4; } // はやく はなすと 小ジャンプ（恐竜ゲーム風の可変ジャンプ）
-  function loopGame(){ var g=game; if(!g||g.over) return; g.t++; g.speed+=0.0018; // だんだん はやく
-    if(g.score>0 && g.score%50===0 && g.mile!==g.score){ g.mile=g.score; g.speed+=0.25; g.night=!g.night; sfx('unlock'); } // 50点ごとに スピードアップ＆昼⇄夜
-    if(g.t>90 && (g.obs.length===0||(g.W-g.obs[g.obs.length-1].x)>(Math.max(100,150-g.t*0.02)+Math.random()*110))){ // かんかくも だんだん せまく
-      var r0=Math.random();
-      if(g.t>250 && r0<0.2){ g.obs.push({x:g.W,w:16,h:12,fly:true}); } // たかい とり：ジャンプすると あぶない
-      else if(g.t>450 && r0<0.36){ g.obs.push({x:g.W,w:16,h:10,low:true}); } // ひくい とり：しゃがむか 大ジャンプで よける
-      else {
-        g.obs.push({x:g.W,w:14+Math.floor(Math.random()*8),h:18+Math.floor(Math.random()*(22+Math.min(16,g.t/240)))}); // だんだん たかく
-        if(g.t>400 && Math.random()<0.3){ g.obs.push({x:g.W+22+Math.random()*10,w:12+Math.floor(Math.random()*6),h:16+Math.floor(Math.random()*14)}); } // サボテンの むれ（恐竜ゲーム風）
-      }
-    }
-    if(g.t>140 && g.t%160===0){ g.items.push({x:g.W,y:g.groundY-g.petH-(22+Math.random()*36)}); } // ⭐ジャンプで あつめる ほし
-    g.obs.forEach(function(o){ o.x-=g.speed; }); g.obs=g.obs.filter(function(o){ return o.x+o.w>-4; });
-    var prevFeet=g.py+g.petH; g.vy+=0.7; g.py+=g.vy; g.onGround=false; // キビキビした重力（ふわふわ滞空を短く）
-    if(g.py>=g.groundY-g.petH){ g.py=g.groundY-g.petH; g.vy=0; g.onGround=true; g.jumps=0; }
-    var pl=g.px+5,pr=g.px+g.petW-5;
-    for(var oi=0;oi<g.obs.length;oi++){ var o=g.obs[oi]; var ol=o.x,orr=o.x+o.w;
-      if(!o.passed && orr<pl){ o.passed=true; g.score+=5; gpop(g,g.px+g.petW+2,g.py-4,'+5'); if(state.sound) tone(880,0,0.07); } // よけたら +5
-      if(o.low){ var lbT=g.groundY-g.petH+2, lbB=lbT+o.h; var petTop=(g.duck&&g.onGround)?(g.py+g.petH*0.45):(g.py+3); if(pl<orr&&pr>ol && petTop<lbB && g.py+g.petH>lbT){ endGame(); return; } continue; } // ひくい とり：しゃがめば あたまの上を とんでいく
-      if(o.fly){ var fb=g.groundY-g.petH-8, ft=fb-o.h; if(pl<orr&&pr>ol && g.py<fb && g.py+g.petH>ft && g.py+4<fb){ endGame(); return; } continue; } // ジャンプ中だけ あたる
-      var top=g.groundY-o.h;
-      if(pl<orr&&pr>ol){ if(g.vy>=0&&prevFeet<=top+6&&g.py+g.petH>=top){ g.py=top-g.petH; g.vy=0; g.onGround=true; g.jumps=0; } else if(g.py+g.petH>top){ endGame(); return; } } }
-    g.items.forEach(function(it){ it.x-=g.speed; }); g.items=g.items.filter(function(it){ return it.x>-10&&!it.got; });
-    var pt2=g.py+2,pb2=g.py+g.petH;
-    g.items.forEach(function(it){ if(!it.got && pl<it.x+9&&pr>it.x && pt2<it.y+9&&pb2>it.y){ it.got=true; g.score+=5; gpop(g,it.x,it.y,'+5'); sfx('correct'); } }); // ⭐ゲット
-    var ctx=g.ctx; ctx.clearRect(0,0,g.W,g.H);
-    // 昼⇄夜パレット（50点ごとに 切りかわる・恐竜ゲーム風）
-    var pal=g.night?{cloud:'#303a5c',ground:'#3a4056',gline:'#9aa2bd',stone:'#5a6180',txt:'#f4f6ff'}:{cloud:'#efe7d3',ground:'#e0d3b0',gline:'#4a3526',stone:'#c8b790',txt:'#4a3526'};
-    if(g.night){ ctx.fillStyle='#1d2438'; ctx.fillRect(0,0,g.W,g.H); ctx.fillStyle='#cdd6f4'; ctx.fillRect(30,18,2,2); ctx.fillRect(90,40,2,2); ctx.fillRect(150,12,2,2); ctx.fillRect(210,30,2,2); ctx.fillRect(280,20,2,2); ctx.fillRect(60,55,2,2); ctx.fillStyle='#e8ecff'; ctx.fillRect(300,10,8,8); } // よる：ほし と つき
-    if(!g.deco){ g.deco={cl:[],st:[]}; }
-    if(g.t%140===0) g.deco.cl.push({x:g.W+10,y:8+Math.random()*50});
-    if(g.t%30===0) g.deco.st.push({x:g.W,y:g.groundY+6+Math.random()*12});
-    ctx.fillStyle=pal.cloud; g.deco.cl.forEach(function(c){ c.x-=g.speed*0.35; ctx.fillRect(c.x,c.y,26,7); ctx.fillRect(c.x+5,c.y-4,14,5); }); g.deco.cl=g.deco.cl.filter(function(c){ return c.x>-30; });
-    ctx.fillStyle=pal.ground; ctx.fillRect(0,g.groundY,g.W,g.H-g.groundY); ctx.fillStyle=pal.gline; ctx.fillRect(0,g.groundY,g.W,2);
-    ctx.fillStyle=pal.stone; g.deco.st.forEach(function(s2){ s2.x-=g.speed; ctx.fillRect(s2.x,s2.y,5,2); }); g.deco.st=g.deco.st.filter(function(s2){ return s2.x>-6; });
-    g.obs.forEach(function(o){ if(o.fly){ var fb=g.groundY-g.petH-8, ft=fb-o.h; ctx.fillStyle='#5b6470'; ctx.fillRect(o.x,ft,o.w,o.h); var wing=(Math.floor(g.t/12)%2===0); ctx.fillStyle='#2f3640'; if(wing){ ctx.fillRect(o.x+2,ft-4,5,4); ctx.fillRect(o.x+9,ft-4,5,4); } else { ctx.fillRect(o.x+2,ft+o.h,5,4); ctx.fillRect(o.x+9,ft+o.h,5,4); } } // はばたく とり
-      else if(o.low){ var lbT=g.groundY-g.petH+2; ctx.fillStyle='#7c5cd6'; ctx.fillRect(o.x,lbT,o.w,o.h); var w2=(Math.floor(g.t/12)%2===0); ctx.fillStyle='#5a3fb0'; if(w2){ ctx.fillRect(o.x+2,lbT-4,5,4); ctx.fillRect(o.x+9,lbT-4,5,4); } else { ctx.fillRect(o.x+2,lbT+o.h,5,4); ctx.fillRect(o.x+9,lbT+o.h,5,4); } } // ひくい とり（むらさき＝しゃがみボタンの いろ）
-      else { ctx.fillStyle='#2f7d4f'; ctx.fillRect(o.x,g.groundY-o.h,o.w,o.h); ctx.fillStyle='#1e5e3a'; ctx.fillRect(o.x,g.groundY-o.h,o.w,2); ctx.fillStyle='#3f9a64'; ctx.fillRect(o.x+2,g.groundY-o.h+3,2,Math.max(2,o.h-6)); } }); // サボテン風
-    ctx.fillStyle='#f6c445'; g.items.forEach(function(it){ ctx.fillRect(it.x+3,it.y,3,9); ctx.fillRect(it.x,it.y+3,9,3); ctx.fillStyle='#fde68a'; ctx.fillRect(it.x+3,it.y+3,3,3); ctx.fillStyle='#f6c445'; }); // ⭐
-    if(g.t<=92){ ctx.font='bold 44px sans-serif'; ctx.fillStyle=pal.txt; ctx.fillText(String(3-Math.floor(g.t/31)),g.W/2-13,g.H/2+15); } // 3・2・1
-    drawPops(g,ctx);
-    drawPetSprite(ctx,g,g.px,Math.round(g.py),g.duck&&g.onGround); document.getElementById('gscore').textContent=g.score; g.raf=requestAnimationFrame(loopGame); }
-  function endGame(){ var g=game; g.over=true; cancelAnimationFrame(g.raf); var sc=g.score; var happyGain=Math.min(25,2+Math.floor(sc/5)); state.happy=Math.min(100,state.happy+happyGain); addXp(5); if(sc>(state.gameHi||0)) state.gameHi=sc; save(); var medal=sc>=60?'🥇':sc>=30?'🥈':sc>=10?'🥉':''; document.getElementById('goverScore').textContent=(medal?medal+' ':'')+'スコア '+sc+'（さいこう '+state.gameHi+'）'; document.getElementById('goverReward').textContent='ごきげん +'+happyGain+' ／ うんどうした！'; document.getElementById('gover').style.display='flex'; } // えさ報酬なし（えさは べんきょうで）
+    if(g.banner>0){ g.banner--; ctx.fillStyle='rgba(0,0,0,.45)'; ctx.fillRect(0,g.H/2-18,g.W,36); ctx.fillStyle='#fff'; ctx.font='bold 16px sans-serif'; ctx.textAlign='center'; ctx.fillText(g.bannerTxt,g.W/2,g.H/2+6); ctx.textAlign='left'; }
+    if(counting){ ctx.font='bold 44px sans-serif'; ctx.fillStyle='#fff'; ctx.textAlign='center'; ctx.fillText(String(3-Math.floor(g.t/31)),g.W/2,g.H/2+15); ctx.textAlign='left'; }
+  }
+  function endGame(won){ var g=game; g.over=true; cancelAnimationFrame(g.raf); var sc=g.score;
+    var happyGain=Math.min(30,3+Math.floor(sc/6)); state.happy=Math.min(100,state.happy+happyGain); addXp(5); if(sc>(state.gameHi||0)) state.gameHi=sc; save();
+    var medal=sc>=140?'🥇':sc>=80?'🥈':sc>=30?'🥉':'';
+    var title=document.querySelector('#gover>div'); if(title) title.textContent=won?'クリア！🎉':'ゲームオーバー';
+    document.getElementById('goverScore').textContent=(medal?medal+' ':'')+'スコア '+sc+'（さいこう '+(state.gameHi||0)+'）';
+    document.getElementById('goverReward').textContent='ごきげん +'+happyGain+' ／ '+(won?'ぜんステージ クリア！':'ステージ '+g.stage+' まで');
+    document.getElementById('gover').style.display='flex';
+  }
   function leaveGame(){ if(game){ game.over=true; cancelAnimationFrame(game.raf); } show('home'); render(); }
   (function(){ var cv=document.getElementById('gcanvas');
-    cv.addEventListener('pointerdown',function(e){ e.preventDefault(); gameInput(); });
-    cv.addEventListener('pointerup',gameRelease); cv.addEventListener('pointercancel',gameRelease);
+    cv.addEventListener('pointerdown',function(e){ e.preventDefault(); kbHold(true); });
+    cv.addEventListener('pointerup',function(){ kbHold(false); }); cv.addEventListener('pointercancel',function(){ kbHold(false); });
     var gj=document.getElementById('gJump');
-    gj.addEventListener('pointerdown',function(e){ e.preventDefault(); gameInput(); });
-    gj.addEventListener('pointerup',gameRelease); gj.addEventListener('pointercancel',gameRelease); gj.addEventListener('pointerleave',gameRelease);
+    if(gj){ gj.addEventListener('pointerdown',function(e){ e.preventDefault(); kbHold(true); });
+      ['pointerup','pointercancel','pointerleave'].forEach(function(ev){ gj.addEventListener(ev,function(){ kbHold(false); }); }); }
     var gd=document.getElementById('gDuck');
-    if(gd){ var don=function(e){ e.preventDefault(); if(game&&!game.over) game.duck=true; }, doff=function(){ if(game) game.duck=false; };
-      gd.addEventListener('pointerdown',don); gd.addEventListener('pointerup',doff); gd.addEventListener('pointerleave',doff); gd.addEventListener('pointercancel',doff); }
-    document.getElementById('gRetry').onclick=function(){ if(state.food<=0){ leaveGame(); bubble('えさが なくなった！べんきょうで あつめよう'); return; } consumePlay(); if(game&&game.mode==='sea') startSeaGame(); else startGame(); };
+    if(gd){ gd.addEventListener('pointerdown',function(e){ e.preventDefault(); kbInhale(); }); }
+    document.getElementById('gRetry').onclick=function(){ if(state.food<=0){ leaveGame(); bubble('えさが なくなった！べんきょうで あつめよう'); return; } consumePlay(); startKirby(); };
     document.getElementById('gHome').onclick=leaveGame; document.getElementById('backGame').onclick=leaveGame; })();
 
   /* ---- study ---- */

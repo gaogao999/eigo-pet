@@ -472,18 +472,17 @@ if(window.caches){caches.keys().then(function(ks){ks.forEach(function(k){caches.
     <button id="backSelect" style="background:var(--gl);border:2px solid var(--bdr);border-radius:8px;padding:8px 16px;font-size:20px;color:var(--g);cursor:pointer;font-family:inherit;line-height:1;">‹</button>
     <div style="font-size:18px;font-weight:900;color:var(--ink);">ミニゲーム</div>
   </div>
-  <p style="text-align:center;font-size:13px;color:var(--mut);font-weight:700;margin:0 0 24px;">あそぶ ゲームを えらんでね（えさ1）</p>
-  <button id="selJump" style="width:100%;border:none;border-radius:12px;padding:22px;font-size:19px;font-weight:900;background:linear-gradient(135deg,#29a65e,#5cde94);color:#fff;cursor:pointer;font-family:inherit;box-shadow:0 3px 14px rgba(41,166,94,.35);margin-bottom:14px;">ジャンプ</button>
-  <button id="selSea" style="width:100%;border:none;border-radius:12px;padding:22px;font-size:19px;font-weight:900;background:linear-gradient(135deg,#3b82f6,#60a5fa);color:#fff;cursor:pointer;font-family:inherit;box-shadow:0 3px 14px rgba(59,130,246,.35);">うみ</button>
+  <p style="text-align:center;font-size:13px;color:var(--mut);font-weight:700;margin:0 0 24px;">あそぶ（えさ1）</p>
+  <button id="selJump" style="width:100%;border:none;border-radius:12px;padding:22px;font-size:19px;font-weight:900;background:linear-gradient(135deg,#f472b6,#fb9ed0);color:#fff;cursor:pointer;font-family:inherit;box-shadow:0 3px 14px rgba(244,114,182,.35);">ふわふわ アドベンチャー</button>
 </section>
 
 <!-- GAME -->
 <section id="game" class="screen">
   <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
     <button id="backGame" style="background:var(--gl);border:2px solid var(--bdr);border-radius:8px;padding:8px 16px;font-size:20px;color:var(--g);cursor:pointer;font-family:inherit;line-height:1;">‹</button>
-    <div id="gTitle" style="font-size:16px;font-weight:900;color:var(--ink);">ジャンプゲーム</div>
+    <div id="gTitle" style="font-size:16px;font-weight:900;color:var(--ink);">ふわふわ アドベンチャー</div>
   </div>
-  <div id="gInstr" style="text-align:center;font-size:13px;color:var(--mut);font-weight:700;margin-bottom:10px;">タップで ジャンプ！</div>
+  <div id="gInstr" style="text-align:center;font-size:13px;color:var(--mut);font-weight:700;margin-bottom:10px;"></div>
   <div style="position:relative;">
     <canvas id="gcanvas" width="340" height="200" style="width:100%;background:#f1ead7;border:2px solid var(--bdr);border-radius:12px;display:block;touch-action:manipulation;"></canvas>
     <div id="gscore" style="position:absolute;top:10px;right:16px;font-size:15px;font-weight:900;color:#4a3526;font-family:'DotGothic16',sans-serif;">0</div>
@@ -498,8 +497,8 @@ if(window.caches){caches.keys().then(function(ks){ks.forEach(function(k){caches.
     </div>
   </div>
   <div style="display:flex;gap:10px;margin-top:12px;">
-    <button id="gDuck" style="display:none;flex:1;padding:16px;font-size:16px;font-weight:900;background:linear-gradient(135deg,#7c5cd6,#a78bfa);color:#fff;border:none;border-radius:10px;cursor:pointer;font-family:inherit;box-shadow:0 3px 10px rgba(124,92,214,.3);touch-action:none;">しゃがむ</button>
-    <button id="gJump" style="flex:2;padding:16px;font-size:18px;font-weight:900;background:linear-gradient(135deg,#29a65e,#5cde94);color:#fff;border:none;border-radius:10px;cursor:pointer;font-family:inherit;box-shadow:0 3px 10px rgba(41,166,94,.3);touch-action:none;">ジャンプ</button>
+    <button id="gDuck" style="flex:1;padding:16px;font-size:16px;font-weight:900;background:linear-gradient(135deg,#7c5cd6,#a78bfa);color:#fff;border:none;border-radius:10px;cursor:pointer;font-family:inherit;box-shadow:0 3px 10px rgba(124,92,214,.3);touch-action:none;">すいこむ</button>
+    <button id="gJump" style="flex:2;padding:16px;font-size:18px;font-weight:900;background:linear-gradient(135deg,#29a65e,#5cde94);color:#fff;border:none;border-radius:10px;cursor:pointer;font-family:inherit;box-shadow:0 3px 10px rgba(41,166,94,.3);touch-action:none;">とぶ（おしっぱ）</button>
   </div>
 </section>
 
