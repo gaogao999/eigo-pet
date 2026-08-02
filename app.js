@@ -803,7 +803,7 @@ window._eigoPetInit = function() {
   var game=null;
   function drawPetCanvas(ctx,map,ox,oy,cell){ for(var y=0;y<map.length;y++) for(var x=0;x<map[y].length;x++){ var c=map[y][x]; if(PAL[c]){ ctx.fillStyle=PAL[c]; ctx.fillRect(ox+x*cell,oy+y*cell,cell,cell); } } }
   function drawPetSprite(ctx,g,ox,oy,squash){ if(g.img&&g.img.complete&&g.img.naturalWidth){ ctx.imageSmoothingEnabled=false; if(squash){ ctx.drawImage(g.img,ox-2,oy+Math.round(g.petH*0.35),Math.round(g.petW*1.12),Math.round(g.petH*0.65)); } else { ctx.drawImage(g.img,ox,oy,g.petW,g.petH); } } else if(g.map){ drawPetCanvas(ctx,g.map,ox,oy+(squash?Math.round(g.petH*0.3):0),g.cell); } } // squash=しゃがみ（ひらたく）
-  function gameSetup(title,instr,btn){ show('game'); var isMa=(title==='メタルアサルト');
+  function gameSetup(title,instr,btn){ show('game'); var isMa=(title==='メタルアサルト'); padDown={}; padPrev={};
     padLabels(isMa?'ma':'mario');
     var sce=document.getElementById('gscore'); if(sce) sce.style.display=isMa?'none':'block'; document.getElementById('gover').style.display='none'; document.getElementById('gTitle').textContent=title; document.getElementById('gInstr').textContent=instr; var cv=document.getElementById('gcanvas'); var info=petInfo(); var img=info.img?getImg(info.img):null; var map=petMap(),cell=3; var pw=img?40:Math.max.apply(null,map.map(function(r){ return r.length; }))*cell, ph=img?40:map.length*cell; return { cv:cv,ctx:cv.getContext('2d'),W:cv.width,H:cv.height,map:map,cell:cell,img:img,petW:pw,petH:ph }; }
   function gpop(g,x,y,txt){ (g.pops=g.pops||[]).push({x:x,y:y,t:0,txt:txt}); }
@@ -1803,18 +1803,27 @@ window._eigoPetInit = function() {
   }
 
   /* ── ゲームパッド（十字キー＋ABXY）。押されたキーを いまのゲームに ふりわける ── */
-  function padSet(k,v){ var g=game; if(!g) return;
+  var padDown={};                                          // いま おされている パッドのキー
+  function padSet(k,v){ if(!!padDown[k]===!!v) return; padDown[k]=v; padApply(); }
+  function padClear(){ padDown={}; padApply(); }
+  var padPrev={};
+  function padApply(){                                     // おされている キーの 組み合わせから ゲームの入力を つくる
+    var g=game; if(!g) return;
+    var want;
     if(g.mode==='ma'){
-      if(k==='U') maSet('U',v); else if(k==='D') maSet('D',v);
-      else if(k==='L') maSet('L',v); else if(k==='R') maSet('R',v);
-      else if(k==='A') maSet('F',v);                       // A＝うつ
-      else if(k==='B') maSet('J',v);                       // B＝ジャンプ
-      else if(k==='X') maSet('B',v);                       // X＝ばくだん
-      else if(k==='Y'){ if(v&&g.p&&g.p.slug) maExitSlug(g); } // Y＝SLUGを おりる
+      want={ U:!!padDown.U, D:!!padDown.D, L:!!padDown.L, R:!!padDown.R,
+             F:!!padDown.A, J:!!padDown.B, B:!!padDown.X, Y:!!padDown.Y };
     } else {
-      if(k==='L') mvSet('L',v); else if(k==='R') mvSet('R',v);
-      else if(k==='A'||k==='B') mvSet('J',v);              // A・B＝ジャンプ
-      else if(k==='X'||k==='Y') mvSet('D',v);              // X・Y＝ダッシュ（本家SNESと同じ2つがけ）
+      want={ L:!!padDown.L, R:!!padDown.R,
+             J:!!(padDown.A||padDown.B), D:!!(padDown.X||padDown.Y) };   // A・B＝ジャンプ／X・Y＝ダッシュ
+    }
+    for(var k in want){
+      if(padPrev[k]===want[k]) continue;                   // かわった ものだけ ゲームに つたえる
+      padPrev[k]=want[k];
+      if(g.mode==='ma'){
+        if(k==='Y'){ if(want[k]&&g.p&&g.p.slug) maExitSlug(g); }
+        else maSet(k,want[k]);
+      } else mvSet(k,want[k]);
     }
   }
   var PAD_LABEL={
@@ -1826,16 +1835,19 @@ window._eigoPetInit = function() {
 
   function leaveGame(){ if(game){ game.over=true; cancelAnimationFrame(game.raf); } show('home'); render(); }
   (function(){
+    var padOwner={};                                          // ゆび(pointerId) ごとの 持ち主ボタン
     [['padU','U'],['padD','D'],['padL','L'],['padR','R'],
      ['btnA','A'],['btnB','B'],['btnX','X'],['btnY','Y']].forEach(function(pr){
       var el=document.getElementById(pr[0]); if(!el) return;
       el.addEventListener('pointerdown',function(e){ e.preventDefault();
         try{ el.setPointerCapture&&el.setPointerCapture(e.pointerId); }catch(_){}   // 指が ボタンから ずれても はなすまで きく
-        padSet(pr[1],true); });
-      ['pointerup','pointercancel'].forEach(function(ev){ el.addEventListener(ev,function(){ padSet(pr[1],false); }); }); });
-    // 画面のどこで はなしても 全部のキーを 解除（押しっぱなし事故ぼうし）
-    ['pointerup','pointercancel','blur'].forEach(function(ev){ window.addEventListener(ev,function(){
-      ['U','D','L','R','A','B','X','Y'].forEach(function(k){ padSet(k,false); }); }); });
+        padOwner[e.pointerId]=pr[1]; padSet(pr[1],true); });
+      ['pointerup','pointercancel'].forEach(function(ev){ el.addEventListener(ev,function(e){
+        delete padOwner[e.pointerId]; padSet(pr[1],false); }); }); });
+    // 画面のどこで はなしても、その ゆびが おしていた キーだけを はなす（ほかの ボタンは そのまま）
+    ['pointerup','pointercancel'].forEach(function(ev){ window.addEventListener(ev,function(e){
+      var k=padOwner[e.pointerId]; if(!k) return; delete padOwner[e.pointerId]; padSet(k,false); }); });
+    window.addEventListener('blur',padClear);                 // アプリが うらに いったら 全部 はなす
     // キーボードでも あそべる（矢印＋Z/X/A/S）
     var KMAP={ArrowLeft:'L',ArrowRight:'R',ArrowUp:'U',ArrowDown:'D',KeyZ:'B',KeyX:'A',KeyA:'Y',KeyS:'X',Space:'B'};
     ['keydown','keyup'].forEach(function(ev){ document.addEventListener(ev,function(e){
