@@ -806,30 +806,31 @@ window._eigoPetInit = function() {
      タイル: # れんが / ? はてなブロック / o コイン / E てき / F ゴール旗 / _ 地面 / (空白)あな   */
   var TS=16; // タイルの大きさ
   var STAGES=[
-   ["                                                                                                            ",
-    "                                                                                                            ",
-    "                            o o o                                                                           ",
-    "                    ?M     #####            o o                        ?  ?                                 ",
-    "              o                            ?#                   o o                          o o o          ",
-    "         ?   ###          G         P     ###             PP   #####       G                #####         F ",
-    "                                                                                                            ",
-    "____________________________________    ______________________    _______________________________________"],
-   ["                                                                                                            ",
-    "                     o o                                    o o o                                           ",
-    "            ?M      #####          ?  ?                    #####            ?                               ",
-    "                                                  o o                                   o o o               ",
-    "      o     P      G          P   ###      K     ###          PP      G     ###         #####               F",
-    "     ###                                                                                                    ",
-    "                                                                                                            ",
-    "_____________________    ____________________    _________________________    __________________________"],
-   ["                                                                                                            ",
-    "        o o o                        ?  ?M ?                     o o o o                                    ",
-    "       #######                                                  ########              ?  ?                  ",
-    "                        o o o                      G                          o o                           ",
-    "   ?M   P     G    PP  #######     K         P    ###        G      PP      ####       K        PP         F",
-    "                                                                                                            ",
-    "                                                                                                            ",
-    "________________   ____________________   ______________    ___________________    ______________________"]];
+   // row0-3=空／row4=?ブロック・コイン（下をあるける）／row5=足場（とび乗る）／row6=てき・土管／row7=地面
+   ["",
+    "",
+    "                 ooo                                                       ooo",
+    "                #####                                                      ####",
+    "   ?M oo                              ooo                                                   ?     ?     ?",
+    "         ###                                  ###                                   #####",
+    "                  G     PP                  K       G                 PP      G           K             F",
+    "__________________________________   _________________________   ___________________________________________"],
+   ["",
+    "",
+    "                         ooo                                     ooo",
+    "                          ###",
+    "   ?M        oo                     oo                                  oo                     ?     ?",
+    "                                  ####                ###                         ####",
+    "        PP                    K       G                   K   PP  G                   K   PP  G         F",
+    "____________________   _________________________   _________________________   _____________________________"],
+   ["",
+    "",
+    "                       ooo                                     ooo",
+    "                        ###",
+    "           oo                      ?M     oo              oo                              oo    ?     ?",
+    "                                                      ###                               #####",
+    "      PP                  K   PP  G                     G   PP  K                 PP  K     G     K     F",
+    "__________________   _________________________   _________________________   _______________________________"]];
   function tileAt(g,tx,ty){ var row=g.map[ty]; if(!row) return ' '; return row.charAt(tx)||' '; }
   function solidCh(c){ return c==='#'||c==='_'||c==='?'||c==='X'||c==='P'||c==='M'; }
   function solidAt(g,px,py){ var tx=Math.floor(px/TS), ty=Math.floor(py/TS); if(ty<0) return false; if(ty>=g.map.length) return false; return solidCh(tileAt(g,tx,ty)); }
@@ -848,16 +849,16 @@ window._eigoPetInit = function() {
     g.px=TS*1.5; g.py=g.rows*TS-TS*2-24; g.vx=0; g.vy=0; g.onGround=false; g.cam=0; g.cleared=false; g.face=1; g.flag=0;
   }
   function startMario(){
-    var s=gameSetup('だいぼうけん','◀▶で うごく／ジャンプ ながおしで たかく！ てきは ふんで やっつけ、？ブロックから キノコで スーパーに！','ジャンプ');
+    var s=gameSetup('だいぼうけん','ダッシュ＋ジャンプ ながおしで とおくへ！ てきは ふんで やっつけ、？ブロックの キノコで スーパーに！','ジャンプ');
     if(game) cancelAnimationFrame(game.raf);
     game={ mode:'mario',ctx:s.ctx,W:s.W,H:s.H,img:s.img,map:null,cell:s.cell,
-      petW:20,petH:20,left:false,right:false,jump:false,skid:0,
+      petW:20,petH:20,left:false,right:false,jump:false,dash:false,skid:0,
       hp:3,maxhp:3,inv:0,coinN:0,stage:0,maxStage:STAGES.length,big:false,items:[],shells:[],flag:0,
       t:0,score:0,over:false,banner:0,bannerTxt:'',raf:0 };
     buildStage(game,0); loopMario();
   }
   function mvSet(k,v){ var g=game; if(!g||g.over||g.mode!=='mario') return;
-    if(k==='L') g.left=v; else if(k==='R') g.right=v;
+    if(k==='L') g.left=v; else if(k==='R') g.right=v; else if(k==='D') g.dash=v;
     else if(k==='J'){ if(v&&g.onGround&&g.t>90){ g.vy=-(6.6+Math.abs(g.vx)*0.42); g.onGround=false; if(state.sound) tone(560+Math.abs(g.vx)*40,0,0.06,'square'); } g.jump=v; }
   }
   function marioClear(){ var g=game; if(g.cleared) return; g.cleared=true; g.score+=50+g.hp*10;
@@ -871,20 +872,21 @@ window._eigoPetInit = function() {
     g.hp--; g.inv=80; if(state.sound) tone(180,0,0.14,'square');
     if(g.hp<=0){ endGame(false); return; } g.vy=-4; }
   function goBig(g){ if(g.big) return; g.big=true; g.petH=28; g.py-=8; g.score+=20; gpop(g,g.px,g.py,'スーパー！'); if(state.sound){ tone(660,0,0.07); tone(880,0.07,0.09); } }
-  function loopMario(){ var g=game; if(!g||g.over) return; g.t++;
+  function loopMario(){ var g=game; if(!g||g.over) return; g.t++; window.__mg=g;
     if(g.cleared&&g.flag<30) g.flag++;                    // はたが するする おりる
     var counting=g.t<=90;
     if(!counting&&!g.cleared){
       // よこ移動
       var dir=g.left?-1:(g.right?1:0);
-      var ACC=g.onGround?0.30:0.20, FRIC=g.onGround?0.86:0.98, SKID=0.52;   // 空中は 効きが よわく 慣性が のこる
+      var MAXV=g.dash?3.0:1.8;                                              // ダッシュで 最高速アップ（本家：歩きは 走りの3/5）
+      var ACC=(g.onGround?0.30:0.20)*(g.dash?1.0:0.85), FRIC=g.onGround?0.86:0.98, SKID=0.52;   // 空中は 効きが よわく 慣性が のこる
       if(dir!==0){
         if(g.vx*dir<0){ g.vx+=dir*SKID; g.skid=6; }                          // ぎゃく方向＝ブレーキ（スキッド）
         else g.vx+=dir*ACC;
         g.face=dir;
       } else { g.vx*=FRIC; if(Math.abs(g.vx)<0.08) g.vx=0; }
       if(g.skid>0) g.skid--;
-      if(g.vx>3.0) g.vx=3.0; if(g.vx<-3.0) g.vx=-3.0;
+      if(g.vx>MAXV) g.vx=MAXV; if(g.vx<-MAXV) g.vx=-MAXV;
       // 上昇ちゅうに ボタンを おしていると 重力が よわい＝ながく おすほど たかく とべる（原作どおり）
       g.vy+=(g.jump&&g.vy<0)?0.40:0.75; if(g.vy>9) g.vy=9;
       // よこ判定
@@ -916,9 +918,12 @@ window._eigoPetInit = function() {
       if(g.inv>0) g.inv--;
       // てき
       g.enemies.forEach(function(e){ if(!e.alive){ e.sq++; return; }
+        e.vy=(e.vy||0)+0.5; if(e.vy>6) e.vy=6;                                   // てきにも 重力（地面に きちんと 立つ）
+        var eny=e.y+e.vy; if(solidAt(g,e.x+e.w/2,eny+e.h)){ eny=Math.floor((eny+e.h)/TS)*TS-e.h-0.01; e.vy=0; e.grounded=true; } else e.grounded=false;
+        e.y=eny;
         e.x+=e.vx;
         if(solidAt(g,e.x+(e.vx>0?e.w:0),e.y+e.h/2)) e.vx=-e.vx;                 // かべで はんてん
-        if(!solidAt(g,e.x+e.w/2,e.y+e.h+2)) e.vx=-e.vx;                          // はしで はんてん
+        if(e.grounded&&!solidAt(g,e.x+e.w/2,e.y+e.h+2)) e.vx=-e.vx;              // はしで はんてん（接地中のみ）
         if(e.x<0){ e.x=0; e.vx=Math.abs(e.vx); } });
       // こうら（ノコノコを ふむと でる）：うごいて てきを なぎたおす
       g.shells.forEach(function(sh){ if(sh.vx!==0){ sh.x+=sh.vx;
@@ -1039,7 +1044,7 @@ window._eigoPetInit = function() {
     var bind=function(id,key){ var el=document.getElementById(id); if(!el) return;
       el.addEventListener('pointerdown',function(e){ e.preventDefault(); mvSet(key,true); });
       ['pointerup','pointercancel','pointerleave'].forEach(function(ev){ el.addEventListener(ev,function(){ mvSet(key,false); }); }); };
-    bind('gLeft','L'); bind('gRight','R'); bind('gJump','J');
+    bind('gLeft','L'); bind('gRight','R'); bind('gJump','J'); bind('gDash','D');
     var cv=document.getElementById('gcanvas');
     if(cv){ cv.addEventListener('pointerdown',function(e){ e.preventDefault(); mvSet('J',true); });
       ['pointerup','pointercancel'].forEach(function(ev){ cv.addEventListener(ev,function(){ mvSet('J',false); }); }); }
