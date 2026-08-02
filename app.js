@@ -804,9 +804,8 @@ window._eigoPetInit = function() {
   function drawPetCanvas(ctx,map,ox,oy,cell){ for(var y=0;y<map.length;y++) for(var x=0;x<map[y].length;x++){ var c=map[y][x]; if(PAL[c]){ ctx.fillStyle=PAL[c]; ctx.fillRect(ox+x*cell,oy+y*cell,cell,cell); } } }
   function drawPetSprite(ctx,g,ox,oy,squash){ if(g.img&&g.img.complete&&g.img.naturalWidth){ ctx.imageSmoothingEnabled=false; if(squash){ ctx.drawImage(g.img,ox-2,oy+Math.round(g.petH*0.35),Math.round(g.petW*1.12),Math.round(g.petH*0.65)); } else { ctx.drawImage(g.img,ox,oy,g.petW,g.petH); } } else if(g.map){ drawPetCanvas(ctx,g.map,ox,oy+(squash?Math.round(g.petH*0.3):0),g.cell); } } // squash=しゃがみ（ひらたく）
   function gameSetup(title,instr,btn){ show('game'); var isMa=(title==='メタルアサルト');
-    var cm=document.getElementById('ctlMario'), ce=document.getElementById('ctlMetal');
-    if(cm) cm.style.display=isMa?'none':'flex'; if(ce) ce.style.display=isMa?'flex':'none';
-    var sce=document.getElementById('gscore'); if(sce) sce.style.display=isMa?'none':'block'; document.getElementById('gover').style.display='none'; document.getElementById('gTitle').textContent=title; document.getElementById('gInstr').textContent=instr; document.getElementById('gJump').textContent=btn; var cv=document.getElementById('gcanvas'); var info=petInfo(); var img=info.img?getImg(info.img):null; var map=petMap(),cell=3; var pw=img?40:Math.max.apply(null,map.map(function(r){ return r.length; }))*cell, ph=img?40:map.length*cell; return { cv:cv,ctx:cv.getContext('2d'),W:cv.width,H:cv.height,map:map,cell:cell,img:img,petW:pw,petH:ph }; }
+    padLabels(isMa?'ma':'mario');
+    var sce=document.getElementById('gscore'); if(sce) sce.style.display=isMa?'none':'block'; document.getElementById('gover').style.display='none'; document.getElementById('gTitle').textContent=title; document.getElementById('gInstr').textContent=instr; var cv=document.getElementById('gcanvas'); var info=petInfo(); var img=info.img?getImg(info.img):null; var map=petMap(),cell=3; var pw=img?40:Math.max.apply(null,map.map(function(r){ return r.length; }))*cell, ph=img?40:map.length*cell; return { cv:cv,ctx:cv.getContext('2d'),W:cv.width,H:cv.height,map:map,cell:cell,img:img,petW:pw,petH:ph }; }
   function gpop(g,x,y,txt){ (g.pops=g.pops||[]).push({x:x,y:y,t:0,txt:txt}); }
   function drawPops(g,ctx){ if(!g.pops||!g.pops.length) return; g.pops.forEach(function(p){ p.t++; p.y-=0.6; }); g.pops=g.pops.filter(function(p){ return p.t<45; }); ctx.font='bold 11px sans-serif'; g.pops.forEach(function(p){ ctx.fillStyle='rgba(234,88,12,'+(1-p.t/45).toFixed(2)+')'; ctx.fillText(p.txt,p.x-g.cam,p.y); }); }
   function heartMark(ctx,x,y,r){ ctx.fillRect(x-r,y-r+1,r,r); ctx.fillRect(x,y-r+1,r,r); ctx.fillRect(x-r+1,y,2*r-2,r); ctx.fillRect(x-r+3,y+r-1,2*r-6,2); }
@@ -1119,7 +1118,7 @@ window._eigoPetInit = function() {
   function startMario(){
     // まえに たどりついた ステージから 再開（ぜんぶ クリアしたら 1面に もどる）
     var st0=Math.floor(Number(state.marioStage)||0); if(!(st0>=0)) st0=0; if(st0>STAGES.length-1) st0=STAGES.length-1;
-    var s=gameSetup('だいぼうけん',(st0>0?'ステージ '+(st0+1)+' から！ ':'')+'ダッシュ＋ジャンプ ながおしで とおくへ！ てきは ふんで やっつけ、？ブロックの キノコで スーパーに！','ジャンプ');
+    var s=gameSetup('だいぼうけん',(st0>0?'ステージ '+(st0+1)+' から！ ':'')+'X/Y＝ダッシュ、A/B＝ジャンプ（ながおしで たかく）。てきは ふんで やっつけ、？ブロックの キノコで スーパーに！','ジャンプ');
     if(game) cancelAnimationFrame(game.raf);
     game={ mode:'mario',ctx:s.ctx,W:s.W,H:s.H,img:s.img,map:null,cell:s.cell,
       petW:20,petH:20,left:false,right:false,jump:false,dash:false,skid:0,
@@ -1397,7 +1396,7 @@ window._eigoPetInit = function() {
 
   function startMetal(mode){
     var s=gameSetup('メタルアサルト',
-      mode==='surv'?'サバイバル：どこまで たおせるか！':'アーケード：ようさいの モーデン将軍を たおせ！','ジャンプ');
+      (mode==='surv'?'サバイバル：どこまで たおせるか！ ':'アーケード：モーデン将軍を たおせ！ ')+'A＝うつ、B＝ジャンプ、X＝ばくだん、▲うえうち／▼ふせる','ジャンプ');
     if(game) cancelAnimationFrame(game.raf);
     var seed=mode==='surv'?(Date.now()&0xffff):20260802;
     game={ mode:'ma', sub:mode, ctx:s.ctx, W:s.W, H:s.H, img:s.img, cell:s.cell,
@@ -1803,20 +1802,44 @@ window._eigoPetInit = function() {
       ctx.fillText(g.bannerTxt,W/2-ctx.measureText(g.bannerTxt).width/2,H/2+5); }
   }
 
+  /* ── ゲームパッド（十字キー＋ABXY）。押されたキーを いまのゲームに ふりわける ── */
+  function padSet(k,v){ var g=game; if(!g) return;
+    if(g.mode==='ma'){
+      if(k==='U') maSet('U',v); else if(k==='D') maSet('D',v);
+      else if(k==='L') maSet('L',v); else if(k==='R') maSet('R',v);
+      else if(k==='A') maSet('F',v);                       // A＝うつ
+      else if(k==='B') maSet('J',v);                       // B＝ジャンプ
+      else if(k==='X') maSet('B',v);                       // X＝ばくだん
+      else if(k==='Y'){ if(v&&g.p&&g.p.slug) maExitSlug(g); } // Y＝SLUGを おりる
+    } else {
+      if(k==='L') mvSet('L',v); else if(k==='R') mvSet('R',v);
+      else if(k==='A'||k==='B') mvSet('J',v);              // A・B＝ジャンプ
+      else if(k==='X'||k==='Y') mvSet('D',v);              // X・Y＝ダッシュ（本家SNESと同じ2つがけ）
+    }
+  }
+  var PAD_LABEL={
+    mario:{A:'ジャンプ',B:'ジャンプ',X:'ダッシュ',Y:'ダッシュ'},
+    ma   :{A:'うつ',    B:'ジャンプ',X:'ばくだん',Y:'おりる'}
+  };
+  function padLabels(kind){ var L=PAD_LABEL[kind]||PAD_LABEL.mario;
+    ['A','B','X','Y'].forEach(function(k){ var el=document.getElementById('lbl'+k); if(el) el.textContent=L[k]; }); }
+
   function leaveGame(){ if(game){ game.over=true; cancelAnimationFrame(game.raf); } show('home'); render(); }
   (function(){
-    var bind=function(id,key){ var el=document.getElementById(id); if(!el) return;
-      el.addEventListener('pointerdown',function(e){ e.preventDefault(); mvSet(key,true); });
-      ['pointerup','pointercancel','pointerleave'].forEach(function(ev){ el.addEventListener(ev,function(){ mvSet(key,false); }); }); };
-    bind('gLeft','L'); bind('gRight','R'); bind('gJump','J'); bind('gDash','D');
-    var bindM=function(id,key){ var el=document.getElementById(id); if(!el) return;
-      el.addEventListener('pointerdown',function(e){ e.preventDefault(); maSet(key,true); });
-      ['pointerup','pointercancel','pointerleave'].forEach(function(ev){ el.addEventListener(ev,function(){ maSet(key,false); }); }); };
-    bindM('mLeft','L'); bindM('mRight','R'); bindM('mUp','U'); bindM('mDown','D');
-    bindM('mJump','J'); bindM('mFire','F'); bindM('mBomb','B');
-    var cv=document.getElementById('gcanvas');
-    if(cv){ cv.addEventListener('pointerdown',function(e){ if(game&&game.mode==='ma') return; e.preventDefault(); mvSet('J',true); });
-      ['pointerup','pointercancel'].forEach(function(ev){ cv.addEventListener(ev,function(){ mvSet('J',false); }); }); }
+    [['padU','U'],['padD','D'],['padL','L'],['padR','R'],
+     ['btnA','A'],['btnB','B'],['btnX','X'],['btnY','Y']].forEach(function(pr){
+      var el=document.getElementById(pr[0]); if(!el) return;
+      el.addEventListener('pointerdown',function(e){ e.preventDefault();
+        try{ el.setPointerCapture&&el.setPointerCapture(e.pointerId); }catch(_){}   // 指が ボタンから ずれても はなすまで きく
+        padSet(pr[1],true); });
+      ['pointerup','pointercancel'].forEach(function(ev){ el.addEventListener(ev,function(){ padSet(pr[1],false); }); }); });
+    // 画面のどこで はなしても 全部のキーを 解除（押しっぱなし事故ぼうし）
+    ['pointerup','pointercancel','blur'].forEach(function(ev){ window.addEventListener(ev,function(){
+      ['U','D','L','R','A','B','X','Y'].forEach(function(k){ padSet(k,false); }); }); });
+    // キーボードでも あそべる（矢印＋Z/X/A/S）
+    var KMAP={ArrowLeft:'L',ArrowRight:'R',ArrowUp:'U',ArrowDown:'D',KeyZ:'B',KeyX:'A',KeyA:'Y',KeyS:'X',Space:'B'};
+    ['keydown','keyup'].forEach(function(ev){ document.addEventListener(ev,function(e){
+      if(!game||game.over) return; var k=KMAP[e.code]; if(!k) return; e.preventDefault(); padSet(k,ev==='keydown'); }); });
     document.getElementById('gRetry').onclick=function(){ if(state.food<=0){ leaveGame(); bubble('えさが なくなった！べんきょうで あつめよう'); return; } consumePlay(); (window.__lastGame?window.__lastGame():startMario)(); };
     document.getElementById('gHome').onclick=leaveGame; document.getElementById('backGame').onclick=leaveGame; })();
 
