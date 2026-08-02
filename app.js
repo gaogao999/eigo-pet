@@ -804,7 +804,7 @@ window._eigoPetInit = function() {
   function heartMark(ctx,x,y,r){ ctx.fillRect(x-r,y-r+1,r,r); ctx.fillRect(x,y-r+1,r,r); ctx.fillRect(x-r+1,y,2*r-2,r); ctx.fillRect(x-r+3,y+r-1,2*r-6,2); }
   // ===== カービィ風ゲーム：ふわふわ とんで、てきを すいこんで はく =====
   function startKirby(){
-    var s=gameSetup('ふわふわ アドベンチャー','ボタン ながおしで ふわふわ とぶ／「すいこむ」で てきを パクッ→もういちどで ほしを ペッ！','とぶ');
+    var s=gameSetup('ふわふわ アドベンチャー','「すいこむ」で てきを パクッ→もう1かいで ほしを ペッ！ くわえてると おもくて とべない（「とぶ」で ごっくん）','とぶ');
     if(game) cancelAnimationFrame(game.raf);
     var groundY=s.H-18, pw=Math.min(28,s.petW), ph=Math.min(28,s.petH);
     var gd=document.getElementById('gDuck'); if(gd){ gd.style.display='block'; gd.textContent='すいこむ'; }
@@ -816,10 +816,13 @@ window._eigoPetInit = function() {
       t:0,score:0,over:false,cleared:false,banner:0,bannerTxt:'',raf:0 };
     loopKirby();
   }
-  function kbHold(v){ var g=game; if(g&&!g.over&&g.mode==='kirby') g.hold=v; }
+  function kbHold(v){ var g=game; if(!g||g.over||g.mode!=='kirby') return;
+    if(v&&g.mouth){ g.mouth=false; g.hold=false; g.score+=2; gpop(g,g.px+g.petW,g.py,'ごっくん+2'); if(state.sound) tone(300,0,0.09); return; } // 口に入っていると おもくて うけない→のみこんで かるくなる（原作の しゃがみ飲み込み）
+    g.hold=v; }
   function kbInhale(){ var g=game; if(!g||g.over||g.mode!=='kirby'||g.t<=90) return;
-    if(g.mouth){ g.stars.push({x:g.px+g.petW,y:g.py+g.petH/2-4,vx:5.4}); g.mouth=false; if(state.sound) tone(880,0,0.06); }
-    else { g.inhaleT=14; var cx0=g.px+g.petW, cx1=cx0+48, cy=g.py+g.petH/2;
+    if(g.mouth){ g.stars.push({x:g.px+g.petW,y:g.py+g.petH/2-4,vx:5.4}); g.mouth=false; g.hold=false; g.vy=1.2; if(state.sound) tone(880,0,0.06); } // はいたら ふくらみが ぬけて おちる（原作どおり）
+    else { if(g.hold){ if(state.sound) tone(220,0,0.05,'square'); return; }        // とんでいる あいだは すいこめない（原作どおり）
+      g.inhaleT=14; var cx0=g.px+g.petW, cx1=cx0+48, cy=g.py+g.petH/2;
       for(var i=0;i<g.enemies.length;i++){ var e=g.enemies[i]; if(e.x>cx0-8&&e.x<cx1&&Math.abs(e.y-cy)<24){ g.enemies.splice(i,1); g.mouth=true; g.score+=5; gpop(g,e.x,e.y,'+5'); if(state.sound) tone(520,0,0.06); return; } }
       if(state.sound) tone(360,0,0.05); }
   }
