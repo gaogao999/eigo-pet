@@ -652,7 +652,7 @@ window._eigoPetInit = function() {
   document.getElementById('bPlay').onclick=function(){ if(state.lv<2){ bubble("タマゴは まだ あそべないよ"); return; } if(state.food<=0){ bubble("べんきょうして えさを あつめよう"); return; } renderGameSelect(); show('gameSelect'); };
   function consumePlay(cost){ state.food=Math.max(0,state.food-(cost||1)); state.weight=Math.max(5,state.weight-1); state.hunger=Math.max(0,state.hunger-4); state.gamesPlayed=(state.gamesPlayed||0)+1; state.lastPlay=Date.now(); state.happy=Math.min(100,state.happy+6); state.discipline=Math.min(100,state.discipline+3); save(); } // あそぶと なつく＝すなおさ+3 // あそぶと 運動：体重-2・おなか-4
   document.getElementById('backSelect').onclick=function(){ show('home'); render(); };
-  var MARIO_CONT_COST=10;                                    // 途中のステージから はじめるときの えさ
+  var MARIO_CONT_COST=10, RETRY_COST=10;                     // 途中のステージから／やられてから 再開する ときの えさ
   function renderGameSelect(){                                // つづきから ボタンの 出しわけ
     var st=Math.floor(Number(state.marioStage)||0); if(!(st>0)) st=0;
     var el=document.getElementById('selJumpCont'), sub=document.getElementById('selContSub');
@@ -661,18 +661,19 @@ window._eigoPetInit = function() {
     if(sub) sub.textContent='ステージ '+(st+1)+' から（えさ'+MARIO_CONT_COST+'）'+(state.food<MARIO_CONT_COST?'／えさが たりない':'');
     el.style.opacity=(state.food<MARIO_CONT_COST)?'0.5':'1';
   }
-  var startPick=function(fn,cost){ return function(){ cost=cost||1;
+  var startPick=function(fn,cost,retry){ return function(){ cost=cost||1;
     if(state.food<cost){ bubble(cost>1?('えさが '+cost+'こ ひつよう だよ'):'えさが たりない'); return; }
-    consumePlay(cost); lastGame=fn; lastCost=cost; fn(); }; };
-  var lastGame=function(){ startMario(0); }, lastCost=1;
+    consumePlay(cost); lastGame=fn; lastCost=cost; lastRetry=retry||fn; fn(); }; };
+  var lastGame=function(){ startMario(0); }, lastCost=1, lastRetry=function(){ startMario(); };
   var fromTop=function(){ startMario(0); };                 // 1面から
   var fromCont=function(){ startMario(); };                   // たどりついた ステージから
-  var selK=document.getElementById('selJump'); if(selK) selK.onclick=startPick(fromTop,1);
-  var selC=document.getElementById('selJumpCont'); if(selC) selC.onclick=startPick(fromCont,MARIO_CONT_COST);
+  var selK=document.getElementById('selJump'); if(selK) selK.onclick=startPick(fromTop,1,fromCont);   // やりなおしは たどりついた ステージから
+  var selC=document.getElementById('selJumpCont'); if(selC) selC.onclick=startPick(fromCont,MARIO_CONT_COST,fromCont);
   var selA=document.getElementById('selMetalA'); if(selA) selA.onclick=startPick(function(){ startMetal('arcade'); });
   var selS=document.getElementById('selMetalS'); if(selS) selS.onclick=startPick(function(){ startMetal('surv'); });
   window.__lastGame=function(){ return lastGame; };
   window.__lastCost=function(){ return lastCost; };
+  window.__lastRetry=function(){ return lastRetry; };
   // しつけは「わがまま・悪さ」のタイミングだけ有効。すなおさが上がる。ミスると ごきげんが さがる
   document.getElementById('bScold').onclick=function(){ if(state.wagamama){ state.wagamama=false; state.discipline=Math.min(100,state.discipline+12); clearTimeout(wagaTimer); bubble("いいこ だね！ すなおさ+"); cheer(); } else { state.happy=Math.max(0,state.happy-8); bubble("いまは しからないで… ごきげん-"); } save(); render(); };
   var flushing=false;
@@ -2053,9 +2054,9 @@ window._eigoPetInit = function() {
     ['keydown','keyup'].forEach(function(ev){ document.addEventListener(ev,function(e){
       if(!game||game.over) return; var k=KMAP[e.code]; if(!k) return; e.preventDefault(); padSet(k,ev==='keydown'); }); });
     document.getElementById('gRetry').onclick=function(){
-      var c=(window.__lastCost?window.__lastCost():1)||1;      // つづきから だった場合は おなじ えさを はらう
-      if(state.food<c){ leaveGame(); bubble(c>1?('えさが '+c+'こ ひつよう だよ'):'えさが なくなった！べんきょうで あつめよう'); return; }
-      consumePlay(c); (window.__lastGame?window.__lastGame():startMario)(); };
+      var c=RETRY_COST;                                        // やられてから 再開するのは えさ10
+      if(state.food<c){ leaveGame(); bubble('えさが '+c+'こ ひつよう だよ。べんきょうで あつめよう'); return; }
+      consumePlay(c); (window.__lastRetry?window.__lastRetry():startMario)(); };
     document.getElementById('gHome').onclick=leaveGame; document.getElementById('backGame').onclick=leaveGame; })();
 
   /* ---- study ---- */
