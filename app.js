@@ -203,8 +203,10 @@ window._eigoPetInit = function() {
   function genMetDays(){ try{ var b=dayStr(new Date(state.born||Date.now())); return (state.metDates||[]).filter(function(d){ return d>=b; }).length; }catch(e){ return (state.metDates||[]).length; } }
   function careTierIndex(){ var gm=genMetDays(); return gm>=3?3:gm>=2?2:gm>=1?1:0; }
   function earnedTierKey(){ if((state.careMiss+state.disciplineMiss)>=8) return 'wild'; return TIER_ORDER[careTierIndex()]; } // がんばりで きまる「本命」ランク（表示・予告用）
-  // ヤングの姿は 確率制：本命ランクが いちばん でやすく、1段はなれるごとに 半分（本命53〜64%・となり22〜27%）
-  function rollYoungTier(){ var ei=TIER_ORDER.indexOf(earnedTierKey()); var ws=TIER_ORDER.map(function(k,i){ return 4/Math.pow(2,Math.abs(i-ei)); }); var tot=0,i; for(i=0;i<ws.length;i++) tot+=ws[i]; var r=Math.random()*tot; for(i=0;i<ws.length;i++){ r-=ws[i]; if(r<=0) return TIER_ORDER[i]; } return TIER_ORDER[ei]; }
+  // ヤングの姿は 確率制：本命ランクが いちばん でやすいが、はなれた ランクにも そこそこ なる
+  // YOUNG_SPREAD が 小さいほど ランダム（1.0で 完全ランダム＝各25%、2.0だと 本命53%）
+  var YOUNG_SPREAD=1.4;                                  // 本命 約34〜39%・となり 約24〜28%
+  function rollYoungTier(){ var ei=TIER_ORDER.indexOf(earnedTierKey()); var ws=TIER_ORDER.map(function(k,i){ return 1/Math.pow(YOUNG_SPREAD,Math.abs(i-ei)); }); var tot=0,i; for(i=0;i<ws.length;i++) tot+=ws[i]; var r=Math.random()*tot; for(i=0;i<ws.length;i++){ r-=ws[i]; if(r<=0) return TIER_ORDER[i]; } return TIER_ORDER[ei]; }
   function youngInfo() { return YOUNGS[state.youngType] || YOUNGS.normal; }
   function adultById(id){ return ADULTS[id] || (id&&LEGACY_ADULT[id]&&ADULTS[LEGACY_ADULT[id]]) || ADULTS[ADULT_TIERS.normal[0]]; }
   function adultInfo() { return adultById(state.adultType); }
@@ -888,7 +890,7 @@ window._eigoPetInit = function() {
     var tree='<div style="display:flex;align-items:center;justify-content:center;gap:8px;margin:2px 0 4px;">'+tnode(EGG_INFO,'タマゴ',true)+'<span class="larrow">→</span>'+tnode(BABIES.a,BABIES.a.name,true)+'<span class="larrow">→</span>'+tnode(CHILDREN.a,CHILDREN.a.name,true)+'</div><div class="tarrow">↓</div>';
     var ytiers=[['star','⭐さいこう'],['good','◎よいこ'],['normal','○ふつう'],['wild','△わんぱく']];
     var nowTier=predictedTier();
-    tree+='<div class="keifuHint" style="background:#eff6ff;border-color:#bfdbfe;"><div style="font-size:12px;font-weight:800;color:var(--ink);line-height:1.6;">いまの ランク：<b style="color:#2563eb;">'+TIER_LABEL[nowTier]+'</b>（もくひょうたっせい '+genMetDays()+'日／せわ・しつけミス '+careMissTotal()+'かい）<br><span style="font-size:11px;color:var(--mut);font-weight:700;">'+(isYoungFixed()?'ヤングに なったので 系統は かくてい。どの子に なるかは そだてかた しだい':'たっせい日が おおいほど 上の系統に なりやすく（かくりつ）')+'。★レアは とくべつな そだてかたで（せわ・しつけミス 3かい いじょうだと 出ない）</span></div></div>';
+    tree+='<div class="keifuHint" style="background:#eff6ff;border-color:#bfdbfe;"><div style="font-size:12px;font-weight:800;color:var(--ink);line-height:1.6;">いまの ランク：<b style="color:#2563eb;">'+TIER_LABEL[nowTier]+'</b>（もくひょうたっせい '+genMetDays()+'日／せわ・しつけミス '+careMissTotal()+'かい）<br><span style="font-size:11px;color:var(--mut);font-weight:700;">'+(isYoungFixed()?'ヤングに なったので 系統は かくてい。どの子に なるかは そだてかた しだい':'たっせい日が おおいほど 上の系統に なりやすい（でも かなり ランダム）')+'。★レアは とくべつな そだてかたで（せわ・しつけミス 3かい いじょうだと 出ない）</span></div></div>';
     tree+='<div class="tiertag">ヤング（おせわランクで なりやすさが かわる）</div><div class="tgrid4">'+ytiers.map(function(t){ return tnode(YOUNGS[t[0]],YOUNGS[t[0]].name,true); }).join('')+'</div><div class="tarrow">↓</div>';
     // アダルト：入手ずみは無料表示。それ以外は「？」を自分でタップ＋えさ で 1体ずつ ひらける
     var HINT_COST=50;
@@ -2366,6 +2368,7 @@ window._eigoPetInit = function() {
       out=out.concat(later.slice(0,need).map(function(x){ return x[0]; })); }
     return shuffle(out);
   }
+  window.__roll=function(){ return rollYoungTier(); };   // テスト用
   window.SRS_DBG={onAnswer:onAnswer,build:buildQuestions,due:srsDue,dueCount:dueCount,prog:gradeProgress,IVL:SRS_IVL,slots:REVIEW_SLOTS,state:function(){ return state; },
     calcFast:function(){ calcFastThreshold(); return fastTh; },th:function(){ return fastTh; },setMode:function(m){ qMode=m; },
     setFlags:function(h,a2){ qUsedHint=h; qUsedAudio=a2; }};
@@ -2546,8 +2549,25 @@ window._eigoPetInit = function() {
      そちらの ほうが ずっと 自然。端末に 入っている えいご音声を すべて出し、
      品質が よさそうな 順に ならべる。                                             */
   var VOICE_GOOD=/(enhanced|premium|neural|natural|siri)/i;              // 高品質の しるし
-  var VOICE_NICE=['Ava','Allison','Samantha','Serena','Zoe','Evan','Nathan','Google US English','Google UK English','Aria','Jenny','Guy','Libby','Sonia','Daniel','Karen','Moira','Tessa','Fiona','Alex'];
-  function enVoices(){ return (window.speechSynthesis?speechSynthesis.getVoices():[]).filter(function(v){ return /^en[-_]?/i.test(v.lang); }); }
+  // まともに 英語学習に つかえる こえ（Apple／Google／Microsoft の 標準的な よみあげ音声）
+  var VOICE_NICE=['Ava','Allison','Samantha','Susan','Zoe','Evan','Nathan','Noelle','Joelle','Nicky','Aaron','Tom','Alex',
+    'Serena','Daniel','Kate','Oliver','Stephanie','Malcolm','Jamie','Karen','Lee','Matilda','Moira','Tessa','Rishi','Veena','Isha',
+    'Google US English','Google UK English','Aria','Jenny','Guy','Michelle','Christopher','Eric','Roger','Steffan','Ana',
+    'Libby','Maisie','Ryan','Sonia','Thomas','Natasha','William'];
+  // ふざけた こえ・ロボット声（学習には つかえない）
+  var VOICE_BAD=/(albert|bad news|bahh|bells|boing|bubbles|cellos|deranged|good news|hysterical|jester|junior|organ|princess|ralph|superstar|trinoids|whisper|wobble|zarvox|fred|bruce|agnes|kathy|victoria|eloquence|reed|rocko|sandy|shelley|grandma|grandpa|flo|eddy|compact)/i;
+  function allEnVoices(){ return (window.speechSynthesis?speechSynthesis.getVoices():[]).filter(function(v){ return /^en[-_]?/i.test(v.lang); }); }
+  function usableVoice(v){
+    var n=v.name||'';
+    if(VOICE_BAD.test(n)) return false;                                  // ネタ・ロボット声は 出さない
+    if(VOICE_GOOD.test(n)) return true;                                  // 拡張・プレミアム
+    if(v.localService===false) return true;                              // ネットワーク音声
+    return VOICE_NICE.some(function(nm){ return n.indexOf(nm)>=0; });    // 定番の こえ
+  }
+  function enVoices(){
+    var all=allEnVoices(), good=all.filter(usableVoice);
+    return good.length?good:all;                                         // ぜんぶ はじかれたら やむを得ず 全部出す
+  }
   function voiceScore(v){
     var s=0, n=v.name||'';
     if(VOICE_GOOD.test(n)) s+=100;                                       // 拡張・プレミアム・ニューラル
@@ -2555,7 +2575,6 @@ window._eigoPetInit = function() {
     var i=VOICE_NICE.findIndex(function(nm){ return n.indexOf(nm)>=0; });
     if(i>=0) s+=(VOICE_NICE.length-i);                                   // よく知られた 聞きやすい こえ
     if(/en[-_]US/i.test(v.lang)) s+=6; else if(/en[-_]GB/i.test(v.lang)) s+=4;
-    if(/compact|eloquence|novelty|whisper|bells|bad news|good news|bubbles|jester|organ|superstar|trinoids|wobble|zarvox|albert|cellos|boing|junior|ralph|fred|kathy|princess|deranged|hysterical|bahh|deutsch/i.test(n)) s-=200; // ネタ音声・低品質
     return s;
   }
   function pickerVoices(){ return enVoices().slice().sort(function(a,b){ return voiceScore(b)-voiceScore(a); }); }
