@@ -285,6 +285,7 @@ window._eigoPetInit = function() {
       for(var mk in (s.mastery||{})){ var lk=mk.toLowerCase(); s.learn[lk]={c:0,w:false,m:(s.mastery[mk]>=2)}; }
       (s.wrongWords||[]).forEach(function(x){ var wk=(x[0]||'').toLowerCase(); if(!wk) return; s.learn[wk]={c:(s.learn[wk]&&s.learn[wk].c)||0,w:true,m:false}; });
     }
+    s=sanitizeImport(s);                                  // 保存データ経由の すりかえも ふせぐ
     if(!WORDBANK[s.grade]) s.grade="jun2";
     if((s.grade==='g3'||s.grade==='g1')&&!s.advGrades) s.grade='jun2'; // 上級モードOFFなら 子供向けの きゅうに もどす
     // ライフサイクル改修(schemaV2)への移行：旧アダルト(lv4)→新アダルト(lv5)
@@ -386,11 +387,18 @@ window._eigoPetInit = function() {
       row('「わからない」',s.dk+'回')+
       row('よく べんきょうする 時間',hrs.map(function(h){ return h+'時('+okPct(s.byHour[h])+')'; }).join('・'));
   }
+  // 表計算ソフトは = + - @ タブ 改行 ではじまる セルを 数式として 実行してしまうので
+  // 先頭に ' を つけて 無害化してから 出す（CSVインジェクション対策）
+  function csvCell(v){
+    if(typeof v!=='string') return v;
+    var s=v;
+    if(/^[=+\-@\t\r]/.test(s)) s="'"+s;
+    return /[",\n\r]/.test(s)?('"'+s.replace(/"/g,'""')+'"'):s;
+  }
   function logCSV(){
     var rows=logAll(), out=[LOG_COLS.join(',')];
     rows.forEach(function(r){ out.push(r.map(function(v,i){
-      if(i===0) return new Date(v).toISOString();
-      return (typeof v==='string'&&/[",\n]/.test(v))?('"'+v.replace(/"/g,'""')+'"'):v; }).join(',')); });
+      return csvCell(i===0?new Date(v).toISOString():v); }).join(',')); });
     return '\ufeff'+out.join('\n');
   }
   function dlFile(name,text,mime){
@@ -937,9 +945,21 @@ window._eigoPetInit = function() {
   function encodeState(){ return btoa(unescape(encodeURIComponent(JSON.stringify(state)))); }
   document.getElementById('btnExport').onclick=function(){ var box=document.getElementById('exportBox'); box.value=encodeState(); box.style.display='block'; document.getElementById('btnCopy').style.display='block'; };
   document.getElementById('btnCopy').onclick=function(){ var box=document.getElementById('exportBox'); box.select(); var ok=function(){ document.getElementById('dataMsg').style.color='var(--g)'; document.getElementById('dataMsg').textContent='コピーしました！'; }; if(navigator.clipboard){ navigator.clipboard.writeText(box.value).then(ok,function(){ try{ document.execCommand('copy'); ok(); }catch(e){} }); } else { try{ document.execCommand('copy'); ok(); }catch(e){} } };
-  document.getElementById('btnImport').onclick=function(){ var msg=document.getElementById('dataMsg'); var code=(document.getElementById('importBox').value||'').trim(); if(!code){ msg.style.color='#9b2222'; msg.textContent='コードを はりつけてね'; return; } var obj=null; try{ obj=JSON.parse(decodeURIComponent(escape(atob(code)))); }catch(e){ try{ obj=JSON.parse(code); }catch(e2){} } if(!obj||typeof obj!=='object'||(obj.lv===undefined&&obj.learned===undefined)){ msg.style.color='#9b2222'; msg.textContent='この コードは よみこめません'; return; } if(!confirm('いまの データを この バックアップで 上書きします。よろしいですか？')) return; state=Object.assign({},state,obj); if(!WORDBANK[state.grade]) state.grade='jun2'; save(); msg.style.color='var(--g)'; msg.textContent='ふっかつしました！'; renderData(); render(); };
+  // 読みこんだ データから プロトタイプを すりかえる キーを とりのぞく
+  //（"__proto__" は Object.assign の [[Set]] で オブジェクトの 親を すりかえられるため）
+  function sanitizeImport(v,depth){
+    depth=depth||0;
+    if(!v||typeof v!=='object'||depth>6) return v;
+    if(Array.isArray(v)) return v.map(function(x){ return sanitizeImport(x,depth+1); });
+    var clean={};
+    for(var k in v){ if(!Object.prototype.hasOwnProperty.call(v,k)) continue;
+      if(k==='__proto__'||k==='constructor'||k==='prototype') continue;   // ここが すりかえの 入口
+      clean[k]=sanitizeImport(v[k],depth+1); }
+    return clean;
+  }
+  document.getElementById('btnImport').onclick=function(){ var msg=document.getElementById('dataMsg'); var code=(document.getElementById('importBox').value||'').trim(); if(!code){ msg.style.color='#9b2222'; msg.textContent='コードを はりつけてね'; return; } var obj=null; try{ obj=JSON.parse(decodeURIComponent(escape(atob(code)))); }catch(e){ try{ obj=JSON.parse(code); }catch(e2){} } obj=sanitizeImport(obj); if(!obj||typeof obj!=='object'||(obj.lv===undefined&&obj.learned===undefined)){ msg.style.color='#9b2222'; msg.textContent='この コードは よみこめません'; return; } if(!confirm('いまの データを この バックアップで 上書きします。よろしいですか？')) return; state=Object.assign({},state,obj); if(!WORDBANK[state.grade]) state.grade='jun2'; save(); msg.style.color='var(--g)'; msg.textContent='ふっかつしました！'; renderData(); render(); };
   document.getElementById('btnDownload').onclick=function(){ var msg=document.getElementById('dataMsg'); try{ var blob=new Blob([JSON.stringify(state)],{type:'application/json'}); var url=URL.createObjectURL(blob); var a=document.createElement('a'); var d=new Date(), ds=d.getFullYear()+('0'+(d.getMonth()+1)).slice(-2)+('0'+d.getDate()).slice(-2); a.href=url; a.download='eigopet_backup_'+ds+'.json'; document.body.appendChild(a); a.click(); document.body.removeChild(a); setTimeout(function(){ URL.revokeObjectURL(url); },1500); msg.style.color='var(--g)'; msg.textContent='ファイルに ほぞんしました！'; }catch(e){ msg.style.color='#9b2222'; msg.textContent='ほぞん できないときは コードを つかってね'; } };
-  document.getElementById('fileImport').onchange=function(e){ var f=e.target.files&&e.target.files[0]; var msg=document.getElementById('dataMsg'); if(!f) return; var r=new FileReader(); r.onload=function(){ var obj=null; try{ obj=JSON.parse(r.result); }catch(err){} if(!obj||typeof obj!=='object'||(obj.lv===undefined&&obj.learned===undefined)){ msg.style.color='#9b2222'; msg.textContent='この ファイルは よみこめません'; return; } if(!confirm('いまの データを この バックアップで 上書きします。よろしいですか？')) return; state=Object.assign({},state,obj); if(!WORDBANK[state.grade]) state.grade='jun2'; save(); msg.style.color='var(--g)'; msg.textContent='ふっかつしました！'; renderData(); render(); }; r.readAsText(f); e.target.value=''; };
+  document.getElementById('fileImport').onchange=function(e){ var f=e.target.files&&e.target.files[0]; var msg=document.getElementById('dataMsg'); if(!f) return; var r=new FileReader(); r.onload=function(){ var obj=null; try{ obj=JSON.parse(r.result); }catch(err){} obj=sanitizeImport(obj); if(!obj||typeof obj!=='object'||(obj.lv===undefined&&obj.learned===undefined)){ msg.style.color='#9b2222'; msg.textContent='この ファイルは よみこめません'; return; } if(!confirm('いまの データを この バックアップで 上書きします。よろしいですか？')) return; state=Object.assign({},state,obj); if(!WORDBANK[state.grade]) state.grade='jun2'; save(); msg.style.color='var(--g)'; msg.textContent='ふっかつしました！'; renderData(); render(); }; r.readAsText(f); e.target.value=''; };
   (function(){
     var stamp=function(){ var d=new Date(); return d.getFullYear()+('0'+(d.getMonth()+1)).slice(-2)+('0'+d.getDate()).slice(-2); };
     var msg=function(t,bad){ var m=document.getElementById('logMsg'); if(!m) return; m.style.color=bad?'#9b2222':'var(--g)'; m.textContent=t; };
