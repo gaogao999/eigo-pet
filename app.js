@@ -948,7 +948,7 @@ window._eigoPetInit = function() {
   document.getElementById('wlSearch').oninput=function(){ renderWordList(); };
   document.getElementById('wlWrongBtn').onclick=function(){ wlWrongOnly=!wlWrongOnly; renderWordList(); };
   var curAdminTab='zukan';
-  function setAdminTab(t){ curAdminTab=t; ['zukan','kisekae','keifu','tango','data'].forEach(function(k){ document.getElementById('tab-'+k).style.display=(k===t)?'block':'none'; }); document.querySelectorAll('#atabs .atab').forEach(function(b){ b.classList.toggle('sel',b.dataset.t===t); }); if(t==='kisekae') renderCosmetics(); if(t==='tango') renderWordList(); if(t==='data'){ renderData(); renderVoicePicker(); } window.scrollTo(0,0); }
+  function setAdminTab(t){ curAdminTab=t; ['zukan','kisekae','keifu','tango','data'].forEach(function(k){ document.getElementById('tab-'+k).style.display=(k===t)?'block':'none'; }); document.querySelectorAll('#atabs .atab').forEach(function(b){ b.classList.toggle('sel',b.dataset.t===t); }); if(t==='kisekae') renderCosmetics(); if(t==='tango') renderWordList(); if(t==='data'){ renderData(); renderVoicePicker(); voicePoll(); } window.scrollTo(0,0); }
   function lockParent(){ var pp=document.getElementById('okParent'); if(pp) pp.style.display='none'; var lk=document.getElementById('okLock'); if(lk) lk.style.display='block'; }
   function unlockParent(){ var pp=document.getElementById('okParent'); if(pp) pp.style.display='block'; var lk=document.getElementById('okLock'); if(lk) lk.style.display='none'; }
   function renderMoney(){
@@ -2603,13 +2603,38 @@ window._eigoPetInit = function() {
         : '「ためす」で こえと はやさを かくにんできます。<br><b style="color:#b45309;">もっと 自然な こえに できます：</b>iPhone/iPadの <b>設定 → アクセシビリティ → 読み上げコンテンツ → 声 → 英語</b> で「<b>拡張</b>」や「Premium」の こえを ダウンロードすると、ここに <b>（高品質）</b>として でてきます（むりょう）'
         + (best?'<br><span style="color:var(--mut);">いまの こえ：'+escJa(best.name)+'</span>':''); }
   }
-  if(window.speechSynthesis){ speechSynthesis.onvoiceschanged=function(){ enVoice=pickVoice(); renderVoicePicker(); }; ensureVoice(); }
+  // iPhone は こえの 一覧が おくれて とどくことが あるので、しばらく 見にいく
+  var voicePollT=null;
+  function voicePoll(){
+    if(voicePollT) clearInterval(voicePollT);
+    var n=0, last=-1;
+    voicePollT=setInterval(function(){
+      var c=(window.speechSynthesis?speechSynthesis.getVoices():[]).length;
+      if(c!==last){ last=c; enVoice=pickVoice(); renderVoicePicker(); }
+      if(++n>20||c>0&&n>6){ clearInterval(voicePollT); voicePollT=null; }
+    },500);
+  }
+  if(window.speechSynthesis){ speechSynthesis.onvoiceschanged=function(){ enVoice=pickVoice(); renderVoicePicker(); }; ensureVoice(); voicePoll(); }
   (function(){
     var sel=document.getElementById('voiceSel');
     if(sel) sel.onchange=function(){ state.voiceName=sel.value;
       enVoice=enVoices().find(function(v){ return v.name===sel.value; })||null; save(); speak('Hello! This is my voice.'); };
     var rs=document.getElementById('rateSel'); if(rs) rs.onchange=function(){ state.speechRate=parseFloat(rs.value)||0.8; save(); speak('Hello! Good job!'); };
     var tb=document.getElementById('voiceTest'); if(tb) tb.onclick=function(){ speak('Hello! Good job!'); };
+    var va=document.getElementById('voiceAll'); if(va) va.onclick=function(){
+      var box=document.getElementById('voiceDump'); if(!box) return;
+      if(box.style.display==='block'){ box.style.display='none'; return; }
+      var all=(window.speechSynthesis?speechSynthesis.getVoices():[]);
+      var en=all.filter(function(v){ return /^en[-_]?/i.test(v.lang); });
+      var shown=enVoices();
+      box.style.display='block';
+      box.innerHTML='<b>この たんまつが 出せる こえ：ぜんぶで '+all.length+'こ ／ えいご '+en.length+'こ ／ アプリに 出しているのは '+shown.length+'こ</b><br>'
+        + (en.length?en.map(function(v){
+            var used=shown.some(function(s2){ return s2.name===v.name; });
+            return (used?'✅ ':'✖ ')+escJa(v.name)+' <span style="color:var(--mut);">('+escJa(v.lang)+(v.localService===false?'・ネット':'')+')</span>';
+          }).join('<br>')
+          : '<span style="color:#b45309;">えいごの こえが 1つも ありません。Safari で ひらいているか、iPhoneの 設定→アクセシビリティ→読み上げコンテンツ→声→英語 を かくにんしてね</span>');
+    };
     renderVoicePicker();
   })();
   function speak(en){ try{
