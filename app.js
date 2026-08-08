@@ -310,7 +310,7 @@ window._eigoPetInit = function() {
      出題アルゴリズムの チューニングに つかう。日ごとに 分けて保存するので
      書きこみは いつも かるい（1日ぶんだけ 書きかえる）。                        */
   var LOG_PREFIX='eigopet_log_', LOG_KEEP_DAYS=400;
-  var LOG_COLS=['ts','day','word','grade','mode','ok','ms','kind','lvBefore','ivlBefore','lateDays','spellMiss','viaDontKnow','streak','todayIdx'];
+  var LOG_COLS=['ts','day','word','grade','mode','ok','ms','kind','lvBefore','ivlBefore','lateDays','spellMiss','viaDontKnow','streak','todayIdx','fast'];
   function logDays(){ var out=[];
     try{ for(var i=0;i<localStorage.length;i++){ var k=localStorage.key(i);
       if(k&&k.indexOf(LOG_PREFIX)===0) out.push(k.slice(LOG_PREFIX.length)); } }catch(e){}
@@ -327,17 +327,44 @@ window._eigoPetInit = function() {
   function logAll(){ var out=[]; logDays().forEach(function(d){ out=out.concat(logLoad(d)); }); return out; }
   function logClear(){ logDays().forEach(function(d){ try{ localStorage.removeItem(LOG_PREFIX+d); }catch(e){} }); }
   var MODE_N={meaning:0,spell:1,reverse:2}, MODE_JA=['英→日4択','スペル入力','日→英4択'];
-  var qStartAt=0;                                        // その問題を 出した時刻（かかった時間の計測）
+  /* ===== すでに 知っている語を はやく 見きわめる =====
+     おなじ級の中には もともと 知っている語が まざっていて、そこに 復習の枠を
+     使われるのは もったいない（試算：既知35%だと 出題の35%が そこに 消える）。
+     ・ヒントも 音声も つかわず、その子にしては はやく 正解した＝「知っている」サイン
+     ・2回 つづいたら 間隔を 一気に のばす（まぐれ当たりの 先送りを へらす安全版）
+     ・「はやい」の基準は 固定値ではなく その子自身の 回答時間から きめる         */
+  var FAST_DEFAULT=[3500,9000,4500];                  // まだ データが 少ないとき用（形式ごと・ミリ秒）
+  var fastTh=null;                                    // 形式ごとの しきい値（べんきょう開始時に 計算）
+  function calcFastThreshold(){
+    var rows=logAll(), by=[[],[],[]];
+    for(var i=0;i<rows.length;i++){ var r=rows[i];
+      if(r[5]===1&&r[6]>300&&r[6]<120000&&by[r[4]]) by[r[4]].push(r[6]); }   // 正解ぶんだけ
+    fastTh=FAST_DEFAULT.map(function(def,m){
+      var a=by[m]; if(a.length<20) return def;         // サンプルが 少ないうちは 既定値
+      a.sort(function(x,y){ return x-y; });
+      return Math.round(a[Math.floor(a.length*0.4)]);  // その子の 正解の うち はやいほうから 40%
+    });
+  }
+  function isFastAnswer(ms){
+    if(!fastTh) calcFastThreshold();
+    var m=MODE_N[qMode]; if(m===undefined) m=0;
+    return ms>0 && ms<=fastTh[m];
+  }
+
+  var qStartAt=0, qUsedHint=false, qUsedAudio=false;     // 出した時刻と、ヒント・音声を つかったか
   // onAnswer の まえに よんで、こたえる直前の SRS状態も いっしょに のこす
   function recordAnswer(en,ok,via){
     var k=(en||'').toLowerCase(), r=state.learn[k];
+    var ms=qStartAt?Math.min(600000,Date.now()-qStartAt):0;
+    // ヒントも 音声も つかわず はやく 正解した＝「もう 知っている」サイン
+    var fast=ok&&!qUsedHint&&!qUsedAudio&&!spellMiss&&via!=='dk'&&isFastAnswer(ms);
     var late=0;
     if(r&&r.due){ late=Math.round((new Date(today())-new Date(r.due))/86400000); if(!(late>=0)) late=0; }
     logPush([ Date.now(), today(), k, state.grade, MODE_N[qMode]===undefined?0:MODE_N[qMode], ok?1:0,
-      qStartAt?Math.min(600000,Date.now()-qStartAt):0, r?1:0,
+      ms, r?1:0,
       r?(r.lv||0):-1, r?(r.ivl||0):-1, late, spellMiss||0, via==='dk'?1:0,
-      displayStreak(), todayCount() ]);
-    onAnswer(en,ok);
+      displayStreak(), todayCount(), fast?1:0 ]);
+    onAnswer(en,ok,fast);
   }
   // 分析まとめ（アプリの中で ざっと 見るよう）
   function logSummary(){
@@ -458,20 +485,24 @@ window._eigoPetInit = function() {
   function dayGain(){                                   // きょう ふえた数（日が かわったら リセット）
     if(!state.gain||state.gain.d!==today()) state.gain={d:today(),m:0,seen:0};
     return state.gain; }
-  function onAnswer(en,ok){
+  var SRS_KNOWN_LV=3, SRS_SURE_LV=5;                   // 知っていそう→14日／たしかに知っている→60日
+  function onAnswer(en,ok,fast){
     var k=(en||'').toLowerCase(); var r=state.learn[k]||{c:0,w:false,m:false,lv:0};
     var wasNew=!state.learn[k], wasM=!!r.m, g=dayGain();
     if(wasNew) g.seen++;
     if(typeof r.lv!=='number') r.lv=0;
     if(ok){
       r.c=(r.c||0)+1;
-      r.lv=(r.ivl>0)?Math.min(SRS_IVL.length-1,r.lv+1):0;   // はじめて／まちがえた直後は レベル0（1日後）から
+      r.fn=fast?((r.fn||0)+1):0;                        // そっこう正解が つづいた回数
+      if(fast&&wasNew) r.lv=SRS_KNOWN_LV;                       // 初回から そっこう → 14日
+      else if(fast&&r.fn>=2&&r.lv<=SRS_KNOWN_LV) r.lv=SRS_SURE_LV;  // 2回つづけば 60日
+      else r.lv=(r.ivl>0)?Math.min(SRS_IVL.length-1,r.lv+1):0;   // はじめて／まちがえた直後は レベル0（1日後）から
       r.ivl=SRS_IVL[r.lv];
       r.due=dayAdd(today(),r.ivl);
       r.m=(r.ivl>=SRS_MASTER_IVL);
       if(!wasM&&r.m) g.m++;                              // ⭐に なった瞬間だけ 数える
     } else {
-      r.c=0; r.w=true; r.m=false;
+      r.c=0; r.w=true; r.m=false; r.fn=0;
       r.lv=0; r.ivl=0; r.due=today();                 // にがては すぐ また出す
     }
     state.learn[k]=r;
@@ -2335,8 +2366,10 @@ window._eigoPetInit = function() {
       out=out.concat(later.slice(0,need).map(function(x){ return x[0]; })); }
     return shuffle(out);
   }
-  window.SRS_DBG={onAnswer:onAnswer,build:buildQuestions,due:srsDue,dueCount:dueCount,prog:gradeProgress,IVL:SRS_IVL,slots:REVIEW_SLOTS,state:function(){ return state; }};
-  function startStudy(){ reviewMode=false; requeued={}; qList=buildQuestions(QPER); window.__qList=qList; qIdx=0; session={correct:0,combo:0,maxCombo:0,newMastered:0,total:qList.length}; document.getElementById('qTotal').textContent=qList.length; show('study'); nextQ(); }
+  window.SRS_DBG={onAnswer:onAnswer,build:buildQuestions,due:srsDue,dueCount:dueCount,prog:gradeProgress,IVL:SRS_IVL,slots:REVIEW_SLOTS,state:function(){ return state; },
+    calcFast:function(){ calcFastThreshold(); return fastTh; },th:function(){ return fastTh; },setMode:function(m){ qMode=m; },
+    setFlags:function(h,a2){ qUsedHint=h; qUsedAudio=a2; }};
+  function startStudy(){ reviewMode=false; requeued={}; calcFastThreshold(); qList=buildQuestions(QPER); window.__qList=qList; qIdx=0; session={correct:0,combo:0,maxCombo:0,newMastered:0,total:qList.length}; document.getElementById('qTotal').textContent=qList.length; show('study'); nextQ(); }
   function escJa(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); } // HTMLに入れる文字列は かならず これを通す
   function splitSenses(s){ return (s||'').split(/[，、,]/).map(function(x){ return x.trim(); }).filter(Boolean); }
   // 各いみの ふりがなを その漢字の 真上に（ruby）。コンマで 行を わける
@@ -2366,7 +2399,8 @@ window._eigoPetInit = function() {
   function choiceHtml(w){ var lng=(w[1]||'').length>9?' long':''; return '<span class="base'+lng+'">'+rubyHTML(w[1],w[2])+'</span>'; }
   function firstSenseKana(w){ var s=(w[2]||w[1]||''); return s.split(/[\u3001,\uff0c]/)[0].trim(); }
   function easyText(w){ var k=(w[0]||''); var e=(typeof EASY!=='undefined')?(EASY[k]||EASY[k.toLowerCase()]):null; return e||firstSenseKana(w); }
-  function showEasy(w,noScroll){ var box=document.getElementById('easyHint'); box.innerHTML='<div class="ehlabel">やさしいいみ</div><div class="ehmean">'+escJa(easyText(w))+'</div>'; box.style.display='block'; if(noScroll) return; try{ box.scrollIntoView({behavior:'smooth',block:'center'}); }catch(e){ try{ box.scrollIntoView(); }catch(_){} } }
+  function showEasy(w,noScroll){ if(!noScroll) qUsedHint=true;   // noScroll=まちがえた後の 自動表示なので ヒント扱いしない
+    var box=document.getElementById('easyHint'); box.innerHTML='<div class="ehlabel">やさしいいみ</div><div class="ehmean">'+escJa(easyText(w))+'</div>'; box.style.display='block'; if(noScroll) return; try{ box.scrollIntoView({behavior:'smooth',block:'center'}); }catch(e){ try{ box.scrollIntoView(); }catch(_){} } }
   function attachLongPress(el,cb){
     var t=null, longFired=false, touched=false;
     function start(){ longFired=false; el._lp=false; clearTimeout(t); t=setTimeout(function(){ longFired=true; el._lp=true; el._lpAt=Date.now(); cb(); },500); }
@@ -2394,7 +2428,7 @@ window._eigoPetInit = function() {
     pendingNext=false; var nb0=document.getElementById('nextBtn'); if(nb0) nb0.style.display='none'; var dk0=document.getElementById('dontKnow'); if(dk0) dk0.style.display='block';
     if(qIdx>=qList.length){ finishStudy(); return; }
     updateStudyProg();
-    var correct=qList[qIdx]; curWord=correct; window.__curWord=correct[0]; qMissed=false; spellMiss=0; qStartAt=Date.now();
+    var correct=qList[qIdx]; curWord=correct; window.__curWord=correct[0]; qMissed=false; spellMiss=0; qStartAt=Date.now(); qUsedHint=false; qUsedAudio=false;
     var en=correct[0];
     qMode=pickQMode();
     if(qMode==='spell'&&!state.learn[(en||'').toLowerCase()]) qMode='meaning';   // はじめて 見る語に いきなり スペル入力は 出さない
@@ -2515,7 +2549,7 @@ window._eigoPetInit = function() {
   if(window.speechSynthesis){ speechSynthesis.onvoiceschanged=function(){ enVoice=pickVoice(); renderVoicePicker(); }; ensureVoice(); }
   (function(){ var sel=document.getElementById('voiceSel'); if(sel) sel.onchange=function(){ state.voiceName=sel.value; enVoice=enVoices().find(function(v){ return v.name===sel.value; })||null; save(); speak('Hello!'); }; var rs=document.getElementById('rateSel'); if(rs) rs.onchange=function(){ state.speechRate=parseFloat(rs.value)||0.8; save(); speak('Hello! Good job!'); }; var tb=document.getElementById('voiceTest'); if(tb) tb.onclick=function(){ speak('Hello! Good job!'); }; renderVoicePicker(); })();
   function speak(en){ try{ if(!window.speechSynthesis) return; var u=new SpeechSynthesisUtterance(en); var v=ensureVoice(); if(v){ u.voice=v; u.lang=v.lang; } else { u.lang='en-US'; } u.rate=state.speechRate||0.8; u.pitch=1.0; speechSynthesis.cancel(); speechSynthesis.speak(u); }catch(e){} }
-  document.getElementById('speak').onclick=function(){ speak(curWord?curWord[0]:document.getElementById('qword').textContent); };
+  document.getElementById('speak').onclick=function(){ qUsedAudio=true; speak(curWord?curWord[0]:document.getElementById('qword').textContent); };
   (function(){ var sb=document.getElementById('spellSubmit'); if(sb) sb.onclick=submitSpell; var si=document.getElementById('spellInput'); if(si){ si.addEventListener('keydown',function(e){ if(e.key==='Enter'){ e.preventDefault(); submitSpell(); } }); si.addEventListener('input',updateSpellBars); } var qw=document.getElementById('qword'); if(qw) attachLongPress(qw,function(){ if(curWord && (qMode==='reverse'||qMode==='spell')) showEasy(curWord); }); })();
   document.getElementById('dontKnow').onclick=function(){
     if(!curWord) return;
