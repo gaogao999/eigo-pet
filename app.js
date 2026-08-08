@@ -455,8 +455,13 @@ window._eigoPetInit = function() {
   var SRS_MASTER_IVL=7;                               // これ以上のびたら「おぼえた」あつかい
   function dayAdd(ds,n){ var d=new Date(ds); d.setDate(d.getDate()+n); return dayStr(d); }
   function srsDue(r){ return !r || !r.due || r.due<=today(); }
+  function dayGain(){                                   // きょう ふえた数（日が かわったら リセット）
+    if(!state.gain||state.gain.d!==today()) state.gain={d:today(),m:0,seen:0};
+    return state.gain; }
   function onAnswer(en,ok){
     var k=(en||'').toLowerCase(); var r=state.learn[k]||{c:0,w:false,m:false,lv:0};
+    var wasNew=!state.learn[k], wasM=!!r.m, g=dayGain();
+    if(wasNew) g.seen++;
     if(typeof r.lv!=='number') r.lv=0;
     if(ok){
       r.c=(r.c||0)+1;
@@ -464,6 +469,7 @@ window._eigoPetInit = function() {
       r.ivl=SRS_IVL[r.lv];
       r.due=dayAdd(today(),r.ivl);
       r.m=(r.ivl>=SRS_MASTER_IVL);
+      if(!wasM&&r.m) g.m++;                              // ⭐に なった瞬間だけ 数える
     } else {
       r.c=0; r.w=true; r.m=false;
       r.lv=0; r.ivl=0; r.due=today();                 // にがては すぐ また出す
@@ -730,8 +736,14 @@ window._eigoPetInit = function() {
     var wd=document.getElementById('weekdots');
     if(wd){ var h=''; var W='月火水木金土日'; var mon=new Date(weekId(today())); for(var i=0;i<7;i++){ var dd2=new Date(mon); dd2.setDate(mon.getDate()+i); var dds=dayStr(dd2); var met2=state.metDates.indexOf(dds)>=0||(dds===today()&&done>=goal); var isT=(dds===today()); h+='<div class="wdot'+(met2?' met':'')+(isT?' today':'')+'">'+W[i]+'</div>'; } wd.innerHTML=h; }
     var gp=gradeProgress();
-    var mb=document.getElementById('masterBar'); if(mb) mb.style.width=(gp.total?Math.round(gp.mastered/gp.total*100):0)+'%';
+    var seenPct=gp.total?((gp.mastered+gp.review)/gp.total*100):0;
+    var lb=document.getElementById('learnBar'); if(lb) lb.style.width=Math.min(100,Math.max(seenPct>0?2.5:0,seenPct))+'%';   // 1語でも 見えるように
+    var mb=document.getElementById('masterBar'); if(mb){ var mp=gp.total?(gp.mastered/gp.total*100):0;
+      mb.style.width=(mp>0?Math.max(2.5,mp):0)+'%'; }
     var mn=document.getElementById('masterN'); if(mn) mn.textContent=gp.mastered;
+    var ln=document.getElementById('learnN'); if(ln) ln.textContent=gp.review;
+    var tg=document.getElementById('todayGain'); if(tg){ var g2=dayGain();
+      tg.textContent=(g2.seen||g2.m)?('きょう 🌱+'+g2.seen+(g2.m?' ⭐+'+g2.m:'')):''; tg.style.display=(g2.seen||g2.m)?'inline-block':'none'; }
     var gt=document.getElementById('gradeTotal'); if(gt) gt.textContent=gp.total;
     var rn=document.getElementById('reviewN'); if(rn) rn.textContent=dueCount();   // きょう じゅんばんが きた 復習の数
     var tn=document.getElementById('ticketN'); if(tn) tn.textContent=state.freezeTickets;
