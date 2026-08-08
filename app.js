@@ -289,6 +289,17 @@ window._eigoPetInit = function() {
     if((s.grade==='g3'||s.grade==='g1')&&!s.advGrades) s.grade='jun2'; // 上級モードOFFなら 子供向けの きゅうに もどす
     // ライフサイクル改修(schemaV2)への移行：旧アダルト(lv4)→新アダルト(lv5)
     if(!s.schemaV || s.schemaV<2){ if(s.lv>=4) s.lv=5; if(typeof s.born!=='number') s.born=Date.now(); if(typeof s.stageSince!=='number') s.stageSince=Date.now(); if(typeof s.lifespanDays!=='number') s.lifespanDays=12; if(!Array.isArray(s.memories)) s.memories=[]; s.schemaV=2; }
+    // 間隔反復(schemaV3)への移行：これまでの おぼえた/にがて を SRSの レベルに 割りあてる
+    if(!s.schemaV || s.schemaV<3){
+      var t0=dayStr(new Date());
+      var addD=function(n){ var d=new Date(t0); d.setDate(d.getDate()+n); return dayStr(d); };
+      for(var lk in (s.learn||{})){ var r=s.learn[lk];
+        if(r.m&&!r.w){ r.lv=2; r.ivl=7;  r.due=addD(7); }        // 一発正解で おぼえた
+        else if(r.m&&r.w){ r.lv=1; r.ivl=3; r.due=addD(3); }     // 間違えたあと おぼえた
+        else { r.lv=0; r.ivl=0; r.due=t0; r.m=false; }           // にがて＝きょうから
+      }
+      s.schemaV=3;
+    }
     return s;
   })();
   function save(){ try{ var js=JSON.stringify(state); localStorage.setItem(KEY,js); localStorage.setItem(BAKKEY,js); }catch(e){} }
@@ -326,11 +337,42 @@ window._eigoPetInit = function() {
   }
 
   /* ---- titles ---- */
-  function onAnswer(en,ok){ var k=(en||'').toLowerCase(); var r=state.learn[k]||{c:0,w:false,m:false}; if(ok){ r.c=(r.c||0)+1; if(r.c>=(r.w?2:1)) r.m=true; } else { r.c=0; r.w=true; r.m=false; } state.learn[k]=r; }
-  function isReviewWord(k){ var r=state.learn[k]; return !!(r&&r.w&&!r.m); }
+  /* ===== 間隔反復（SRS）=====
+     ・Karpicke & Roediger (2008)：正解できた語も「テストし続ける」ことが定着の鍵
+       （1週間後の再生率 テスト継続80% / 再学習のみ36%）→ おぼえた語も 引退させず
+       間隔を のばして 出しつづける
+     ・Cepeda et al. (2008)：最適な復習間隔は「おぼえていたい期間」の 10〜20%
+       → 数か月〜1年 もたせる想定で 1→3→7→14→30→60日 の階段
+     ・Nakata (2015) / Nakata & Webb (2016)：効くのは「間隔の量」。拡張か均等かの差は小さく、
+       1回に学ぶ語数より 間隔のほうが大事 → 5問/回は そのまま、日をまたぐ間隔を入れる  */
+  var SRS_IVL=[1,3,7,14,30,60];                       // レベルごとの 日数
+  var SRS_MASTER_IVL=7;                               // これ以上のびたら「おぼえた」あつかい
+  function dayAdd(ds,n){ var d=new Date(ds); d.setDate(d.getDate()+n); return dayStr(d); }
+  function srsDue(r){ return !r || !r.due || r.due<=today(); }
+  function onAnswer(en,ok){
+    var k=(en||'').toLowerCase(); var r=state.learn[k]||{c:0,w:false,m:false,lv:0};
+    if(typeof r.lv!=='number') r.lv=0;
+    if(ok){
+      r.c=(r.c||0)+1;
+      r.lv=(r.ivl>0)?Math.min(SRS_IVL.length-1,r.lv+1):0;   // はじめて／まちがえた直後は レベル0（1日後）から
+      r.ivl=SRS_IVL[r.lv];
+      r.due=dayAdd(today(),r.ivl);
+      r.m=(r.ivl>=SRS_MASTER_IVL);
+    } else {
+      r.c=0; r.w=true; r.m=false;
+      r.lv=0; r.ivl=0; r.due=today();                 // にがては すぐ また出す
+    }
+    state.learn[k]=r;
+  }
+  function isReviewWord(k){ var r=state.learn[k]; return !!(r&&!r.m); }
   function masteredCount(){ var n=0; for(var k in state.learn){ if(state.learn[k].m) n++; } return n; }
-  function reviewCount(){ var n=0; for(var k in state.learn){ var r=state.learn[k]; if(r.w&&!r.m) n++; } return n; }
-  function gradeProgress(){ var ws=currentWords(), m=0, rev=0; for(var i=0;i<ws.length;i++){ var r=state.learn[ws[i][0].toLowerCase()]; if(r){ if(r.m) m++; else if(r.w) rev++; } } return {total:ws.length, mastered:m, review:rev}; }
+  function reviewCount(){ var n=0; for(var k in state.learn){ var r=state.learn[k]; if(!r.m) n++; } return n; }
+  function dueCount(){ var n=0, ws=currentWords();     // きょう 復習の じゅんばんが きた語
+    for(var i=0;i<ws.length;i++){ var r=state.learn[ws[i][0].toLowerCase()]; if(r&&srsDue(r)) n++; }
+    return n; }
+  function gradeProgress(){ var ws=currentWords(), m=0, rev=0;
+    for(var i=0;i<ws.length;i++){ var r=state.learn[ws[i][0].toLowerCase()]; if(r){ if(r.m) m++; else rev++; } }
+    return {total:ws.length, mastered:m, review:rev}; }
   var TITLES=[
     {id:'w50',name:'たんごの たまご',cond:function(s){return s.learned>=50;}},
     {id:'w100',name:'100ご マスター',cond:function(s){return s.learned>=100;}},
@@ -585,7 +627,7 @@ window._eigoPetInit = function() {
     var mb=document.getElementById('masterBar'); if(mb) mb.style.width=(gp.total?Math.round(gp.mastered/gp.total*100):0)+'%';
     var mn=document.getElementById('masterN'); if(mn) mn.textContent=gp.mastered;
     var gt=document.getElementById('gradeTotal'); if(gt) gt.textContent=gp.total;
-    var rn=document.getElementById('reviewN'); if(rn) rn.textContent=gp.review;
+    var rn=document.getElementById('reviewN'); if(rn) rn.textContent=dueCount();   // きょう じゅんばんが きた 復習の数
     var tn=document.getElementById('ticketN'); if(tn) tn.textContent=state.freezeTickets;
     var wm=document.getElementById('weekMet'); if(wm) wm.textContent=Math.min(5,thisWeekMet());
     var tt=document.getElementById('titleN'); if(tt) tt.textContent=(state.titles.length)+'/'+TITLES.length;
@@ -746,7 +788,7 @@ window._eigoPetInit = function() {
       var badge=mastered?'<span class="wlmast">✓おぼえた</span>':(review?'<span class="wlwrong">🔁ふくしゅう</span>':'');
       html+='<div class="wlrow'+(review?' iswrong':'')+'"><div class="wltop"><div class="wlen">'+escJa(w[0])+(pos?'<span class="wlpos">'+pos+'</span>':'')+badge+'</div><div class="wlja">'+yomi+'<span>'+escJa(wlp[0].join('，'))+'</span></div></div>'+easyLine+'</div>';
     }
-    document.getElementById('wlCount').textContent=list.length+'ご ／ おぼえた '+masteredCount()+' ／ ふくしゅうまち '+reviewCount();
+    document.getElementById('wlCount').textContent=list.length+'ご ／ おぼえた '+masteredCount()+' ／ きょうの ふくしゅう '+dueCount();
     document.getElementById('wlList').innerHTML=html;
     document.querySelectorAll('#wlGrades .gbtn').forEach(function(b){ b.classList.toggle('sel',b.dataset.g===wlGrade); });
     document.getElementById('wlWrongBtn').classList.toggle('sel',wlWrongOnly);
@@ -2117,8 +2159,8 @@ window._eigoPetInit = function() {
   // 1回のべんきょうは つねに QPER(5)問で固定。まちがえた語は 同セッションでは増やさず、
   //   次回に 重み×5 で 優先的に 再登場する（requeueMissedは 何もしない）
   function requeueMissed(w){ /* no-op: セッションを のばさない */ }
-  // まちがえた単語(復習まち)を出やすくする重み付き抽選。覚えた=低確率で再確認
-  // 出題の優先度：1)にがて と 4)新出 を最優先、2)間違えて覚えた は中、3)一発正解 は最低
+  // 重みつき抽選。SRSを入れたので、いまは「まだ一度も出ていない語」の中から えらぶのに つかう
+  // （復習の順番は buildQuestions が 期限順で きめる）
   function qWeight(w){ var r=state.learn[w[0].toLowerCase()];
     if(!r) return 4;              // 4) まだ一度も出てない新出：最優先グループ
     if(r.w&&!r.m) return 5;       // 1) 間違えた/未正解のにがて：最優先
@@ -2127,7 +2169,29 @@ window._eigoPetInit = function() {
     return 3;                     // その他
   }
   function pickWeighted(words,n){ var used={}, chosen=[], wt=words.map(qWeight); for(var s=0;s<n;s++){ var total=0,i; for(i=0;i<words.length;i++){ if(!used[i]) total+=wt[i]; } if(total<=0) break; var rnd=Math.random()*total, acc=0, idx=-1; for(i=0;i<words.length;i++){ if(used[i])continue; acc+=wt[i]; if(rnd<=acc){ idx=i; break; } } if(idx<0){ for(i=0;i<words.length;i++){ if(!used[i]){ idx=i; break; } } } if(idx<0) break; used[idx]=true; chosen.push(words[idx]); } return chosen; }
-  function startStudy(){ reviewMode=false; requeued={}; qList=pickWeighted(currentWords(),QPER); qIdx=0; session={correct:0,combo:0,maxCombo:0,newMastered:0,total:qList.length}; document.getElementById('qTotal').textContent=qList.length; show('study'); nextQ(); }
+  var REVIEW_SLOTS=3;
+  window.SRS_DBG={};   // テスト用（あとで 中身を いれる）                                  // 5問のうち 復習に あてる 上限
+  // 期限のきた復習（ふるい順）→ のこりを 新出（重みつき抽選）で うめる。
+  // 新出が つきたら 復習で うめ、それも なければ 期限前の語から えらぶ
+  function buildQuestions(n){
+    var ws=currentWords(), due=[], fresh=[], later=[];
+    for(var i=0;i<ws.length;i++){ var r=state.learn[ws[i][0].toLowerCase()];
+      if(!r) fresh.push(ws[i]);
+      else if(srsDue(r)) due.push([ws[i],r.due||'']);
+      else later.push([ws[i],r.due||'']); }
+    due.sort(function(a,b){ return a[1]<b[1]?-1:(a[1]>b[1]?1:0); });   // 期限が ふるい順
+    var out=due.slice(0,Math.min(REVIEW_SLOTS,n)).map(function(x){ return x[0]; });
+    var need=n-out.length;
+    if(need>0&&fresh.length) out=out.concat(pickWeighted(fresh,need));
+    need=n-out.length;
+    if(need>0&&due.length>out.length) out=out.concat(due.slice(REVIEW_SLOTS,REVIEW_SLOTS+need).map(function(x){ return x[0]; }));
+    need=n-out.length;
+    if(need>0&&later.length){ later.sort(function(a,b){ return a[1]<b[1]?-1:(a[1]>b[1]?1:0); });
+      out=out.concat(later.slice(0,need).map(function(x){ return x[0]; })); }
+    return shuffle(out);
+  }
+  window.SRS_DBG={onAnswer:onAnswer,build:buildQuestions,due:srsDue,dueCount:dueCount,prog:gradeProgress,IVL:SRS_IVL,slots:REVIEW_SLOTS,state:function(){ return state; }};
+  function startStudy(){ reviewMode=false; requeued={}; qList=buildQuestions(QPER); window.__qList=qList; qIdx=0; session={correct:0,combo:0,maxCombo:0,newMastered:0,total:qList.length}; document.getElementById('qTotal').textContent=qList.length; show('study'); nextQ(); }
   function escJa(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); } // HTMLに入れる文字列は かならず これを通す
   function splitSenses(s){ return (s||'').split(/[，、,]/).map(function(x){ return x.trim(); }).filter(Boolean); }
   // 各いみの ふりがなを その漢字の 真上に（ruby）。コンマで 行を わける
@@ -2185,9 +2249,10 @@ window._eigoPetInit = function() {
     pendingNext=false; var nb0=document.getElementById('nextBtn'); if(nb0) nb0.style.display='none'; var dk0=document.getElementById('dontKnow'); if(dk0) dk0.style.display='block';
     if(qIdx>=qList.length){ finishStudy(); return; }
     updateStudyProg();
-    var correct=qList[qIdx]; curWord=correct; qMissed=false; spellMiss=0;
+    var correct=qList[qIdx]; curWord=correct; window.__curWord=correct[0]; qMissed=false; spellMiss=0;
     var en=correct[0];
     qMode=pickQMode();
+    if(qMode==='spell'&&!state.learn[(en||'').toLowerCase()]) qMode='meaning';   // はじめて 見る語に いきなり スペル入力は 出さない
     if(qMode==='spell'&&spellLetters(en).length>12) qMode='meaning'; // 長い単語・熟語のスペル入力は むずかしすぎるので 4択に
     document.getElementById('qNo').textContent=qIdx+1;
     document.getElementById('reward').textContent='';
