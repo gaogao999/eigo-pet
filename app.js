@@ -303,6 +303,104 @@ window._eigoPetInit = function() {
     return s;
   })();
   function save(){ try{ var js=JSON.stringify(state); localStorage.setItem(KEY,js); localStorage.setItem(BAKKEY,js); }catch(e){} }
+
+  /* ===== がくしゅうログ（この たんまつの中だけ・外には おくりません） =====
+     1問こたえるごとに 1行ずつ 記録し、あとから CSV/JSON で とりだして
+     出題アルゴリズムの チューニングに つかう。日ごとに 分けて保存するので
+     書きこみは いつも かるい（1日ぶんだけ 書きかえる）。                        */
+  var LOG_PREFIX='eigopet_log_', LOG_KEEP_DAYS=400;
+  var LOG_COLS=['ts','day','word','grade','mode','ok','ms','kind','lvBefore','ivlBefore','lateDays','spellMiss','viaDontKnow','streak','todayIdx'];
+  function logDays(){ var out=[];
+    try{ for(var i=0;i<localStorage.length;i++){ var k=localStorage.key(i);
+      if(k&&k.indexOf(LOG_PREFIX)===0) out.push(k.slice(LOG_PREFIX.length)); } }catch(e){}
+    return out.sort(); }
+  function logLoad(day){ try{ var v=localStorage.getItem(LOG_PREFIX+day); return v?(JSON.parse(v)||[]):[]; }catch(e){ return []; } }
+  function logPrune(){ var ds=logDays();
+    while(ds.length>LOG_KEEP_DAYS){ try{ localStorage.removeItem(LOG_PREFIX+ds.shift()); }catch(e){} } }
+  function logPush(row){
+    try{ var d=row[1], a=logLoad(d); a.push(row); localStorage.setItem(LOG_PREFIX+d,JSON.stringify(a)); logPrune(); }
+    catch(e){ /* 容量オーバーなら いちばん ふるい日を すてて 1回だけ やりなおす */
+      try{ var ds=logDays(); if(ds.length){ localStorage.removeItem(LOG_PREFIX+ds[0]);
+        var a2=logLoad(row[1]); a2.push(row); localStorage.setItem(LOG_PREFIX+row[1],JSON.stringify(a2)); } }catch(e2){} }
+  }
+  function logAll(){ var out=[]; logDays().forEach(function(d){ out=out.concat(logLoad(d)); }); return out; }
+  function logClear(){ logDays().forEach(function(d){ try{ localStorage.removeItem(LOG_PREFIX+d); }catch(e){} }); }
+  var MODE_N={meaning:0,spell:1,reverse:2}, MODE_JA=['英→日4択','スペル入力','日→英4択'];
+  var qStartAt=0;                                        // その問題を 出した時刻（かかった時間の計測）
+  // onAnswer の まえに よんで、こたえる直前の SRS状態も いっしょに のこす
+  function recordAnswer(en,ok,via){
+    var k=(en||'').toLowerCase(), r=state.learn[k];
+    var late=0;
+    if(r&&r.due){ late=Math.round((new Date(today())-new Date(r.due))/86400000); if(!(late>=0)) late=0; }
+    logPush([ Date.now(), today(), k, state.grade, MODE_N[qMode]===undefined?0:MODE_N[qMode], ok?1:0,
+      qStartAt?Math.min(600000,Date.now()-qStartAt):0, r?1:0,
+      r?(r.lv||0):-1, r?(r.ivl||0):-1, late, spellMiss||0, via==='dk'?1:0,
+      displayStreak(), todayCount() ]);
+    onAnswer(en,ok);
+  }
+  // 分析まとめ（アプリの中で ざっと 見るよう）
+  function logSummary(){
+    var rows=logAll();
+    if(!rows.length) return null;
+    var byMode=[[0,0],[0,0],[0,0]], byIvl={}, byLate={'0':[0,0],'1-2':[0,0],'3-6':[0,0],'7+':[0,0]},
+        byHour={}, days={}, ms=[], newOk=[0,0], revOk=[0,0], dk=0;
+    rows.forEach(function(r){
+      var mode=r[4], ok=r[5];
+      byMode[mode][0]++; byMode[mode][1]+=ok;
+      var iv=r[9]; if(iv>=0){ var key=String(iv); if(!byIvl[key]) byIvl[key]=[0,0]; byIvl[key][0]++; byIvl[key][1]+=ok; }
+      if(r[7]===1){ var L=r[10], b=L<=0?'0':(L<=2?'1-2':(L<=6?'3-6':'7+'));
+        byLate[b][0]++; byLate[b][1]+=ok; revOk[0]++; revOk[1]+=ok; } else { newOk[0]++; newOk[1]+=ok; }
+      var h=new Date(r[0]).getHours(); if(!byHour[h]) byHour[h]=[0,0]; byHour[h][0]++; byHour[h][1]+=ok;
+      days[r[1]]=(days[r[1]]||0)+1;
+      if(r[6]>0&&r[6]<120000) ms.push(r[6]);
+      if(r[12]) dk++;
+    });
+    ms.sort(function(a,b){ return a-b; });
+    return { rows:rows.length, days:Object.keys(days).length,
+      first:rows[0][1], last:rows[rows.length-1][1],
+      byMode:byMode, byIvl:byIvl, byLate:byLate, byHour:byHour,
+      median:ms.length?Math.round(ms[Math.floor(ms.length/2)]/100)/10:0,
+      newOk:newOk, revOk:revOk, dk:dk, perDay:Math.round(rows.length/Math.max(1,Object.keys(days).length)) };
+  }
+  function okPct(a){ return a[0]?Math.round(100*a[1]/a[0])+'%':'—'; }   // 正答率（既存の pct と 名前がかぶらないように）
+  function renderLogStat(){
+    var el=document.getElementById('logStat'); if(!el) return;
+    var s=logSummary();
+    if(!s){ el.innerHTML='<div style="color:var(--mut);font-weight:700;">まだ きろくが ありません。べんきょうすると たまります。</div>'; return; }
+    var ivKeys=Object.keys(s.byIvl).map(Number).sort(function(a,b){ return a-b; });
+    var hrs=Object.keys(s.byHour).map(Number).sort(function(a,b){ return s.byHour[b][0]-s.byHour[a][0]; }).slice(0,3);
+    var row=function(l,v){ return '<div style="display:flex;justify-content:space-between;gap:8px;"><span>'+l+'</span><b>'+v+'</b></div>'; };
+    el.innerHTML=
+      row('きろく',s.rows+'問 ／ '+s.days+'日ぶん（1日 平均 '+s.perDay+'問）')+
+      row('きかん',escJa(s.first)+' 〜 '+escJa(s.last))+
+      row('新しい語の 正答率',okPct(s.newOk))+
+      row('ふくしゅうの 正答率',okPct(s.revOk))+
+      '<div style="height:6px;"></div>'+
+      MODE_JA.map(function(m,i){ return row(m,okPct(s.byMode[i])+'（'+s.byMode[i][0]+'問）'); }).join('')+
+      '<div style="height:6px;"></div>'+
+      ivKeys.map(function(k){ return row('かんかく '+(k<0?'—':SRS_IVL[k]+'日')+' の正答率',okPct(s.byIvl[k])+'（'+s.byIvl[k][0]+'問）'); }).join('')+
+      '<div style="height:6px;"></div>'+
+      Object.keys(s.byLate).map(function(k){ return row('おくれ '+k+'日',okPct(s.byLate[k])+'（'+s.byLate[k][0]+'問）'); }).join('')+
+      '<div style="height:6px;"></div>'+
+      row('こたえるまで（中央値）',s.median+'びょう')+
+      row('「わからない」',s.dk+'回')+
+      row('よく べんきょうする 時間',hrs.map(function(h){ return h+'時('+okPct(s.byHour[h])+')'; }).join('・'));
+  }
+  function logCSV(){
+    var rows=logAll(), out=[LOG_COLS.join(',')];
+    rows.forEach(function(r){ out.push(r.map(function(v,i){
+      if(i===0) return new Date(v).toISOString();
+      return (typeof v==='string'&&/[",\n]/.test(v))?('"'+v.replace(/"/g,'""')+'"'):v; }).join(',')); });
+    return '\ufeff'+out.join('\n');
+  }
+  function dlFile(name,text,mime){
+    try{ var blob=new Blob([text],{type:mime}); var url=URL.createObjectURL(blob);
+      var a=document.createElement('a'); a.href=url; a.download=name;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      setTimeout(function(){ URL.revokeObjectURL(url); },1500); return true;
+    }catch(e){ return false; }
+  }
+
   function dayStr(d){ return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2); }
   function yesterday(){ var d=new Date(today()); d.setDate(d.getDate()-1); return dayStr(d); }
   function tomorrow(){ var d=new Date(today()); d.setDate(d.getDate()+1); return dayStr(d); }
@@ -835,13 +933,28 @@ window._eigoPetInit = function() {
       state.moneyTiers=readTiers(); save(); renderMoney(); bubble('せってい を ほぞんしたよ');
     };
   })();
-  function renderData(){ document.getElementById('dataStat').textContent='なまえ：'+state.name+' ／ レベル '+state.lv+' ／ おぼえた '+masteredCount()+'こ ／ 🔥'+displayStreak()+'にち'; document.getElementById('exportBox').style.display='none'; document.getElementById('btnCopy').style.display='none'; document.getElementById('importBox').value=''; document.getElementById('dataMsg').textContent=''; }
+  function renderData(){ document.getElementById('dataStat').textContent='なまえ：'+state.name+' ／ レベル '+state.lv+' ／ おぼえた '+masteredCount()+'こ ／ 🔥'+displayStreak()+'にち'; document.getElementById('exportBox').style.display='none'; document.getElementById('btnCopy').style.display='none'; document.getElementById('importBox').value=''; document.getElementById('dataMsg').textContent=''; renderLogStat(); }
   function encodeState(){ return btoa(unescape(encodeURIComponent(JSON.stringify(state)))); }
   document.getElementById('btnExport').onclick=function(){ var box=document.getElementById('exportBox'); box.value=encodeState(); box.style.display='block'; document.getElementById('btnCopy').style.display='block'; };
   document.getElementById('btnCopy').onclick=function(){ var box=document.getElementById('exportBox'); box.select(); var ok=function(){ document.getElementById('dataMsg').style.color='var(--g)'; document.getElementById('dataMsg').textContent='コピーしました！'; }; if(navigator.clipboard){ navigator.clipboard.writeText(box.value).then(ok,function(){ try{ document.execCommand('copy'); ok(); }catch(e){} }); } else { try{ document.execCommand('copy'); ok(); }catch(e){} } };
   document.getElementById('btnImport').onclick=function(){ var msg=document.getElementById('dataMsg'); var code=(document.getElementById('importBox').value||'').trim(); if(!code){ msg.style.color='#9b2222'; msg.textContent='コードを はりつけてね'; return; } var obj=null; try{ obj=JSON.parse(decodeURIComponent(escape(atob(code)))); }catch(e){ try{ obj=JSON.parse(code); }catch(e2){} } if(!obj||typeof obj!=='object'||(obj.lv===undefined&&obj.learned===undefined)){ msg.style.color='#9b2222'; msg.textContent='この コードは よみこめません'; return; } if(!confirm('いまの データを この バックアップで 上書きします。よろしいですか？')) return; state=Object.assign({},state,obj); if(!WORDBANK[state.grade]) state.grade='jun2'; save(); msg.style.color='var(--g)'; msg.textContent='ふっかつしました！'; renderData(); render(); };
   document.getElementById('btnDownload').onclick=function(){ var msg=document.getElementById('dataMsg'); try{ var blob=new Blob([JSON.stringify(state)],{type:'application/json'}); var url=URL.createObjectURL(blob); var a=document.createElement('a'); var d=new Date(), ds=d.getFullYear()+('0'+(d.getMonth()+1)).slice(-2)+('0'+d.getDate()).slice(-2); a.href=url; a.download='eigopet_backup_'+ds+'.json'; document.body.appendChild(a); a.click(); document.body.removeChild(a); setTimeout(function(){ URL.revokeObjectURL(url); },1500); msg.style.color='var(--g)'; msg.textContent='ファイルに ほぞんしました！'; }catch(e){ msg.style.color='#9b2222'; msg.textContent='ほぞん できないときは コードを つかってね'; } };
   document.getElementById('fileImport').onchange=function(e){ var f=e.target.files&&e.target.files[0]; var msg=document.getElementById('dataMsg'); if(!f) return; var r=new FileReader(); r.onload=function(){ var obj=null; try{ obj=JSON.parse(r.result); }catch(err){} if(!obj||typeof obj!=='object'||(obj.lv===undefined&&obj.learned===undefined)){ msg.style.color='#9b2222'; msg.textContent='この ファイルは よみこめません'; return; } if(!confirm('いまの データを この バックアップで 上書きします。よろしいですか？')) return; state=Object.assign({},state,obj); if(!WORDBANK[state.grade]) state.grade='jun2'; save(); msg.style.color='var(--g)'; msg.textContent='ふっかつしました！'; renderData(); render(); }; r.readAsText(f); e.target.value=''; };
+  (function(){
+    var stamp=function(){ var d=new Date(); return d.getFullYear()+('0'+(d.getMonth()+1)).slice(-2)+('0'+d.getDate()).slice(-2); };
+    var msg=function(t,bad){ var m=document.getElementById('logMsg'); if(!m) return; m.style.color=bad?'#9b2222':'var(--g)'; m.textContent=t; };
+    var c=document.getElementById('btnLogCsv'); if(c) c.onclick=function(){
+      var n=logAll().length; if(!n){ msg('まだ きろくが ありません',true); return; }
+      msg(dlFile('eigopet_log_'+stamp()+'.csv',logCSV(),'text/csv;charset=utf-8')?(n+'問ぶんを ほぞんしました'):'ほぞん できませんでした',false); };
+    var j=document.getElementById('btnLogJson'); if(j) j.onclick=function(){
+      var rows=logAll(); if(!rows.length){ msg('まだ きろくが ありません',true); return; }
+      var obj={app:'eigo-pet',rev:(typeof APP_REV!=='undefined'?APP_REV:''),exported:new Date().toISOString(),
+        columns:LOG_COLS,modes:MODE_JA,srsIntervals:SRS_IVL,rows:rows};
+      msg(dlFile('eigopet_log_'+stamp()+'.json',JSON.stringify(obj),'application/json')?(rows.length+'問ぶんを ほぞんしました'):'ほぞん できませんでした',false); };
+    var cl=document.getElementById('btnLogClear'); if(cl) cl.onclick=function(){
+      if(!confirm('がくしゅうログを ぜんぶ けします。よろしいですか？（そだてた しんちょくは けえません）')) return;
+      logClear(); renderLogStat(); msg('けしました'); };
+  })();
   document.getElementById('atabs').onclick=function(e){ var b=e.target.closest('.atab'); if(!b) return; setAdminTab(b.dataset.t); };
   function buyReveal(id){
     if(!ADULTS[id]) return;
@@ -2249,7 +2362,7 @@ window._eigoPetInit = function() {
     pendingNext=false; var nb0=document.getElementById('nextBtn'); if(nb0) nb0.style.display='none'; var dk0=document.getElementById('dontKnow'); if(dk0) dk0.style.display='block';
     if(qIdx>=qList.length){ finishStudy(); return; }
     updateStudyProg();
-    var correct=qList[qIdx]; curWord=correct; window.__curWord=correct[0]; qMissed=false; spellMiss=0;
+    var correct=qList[qIdx]; curWord=correct; window.__curWord=correct[0]; qMissed=false; spellMiss=0; qStartAt=Date.now();
     var en=correct[0];
     qMode=pickQMode();
     if(qMode==='spell'&&!state.learn[(en||'').toLowerCase()]) qMode='meaning';   // はじめて 見る語に いきなり スペル入力は 出さない
@@ -2308,7 +2421,7 @@ window._eigoPetInit = function() {
     if(val===target){ inp.disabled=true; var sb=document.getElementById('spellSubmit'); if(sb) sb.disabled=true; speak(curWord[0]);
       if(qMissed){ document.getElementById('reward').textContent='かけたね！ つぎは いちどで せいかい しよう'; showEasy(curWord); save(); showNext(); return; } // まちがえてからの正解は ごほうびなし
       awardCorrect(curWord[0]); }
-    else { qMissed=true; spellMiss++; session.combo=0; onAnswer(curWord[0],false); save(); sfx('wrong'); // まちがい＝この時点で「にがて・ふくしゅうゆき」に記録
+    else { qMissed=true; spellMiss++; session.combo=0; recordAnswer(curWord[0],false); save(); sfx('wrong'); // まちがい＝この時点で「にがて・ふくしゅうゆき」に記録
       if(spellMiss>=2){ inp.disabled=true; var sb=document.getElementById('spellSubmit'); if(sb) sb.disabled=true; speak(curWord[0]); requeueMissed(curWord); document.getElementById('reward').textContent='ざんねん… こたえは「'+curWord[0]+'」　ふくしゅうに いれたよ'; showEasy(curWord); showNext(); } // 2回まちがい＝確定・答え表示
       else { document.getElementById('reward').textContent='おしい！ もう1かい かいてみよう（タイプミス？）'; try{ inp.focus(); inp.select(); }catch(e){} } }
   }
@@ -2323,7 +2436,7 @@ window._eigoPetInit = function() {
     var mult=session.combo>=3?2:1; var gb=isDblDay()?2:1; var dd=isDoubleDay()?2:1; var gain=mult*gb*dd;
     var longLive=state.lv>=5 && ageDays()>=10; // 10日いっしょに いられたら えさ ×2
     if(longLive) gain*=2;
-    session.correct++; state.food+=gain; walletEarn(gain); state.learned++; gainGP((reviewMode?10:8)*gain); onAnswer(en,true);
+    session.correct++; state.food+=gain; walletEarn(gain); state.learned++; gainGP((reviewMode?10:8)*gain); recordAnswer(en,true);
     if(!wasM&&state.learn[kL]&&state.learn[kL].m) session.newMastered=(session.newMastered||0)+1;
     recordLearned(en); checkUnlock(prev); checkTickets(); checkTitles(); sfx(session.combo>=3?'combo':'correct');
     var msg2='せいかい！'; if(mult>1) msg2+=' コンボ×'+mult; if(gb>1) msg2+=' ✨まいにちボーナス×2'; if(dd>1) msg2+=' 🎉2ばいデー'; if(longLive) msg2+=' 🌟10日ボーナス×2'; msg2+=reviewMode?' おぼえたね':(' えさ+'+gain);
@@ -2338,7 +2451,7 @@ window._eigoPetInit = function() {
     } else {
       // まちがい → 正しいこたえを 見せ、②「せいかいを タップ」で 能動的に確認してから すすむ。①同セッションで 再出題
       btn.classList.add('ng'); if(_cb0) _cb0.style.pointerEvents='none';
-      session.combo=0; onAnswer(en,false); save(); sfx('wrong'); speak(en); // 正しい はつおんを きかせる
+      session.combo=0; recordAnswer(en,false); save(); sfx('wrong'); speak(en); // 正しい はつおんを きかせる
       requeueMissed(curWord);
       showEasy(curWord,true); // 選択肢を 見える位置に のこす（スクロールしない）
       var pickedInfo='';                                   // えらんだ ほうの 単語も おしえる（1問で 2語 おぼえられる）
@@ -2374,12 +2487,12 @@ window._eigoPetInit = function() {
   (function(){ var sb=document.getElementById('spellSubmit'); if(sb) sb.onclick=submitSpell; var si=document.getElementById('spellInput'); if(si){ si.addEventListener('keydown',function(e){ if(e.key==='Enter'){ e.preventDefault(); submitSpell(); } }); si.addEventListener('input',updateSpellBars); } var qw=document.getElementById('qword'); if(qw) attachLongPress(qw,function(){ if(curWord && (qMode==='reverse'||qMode==='spell')) showEasy(curWord); }); })();
   document.getElementById('dontKnow').onclick=function(){
     if(!curWord) return;
-    if(qMode==='spell'){ var inp=document.getElementById('spellInput'); if(inp&&inp.disabled) return; if(inp) inp.disabled=true; var sb2=document.getElementById('spellSubmit'); if(sb2) sb2.disabled=true; qMissed=true; onAnswer(curWord[0],false); save(); speak(curWord[0]); requeueMissed(curWord); document.getElementById('reward').textContent='こたえ：'+curWord[0]; showEasy(curWord); showNext(); return; }
+    if(qMode==='spell'){ var inp=document.getElementById('spellInput'); if(inp&&inp.disabled) return; if(inp) inp.disabled=true; var sb2=document.getElementById('spellSubmit'); if(sb2) sb2.disabled=true; qMissed=true; recordAnswer(curWord[0],false,'dk'); save(); speak(curWord[0]); requeueMissed(curWord); document.getElementById('reward').textContent='こたえ：'+curWord[0]; showEasy(curWord); showNext(); return; }
     var box=document.getElementById('choices');
     if(box.style.pointerEvents==='none') return; // すでに回答済み
     box.style.pointerEvents='none';
     var btns=box.querySelectorAll('.ch'); for(var i=0;i<btns.length;i++){ if(btns[i]._isCorrect) btns[i].classList.add('ok'); }
-    qMissed=true; onAnswer(curWord[0],false); save(); speak(curWord[0]); requeueMissed(curWord); // わからない＝復習まちへ、正しい発音を きかせる
+    qMissed=true; recordAnswer(curWord[0],false,'dk'); save(); speak(curWord[0]); requeueMissed(curWord); // わからない＝復習まちへ、正しい発音を きかせる
     document.getElementById('reward').textContent='こたえ：'+(qMode==='reverse'?curWord[0]:jaT(curWord[1]));
     showEasy(curWord); showNext();
   };
