@@ -2540,15 +2540,68 @@ window._eigoPetInit = function() {
     cheer();
   }
   var enVoice=null;
-  var VOICE_NAMES=['Samantha','Daniel','Karen']; // つかえる こえは この3つだけ
+  /* ===== えいごの こえ =====
+     これまでは Samantha / Daniel / Karen の3つに しぼっていたが、
+     iPhone・iPad には あとから ダウンロードできる「拡張(Enhanced)」音声が あり、
+     そちらの ほうが ずっと 自然。端末に 入っている えいご音声を すべて出し、
+     品質が よさそうな 順に ならべる。                                             */
+  var VOICE_GOOD=/(enhanced|premium|neural|natural|siri)/i;              // 高品質の しるし
+  var VOICE_NICE=['Ava','Allison','Samantha','Serena','Zoe','Evan','Nathan','Google US English','Google UK English','Aria','Jenny','Guy','Libby','Sonia','Daniel','Karen','Moira','Tessa','Fiona','Alex'];
   function enVoices(){ return (window.speechSynthesis?speechSynthesis.getVoices():[]).filter(function(v){ return /^en[-_]?/i.test(v.lang); }); }
-  function pickerVoices(){ var vs=enVoices(); var picks=[]; VOICE_NAMES.forEach(function(nm){ var v=vs.find(function(vv){ return vv.name.indexOf(nm)>=0; }); if(v) picks.push(v); }); return picks; }
-  function pickVoice(){ var pv=pickerVoices(); if(pv.length){ if(state.voiceName){ var sv=pv.find(function(v){ return v.name===state.voiceName; }); if(sv) return sv; } return pv[0]; } var vs=enVoices(); if(!vs.length) return null; return vs.find(function(v){ return /en[-_]US/i.test(v.lang); })||vs[0]; }
+  function voiceScore(v){
+    var s=0, n=v.name||'';
+    if(VOICE_GOOD.test(n)) s+=100;                                       // 拡張・プレミアム・ニューラル
+    if(v.localService===false) s+=40;                                    // ネットワーク音声（Googleなど）は 高品質なことが多い
+    var i=VOICE_NICE.findIndex(function(nm){ return n.indexOf(nm)>=0; });
+    if(i>=0) s+=(VOICE_NICE.length-i);                                   // よく知られた 聞きやすい こえ
+    if(/en[-_]US/i.test(v.lang)) s+=6; else if(/en[-_]GB/i.test(v.lang)) s+=4;
+    if(/compact|eloquence|novelty|whisper|bells|bad news|good news|bubbles|jester|organ|superstar|trinoids|wobble|zarvox|albert|cellos|boing|junior|ralph|fred|kathy|princess|deranged|hysterical|bahh|deutsch/i.test(n)) s-=200; // ネタ音声・低品質
+    return s;
+  }
+  function pickerVoices(){ return enVoices().slice().sort(function(a,b){ return voiceScore(b)-voiceScore(a); }); }
+  function voiceLabel(v){
+    var accent=/en[-_]GB/i.test(v.lang)?'イギリス':(/en[-_]AU/i.test(v.lang)?'オーストラリア':(/en[-_]IN/i.test(v.lang)?'インド':'アメリカ'));
+    return v.name+'（'+accent+(VOICE_GOOD.test(v.name)?'・高品質':'')+'）';
+  }
+  function pickVoice(){
+    var vs=enVoices(); if(!vs.length) return null;
+    if(state.voiceName){ var sv=vs.find(function(v){ return v.name===state.voiceName; }); if(sv) return sv; }
+    return pickerVoices()[0]||null;                                      // 何も えらんでいなければ いちばん よさそうな こえ
+  }
   function ensureVoice(){ if(!enVoice) enVoice=pickVoice(); return enVoice; }
-  function renderVoicePicker(){ var sel=document.getElementById('voiceSel'); if(sel){ var pv=pickerVoices(), cur=ensureVoice(); if(!pv.length){ sel.innerHTML='<option>（このタブレットには えいご音声が ありません）</option>'; sel.disabled=true; } else { sel.disabled=false; sel.innerHTML=pv.map(function(v){ return '<option value="'+v.name.replace(/"/g,'&quot;')+'"'+(cur&&v.name===cur.name?' selected':'')+'>'+escJa(v.name)+'</option>'; }).join(''); } } var rs=document.getElementById('rateSel'); if(rs){ var r=String(state.speechRate||0.8); Array.prototype.forEach.call(rs.options,function(o){ o.selected=(o.value===r); }); } }
+  function renderVoicePicker(){
+    var sel=document.getElementById('voiceSel');
+    if(sel){ var pv=pickerVoices(), cur=ensureVoice();
+      if(!pv.length){ sel.innerHTML='<option>（この たんまつには えいご音声が ありません）</option>'; sel.disabled=true; }
+      else { sel.disabled=false;
+        sel.innerHTML=pv.map(function(v){ return '<option value="'+escJa(v.name)+'"'+(cur&&v.name===cur.name?' selected':'')+'>'+escJa(voiceLabel(v))+'</option>'; }).join(''); } }
+    var rs=document.getElementById('rateSel'); if(rs){ var r=String(state.speechRate||0.8);
+      Array.prototype.forEach.call(rs.options,function(o){ o.selected=(o.value===r); }); }
+    var note=document.getElementById('voiceNote');
+    if(note){ var pv2=pickerVoices(), best=pv2[0], hasGood=pv2.some(function(v){ return VOICE_GOOD.test(v.name); });
+      note.innerHTML=hasGood
+        ? '「ためす」で こえと はやさを かくにんできます。<b>（高品質）</b>と ついた こえが いちばん 自然です'
+        : '「ためす」で こえと はやさを かくにんできます。<br><b style="color:#b45309;">もっと 自然な こえに できます：</b>iPhone/iPadの <b>設定 → アクセシビリティ → 読み上げコンテンツ → 声 → 英語</b> で「<b>拡張</b>」や「Premium」の こえを ダウンロードすると、ここに <b>（高品質）</b>として でてきます（むりょう）'
+        + (best?'<br><span style="color:var(--mut);">いまの こえ：'+escJa(best.name)+'</span>':''); }
+  }
   if(window.speechSynthesis){ speechSynthesis.onvoiceschanged=function(){ enVoice=pickVoice(); renderVoicePicker(); }; ensureVoice(); }
-  (function(){ var sel=document.getElementById('voiceSel'); if(sel) sel.onchange=function(){ state.voiceName=sel.value; enVoice=enVoices().find(function(v){ return v.name===sel.value; })||null; save(); speak('Hello!'); }; var rs=document.getElementById('rateSel'); if(rs) rs.onchange=function(){ state.speechRate=parseFloat(rs.value)||0.8; save(); speak('Hello! Good job!'); }; var tb=document.getElementById('voiceTest'); if(tb) tb.onclick=function(){ speak('Hello! Good job!'); }; renderVoicePicker(); })();
-  function speak(en){ try{ if(!window.speechSynthesis) return; var u=new SpeechSynthesisUtterance(en); var v=ensureVoice(); if(v){ u.voice=v; u.lang=v.lang; } else { u.lang='en-US'; } u.rate=state.speechRate||0.8; u.pitch=1.0; speechSynthesis.cancel(); speechSynthesis.speak(u); }catch(e){} }
+  (function(){
+    var sel=document.getElementById('voiceSel');
+    if(sel) sel.onchange=function(){ state.voiceName=sel.value;
+      enVoice=enVoices().find(function(v){ return v.name===sel.value; })||null; save(); speak('Hello! This is my voice.'); };
+    var rs=document.getElementById('rateSel'); if(rs) rs.onchange=function(){ state.speechRate=parseFloat(rs.value)||0.8; save(); speak('Hello! Good job!'); };
+    var tb=document.getElementById('voiceTest'); if(tb) tb.onclick=function(){ speak('Hello! Good job!'); };
+    renderVoicePicker();
+  })();
+  function speak(en){ try{
+    if(!window.speechSynthesis) return;
+    var u=new SpeechSynthesisUtterance(en);
+    u.lang='en-US';
+    // こえの わりあては 別に try する（ここで こけても 読み上げ自体は 止めない）
+    try{ var v=ensureVoice(); if(v){ u.voice=v; if(v.lang) u.lang=v.lang; } }catch(e2){}
+    u.rate=state.speechRate||0.8; u.pitch=1.0;
+    speechSynthesis.cancel(); speechSynthesis.speak(u);
+  }catch(e){} }
   document.getElementById('speak').onclick=function(){ qUsedAudio=true; speak(curWord?curWord[0]:document.getElementById('qword').textContent); };
   (function(){ var sb=document.getElementById('spellSubmit'); if(sb) sb.onclick=submitSpell; var si=document.getElementById('spellInput'); if(si){ si.addEventListener('keydown',function(e){ if(e.key==='Enter'){ e.preventDefault(); submitSpell(); } }); si.addEventListener('input',updateSpellBars); } var qw=document.getElementById('qword'); if(qw) attachLongPress(qw,function(){ if(curWord && (qMode==='reverse'||qMode==='spell')) showEasy(curWord); }); })();
   document.getElementById('dontKnow').onclick=function(){
