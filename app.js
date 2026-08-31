@@ -2435,44 +2435,79 @@ window._eigoPetInit = function() {
   var MAIN_TABS=['home','learn','okane','printsheet','admin'];
   /* ===== プリント：きゅうを えらんで たんご20こを A4に いんさつ =====
      おうちの ひとが 紙で テストする ための モード。
-     ひだり＝英単語／みぎ＝いみ。「こたえを かくす」で みぎを 白くして 問題用紙に できる。 */
-  var PR_N=20, prGrade='jun2', prWords=[], prHide=false;
+     ひだり＝英単語／まんなか＝品詞／みぎ＝いみ。
+     「こたえを かくす」で みぎを 白くして 問題用紙に できる。
+     いちど 出した語は state.prDone に のこして 二度と 出さない。 */
+  var PR_N=20, prGrade='jun2', prWords=[], prHide=false, prMsg='';
+
+  /* 品詞：もとデータの pos は noun が ごみ箱に なっていて（動詞283語 対 名詞5854語）、
+     demonstrate が「名詞」など まちがいが 多い。
+     そこで noun 以外の ラベルだけ 信用し、noun は 訳文から みなおす。 */
+  var PR_POS={noun:'名',verb:'動',adjective:'形',adverb:'副',phrase:'熟',preposition:'前',conjunction:'接',pronoun:'代'};
+  function prPos(w){
+    var t=(w[1]||'').split(/[，,、]/)[0].trim(), p=w[3];
+    if(/[ \-]/.test(w[0])) return '熟';                       // 2語いじょうは 熟語
+    if(p&&p!=='noun') return PR_POS[p]||'名';
+    if(/^(を|に|と|が|から|へ)/.test(t)||/する$/.test(t)) return '動';
+    if(/[うくぐすつぬぶむる]$/.test(t)) return '動';           // 「かむ」「飾る」など 動詞の じしょ形
+    if(/(な|しい|い)$/.test(t)&&!/(こと|もの|ひと)$/.test(t)) return '形';
+    if(/(に|く|で)$/.test(t)) return '副';
+    return '名';
+  }
+
+  function prDoneSet(g){ if(!state.prDone) state.prDone={}; if(!state.prDone[g]) state.prDone[g]=[]; return state.prDone[g]; }
 
   function prPick(g){
     var src=(WORDBANK[g]&&WORDBANK[g].words)||[];
     var pool=src.filter(function(w){ return w&&w[0]&&w[1]; });
-    // フィッシャー・イェーツで シャッフルしてから 先頭N個（同じ語が 2回でない）
-    var a=pool.slice();
+    var done=prDoneSet(g), dset={}; done.forEach(function(k){ dset[k]=1; });
+    var rest=pool.filter(function(w){ return !dset[w[0]]; });
+    prMsg='';
+    if(rest.length<PR_N){                                  // ぜんぶ 出しきったので さいしょから
+      state.prDone[g]=[]; save(); rest=pool;
+      prMsg='この きゅうの たんごを ぜんぶ 出しました。もういちど さいしょから えらびます。';
+    }
+    var a=rest.slice();                                    // フィッシャー・イェーツ
     for(var i=a.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)),t=a[i]; a[i]=a[j]; a[j]=t; }
     return a.slice(0,Math.min(PR_N,a.length));
+  }
+
+  function prMark(){                                       // いんさつした語を きろくする
+    if(!prWords.length) return;
+    var done=prDoneSet(prGrade);
+    prWords.forEach(function(w){ if(done.indexOf(w[0])<0) done.push(w[0]); });
+    save(); prRender();
   }
 
   function prRender(){
     document.querySelectorAll('#prGrades .gbtn').forEach(function(b){ b.classList.toggle('sel',b.dataset.g===prGrade); });
     var hb=document.getElementById('prHide');
-    if(hb){ hb.textContent=prHide?'こたえを だす':'こたえを かくす'; }
+    if(hb) hb.textContent=prHide?'こたえを だす':'こたえを かくす';
     document.body.classList.toggle('pr-hide',prHide);
 
+    var total=((WORDBANK[prGrade]&&WORDBANK[prGrade].words)||[]).length, done=prDoneSet(prGrade).length;
+    var st=document.getElementById('prStat');
+    if(st) st.textContent='いんさつずみ '+done+' ／ '+total+' こ　（のこり '+(total-done)+'）';
+    var mg=document.getElementById('prMsg');
+    if(mg){ mg.textContent=prMsg; mg.style.display=prMsg?'block':'none'; }
+
     var lab=(WORDBANK[prGrade]&&WORDBANK[prGrade].label)||'';
-    var d=new Date();
-    var date=d.getFullYear()+'.'+(d.getMonth()+1)+'.'+d.getDate();
+    var d=new Date(), date=d.getFullYear()+'.'+(d.getMonth()+1)+'.'+d.getDate();
     var rows=prWords.map(function(w,i){
-      // 品詞は もとデータに 誤りが まざるので 紙には ださない（まちがいを 刷らない）
-      var ja=escJa(splitSenses(w[1]).join('，'));
       return '<tr><td class="prno">'+(i+1)+'</td>'
            +'<td class="pren">'+escJa(w[0])+'</td>'
-           +'<td class="prja">'+ja+'</td></tr>';
+           +'<td class="prp">'+prPos(w)+'</td>'
+           +'<td class="prja">'+escJa(splitSenses(w[1]).join('，'))+'</td></tr>';
     }).join('');
     document.getElementById('prSheet').innerHTML=
        '<div class="prhead"><div class="prtitle">たんごテスト　'+escJa(lab)+'</div>'
       +'<div class="prmeta">'+PR_N+'もん<br>'+date+'</div></div>'
       +'<div class="prfields"><span>なまえ：</span><span>てんすう：　　／'+PR_N+'</span></div>'
       +'<table class="prtbl">'+rows+'</table>'
-      +'<div class="prfoot">えいごペット</div>';
+      +'<div class="prfoot">名=名詞／動=動詞／形=形容詞／副=副詞／熟=熟語　　えいごペット</div>';
   }
 
   function prOpen(){
-    // 上級モードが OFF のときは 3級・1級を えらべないので、いまの きゅうに よせる
     if(!state.advGrades&&(prGrade==='g3'||prGrade==='g1')) prGrade='jun2';
     if(!prWords.length) prWords=prPick(prGrade);
     prRender();
@@ -2483,7 +2518,11 @@ window._eigoPetInit = function() {
     g.onclick=function(e){ var b=e.target.closest('.gbtn'); if(!b) return; prGrade=b.dataset.g; prWords=prPick(prGrade); prRender(); };
     document.getElementById('prShuffle').onclick=function(){ prWords=prPick(prGrade); prRender(); sfx('correct'); };
     document.getElementById('prHide').onclick=function(){ prHide=!prHide; prRender(); };
-    document.getElementById('prPrint').onclick=function(){ window.print(); };
+    document.getElementById('prReset').onclick=function(){
+      if(!confirm('「いんさつずみ」の きろくを けして、さいしょから えらべるように しますか？')) return;
+      if(state.prDone) state.prDone[prGrade]=[]; save(); prWords=prPick(prGrade); prRender(); bubble('きろくを けしました');
+    };
+    document.getElementById('prPrint').onclick=function(){ prMark(); window.print(); };
   })();
 
   function show(id){ document.querySelectorAll('.screen').forEach(function(s){ s.classList.remove('on'); }); document.getElementById(id).classList.add('on'); var tb=document.getElementById('tabbar'); if(MAIN_TABS.indexOf(id)>=0){ tb.classList.add('on'); document.querySelectorAll('#tabbar .tab').forEach(function(b){ b.classList.toggle('sel',b.dataset.s===id); }); } else { tb.classList.remove('on'); } window.scrollTo(0,0); }

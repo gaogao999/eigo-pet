@@ -125,10 +125,13 @@ if(window.caches){caches.keys().then(function(ks){ks.forEach(function(k){caches.
     .prmeta{font-size:11px;color:#555;font-weight:700;text-align:right;line-height:1.7;white-space:nowrap;}
     .prfields{display:flex;gap:16px;font-size:12px;font-weight:700;color:#333;margin:10px 0 12px;}
     .prfields span{border-bottom:1px solid #999;flex:1;padding-bottom:2px;}
+    .prstat{font-size:12px;color:var(--mut);font-weight:800;margin-bottom:8px;}
+    .prmsg{font-size:12px;color:#92400e;background:#fff7ed;border:2px solid #fed7aa;border-radius:8px;padding:8px 10px;font-weight:800;line-height:1.5;margin-bottom:10px;}
     table.prtbl{width:100%;border-collapse:collapse;table-layout:fixed;}
     table.prtbl td{border:1px solid #333;padding:9px 8px;vertical-align:middle;}
     td.prno{width:30px;text-align:center;font-size:12px;color:#666;font-weight:700;}
-    td.pren{width:41%;font-size:16px;font-weight:800;word-break:break-word;}
+    td.pren{width:37%;font-size:16px;font-weight:800;word-break:break-word;}
+    td.prp{width:26px;text-align:center;font-size:11px;font-weight:800;color:#333;}
     td.prja{font-size:14px;color:#111;}
     body.pr-hide td.prja{color:transparent;}
     .prfoot{margin-top:10px;font-size:11px;color:#666;font-weight:700;text-align:right;}
@@ -144,6 +147,7 @@ if(window.caches){caches.keys().then(function(ks){ks.forEach(function(k){caches.
       table.prtbl td{padding:9pt 7pt;}
       td.pren{font-size:12.5pt;}
       td.prja{font-size:11pt;}
+      td.prp{font-size:8.5pt;}
       .prtitle{font-size:15pt;}
       body.pr-hide td.prja{color:#fff;}
     }
@@ -501,7 +505,7 @@ if(window.caches){caches.keys().then(function(ks){ks.forEach(function(k){caches.
 <section id="printsheet" class="screen">
   <div class="prnoprint">
     <div style="font-size:18px;font-weight:900;color:var(--ink);margin-bottom:2px;">プリント</div>
-    <div class="prnote">きゅうを えらんで、たんご20こを A4の かみに いんさつ できます。<br>おうちの ひとが まるつけ できるように、みぎに いみが はいっています。</div>
+    <div class="prnote">きゅうを えらんで、たんご20こを A4の かみに いんさつ できます。<br>おうちの ひとが まるつけ できるように、みぎに いみが はいっています。<br>いちど いんさつした たんごは、つぎからは 出てきません。</div>
     <div class="prgrades" id="prGrades">
       <button class="gbtn" data-g="g3">英検3級</button>
       <button class="gbtn" data-g="jun2">英検準2級</button>
@@ -511,7 +515,10 @@ if(window.caches){caches.keys().then(function(ks){ks.forEach(function(k){caches.
     <div class="prrow">
       <button class="prbtn" id="prShuffle">↻ ちがう20こ</button>
       <button class="prbtn" id="prHide">こたえを かくす</button>
+      <button class="prbtn" id="prReset">きろくを けす</button>
     </div>
+    <div id="prStat" class="prstat"></div>
+    <div id="prMsg" class="prmsg" style="display:none;"></div>
     <div class="prrow"><button class="prbtn main" id="prPrint">この かみを いんさつ</button></div>
   </div>
   <div id="prSheet"></div>
