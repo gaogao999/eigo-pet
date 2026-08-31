@@ -2432,9 +2432,62 @@ window._eigoPetInit = function() {
 
   /* ---- study ---- */
   var session, qIdx, qList;
-  var MAIN_TABS=['home','learn','okane','admin'];
+  var MAIN_TABS=['home','learn','okane','printsheet','admin'];
+  /* ===== プリント：きゅうを えらんで たんご20こを A4に いんさつ =====
+     おうちの ひとが 紙で テストする ための モード。
+     ひだり＝英単語／みぎ＝いみ。「こたえを かくす」で みぎを 白くして 問題用紙に できる。 */
+  var PR_N=20, prGrade='jun2', prWords=[], prHide=false;
+
+  function prPick(g){
+    var src=(WORDBANK[g]&&WORDBANK[g].words)||[];
+    var pool=src.filter(function(w){ return w&&w[0]&&w[1]; });
+    // フィッシャー・イェーツで シャッフルしてから 先頭N個（同じ語が 2回でない）
+    var a=pool.slice();
+    for(var i=a.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)),t=a[i]; a[i]=a[j]; a[j]=t; }
+    return a.slice(0,Math.min(PR_N,a.length));
+  }
+
+  function prRender(){
+    document.querySelectorAll('#prGrades .gbtn').forEach(function(b){ b.classList.toggle('sel',b.dataset.g===prGrade); });
+    var hb=document.getElementById('prHide');
+    if(hb){ hb.textContent=prHide?'こたえを だす':'こたえを かくす'; }
+    document.body.classList.toggle('pr-hide',prHide);
+
+    var lab=(WORDBANK[prGrade]&&WORDBANK[prGrade].label)||'';
+    var d=new Date();
+    var date=d.getFullYear()+'.'+(d.getMonth()+1)+'.'+d.getDate();
+    var rows=prWords.map(function(w,i){
+      // 品詞は もとデータに 誤りが まざるので 紙には ださない（まちがいを 刷らない）
+      var ja=escJa(splitSenses(w[1]).join('，'));
+      return '<tr><td class="prno">'+(i+1)+'</td>'
+           +'<td class="pren">'+escJa(w[0])+'</td>'
+           +'<td class="prja">'+ja+'</td></tr>';
+    }).join('');
+    document.getElementById('prSheet').innerHTML=
+       '<div class="prhead"><div class="prtitle">たんごテスト　'+escJa(lab)+'</div>'
+      +'<div class="prmeta">'+PR_N+'もん<br>'+date+'</div></div>'
+      +'<div class="prfields"><span>なまえ：</span><span>てんすう：　　／'+PR_N+'</span></div>'
+      +'<table class="prtbl">'+rows+'</table>'
+      +'<div class="prfoot">えいごペット</div>';
+  }
+
+  function prOpen(){
+    // 上級モードが OFF のときは 3級・1級を えらべないので、いまの きゅうに よせる
+    if(!state.advGrades&&(prGrade==='g3'||prGrade==='g1')) prGrade='jun2';
+    if(!prWords.length) prWords=prPick(prGrade);
+    prRender();
+  }
+
+  (function(){
+    var g=document.getElementById('prGrades'); if(!g) return;
+    g.onclick=function(e){ var b=e.target.closest('.gbtn'); if(!b) return; prGrade=b.dataset.g; prWords=prPick(prGrade); prRender(); };
+    document.getElementById('prShuffle').onclick=function(){ prWords=prPick(prGrade); prRender(); sfx('correct'); };
+    document.getElementById('prHide').onclick=function(){ prHide=!prHide; prRender(); };
+    document.getElementById('prPrint').onclick=function(){ window.print(); };
+  })();
+
   function show(id){ document.querySelectorAll('.screen').forEach(function(s){ s.classList.remove('on'); }); document.getElementById(id).classList.add('on'); var tb=document.getElementById('tabbar'); if(MAIN_TABS.indexOf(id)>=0){ tb.classList.add('on'); document.querySelectorAll('#tabbar .tab').forEach(function(b){ b.classList.toggle('sel',b.dataset.s===id); }); } else { tb.classList.remove('on'); } window.scrollTo(0,0); }
-  function gotoTab(s){ if(s==='admin'){ renderAdmin(); wlGrade=state.grade; setAdminTab('zukan'); } if(s==='okane'){ renderMoney(); } if(s==='learn'){ announceBonuses(); } show(s); render(); } // 単語一覧(最大2258行)は たんごタブを開いたときだけ描画
+  function gotoTab(s){ if(s==='printsheet'){ prOpen(); } if(s==='admin'){ renderAdmin(); wlGrade=state.grade; setAdminTab('zukan'); } if(s==='okane'){ renderMoney(); } if(s==='learn'){ announceBonuses(); } show(s); render(); } // 単語一覧(最大2258行)は たんごタブを開いたときだけ描画
   document.getElementById('tabbar').onclick=function(e){ var b=e.target.closest('.tab'); if(!b) return; gotoTab(b.dataset.s); };
   var ADMIN_TABS=['zukan','kisekae','keifu','tango','data'];
   function swipeTab(dir){ var cur=document.querySelector('.screen.on'); if(!cur) return; if(document.getElementById('goalCele').style.display==='flex') return; if(cur.id==='admin'){ var i=ADMIN_TABS.indexOf(curAdminTab),ni=i+dir; if(ni>=0&&ni<ADMIN_TABS.length){ setAdminTab(ADMIN_TABS[ni]); return; } if(dir<0&&i<=0){ gotoTab('learn'); } return; } if(MAIN_TABS.indexOf(cur.id)>=0){ var i2=MAIN_TABS.indexOf(cur.id),ni2=i2+dir; if(ni2>=0&&ni2<MAIN_TABS.length) gotoTab(MAIN_TABS[ni2]); } }

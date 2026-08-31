@@ -36,8 +36,8 @@ if(window.caches){caches.keys().then(function(ks){ks.forEach(function(k){caches.
     #bFeed,#bSnack,#bPlay,#bScold,#bClean,#bMed{padding:8px 4px!important;}
     #tabbar{position:fixed;left:0;right:0;bottom:0;z-index:50;display:none;background:rgba(255,255,255,.97);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-top:2px solid var(--bdr);padding:8px 16px calc(8px + env(safe-area-inset-bottom));}
     #tabbar.on{display:flex;justify-content:center;}
-    .tabrow{display:flex;gap:6px;width:100%;max-width:360px;}
-    .tab{flex:1;border:none;background:transparent;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11px;font-weight:800;color:var(--mut);cursor:pointer;padding:8px 0;border-radius:10px;font-family:inherit;transition:background .15s,color .15s;}
+    .tabrow{display:flex;gap:3px;width:100%;max-width:430px;}
+    .tab{flex:1;border:none;background:transparent;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:10px;font-weight:800;color:var(--mut);cursor:pointer;padding:8px 1px;border-radius:10px;font-family:inherit;transition:background .15s,color .15s;letter-spacing:-.02em;white-space:nowrap;}
     .tab .ti{display:flex;align-items:center;justify-content:center;width:24px;height:24px;}
     .tab.sel{color:var(--g);background:var(--gl);}
     .tab:active{transform:scale(.91);}
@@ -111,6 +111,42 @@ if(window.caches){caches.keys().then(function(ks){ks.forEach(function(k){caches.
     body.advgrades .gbtn[data-g="g3"],body.advgrades .gbtn[data-g="g1"]{display:block;}
     .gbtn.sel{background:var(--g);color:#fff;border-color:var(--g);box-shadow:0 2px 8px rgba(41,166,94,.3);}
     .gbtn:active{transform:scale(.96);}
+    /* ===== プリント（おうちのひとが 紙でテストする） ===== */
+    .prgrades{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:12px;}
+    .prrow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px;}
+    .prbtn{border:2px solid var(--bdr);background:var(--card);border-radius:8px;padding:11px 16px;font-size:14px;font-weight:800;color:var(--ink);cursor:pointer;font-family:inherit;}
+    .prbtn:active{transform:scale(.96);}
+    .prbtn.main{background:var(--g);color:#fff;border-color:var(--g);flex:1;}
+    .prnote{font-size:12px;color:var(--mut);font-weight:700;line-height:1.6;margin-bottom:12px;}
+    /* 画面上のプレビュー（A4の見た目に よせる） */
+    #prSheet{background:#fff;color:#111;border:2px solid var(--bdr);border-radius:10px;padding:18px 16px;}
+    .prhead{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;border-bottom:3px solid #111;padding-bottom:8px;margin-bottom:4px;}
+    .prtitle{font-size:19px;font-weight:900;letter-spacing:.04em;}
+    .prmeta{font-size:11px;color:#555;font-weight:700;text-align:right;line-height:1.7;white-space:nowrap;}
+    .prfields{display:flex;gap:16px;font-size:12px;font-weight:700;color:#333;margin:10px 0 12px;}
+    .prfields span{border-bottom:1px solid #999;flex:1;padding-bottom:2px;}
+    table.prtbl{width:100%;border-collapse:collapse;table-layout:fixed;}
+    table.prtbl td{border:1px solid #333;padding:9px 8px;vertical-align:middle;}
+    td.prno{width:30px;text-align:center;font-size:12px;color:#666;font-weight:700;}
+    td.pren{width:41%;font-size:16px;font-weight:800;word-break:break-word;}
+    td.prja{font-size:14px;color:#111;}
+    body.pr-hide td.prja{color:transparent;}
+    .prfoot{margin-top:10px;font-size:11px;color:#666;font-weight:700;text-align:right;}
+    /* ===== 印刷（A4たて・1まいに おさめる） ===== */
+    @media print{
+      @page{size:A4 portrait;margin:14mm 13mm;}
+      html,body{background:#fff!important;}
+      body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+      body.hastab .screen.on{padding-bottom:0;}
+      #tabbar,.prnoprint,.screen:not(#printsheet){display:none!important;}
+      #printsheet{display:block!important;max-width:none;padding:0;margin:0;}
+      #prSheet{border:none;border-radius:0;padding:0;}
+      table.prtbl td{padding:9pt 7pt;}
+      td.pren{font-size:12.5pt;}
+      td.prja{font-size:11pt;}
+      .prtitle{font-size:15pt;}
+      body.pr-hide td.prja{color:#fff;}
+    }
     .atabs{display:grid;grid-template-columns:repeat(5,1fr);gap:3px;margin:8px 0 14px;background:var(--gl);padding:4px;border-radius:10px;}
     .atab{border:none;background:transparent;border-radius:7px;padding:8px 0;font-size:11px;font-weight:800;color:var(--mut);cursor:pointer;font-family:inherit;white-space:nowrap;}
     .atab.sel{background:var(--card);color:var(--g);box-shadow:0 1px 4px rgba(0,0,0,.08);}
@@ -462,6 +498,24 @@ if(window.caches){caches.keys().then(function(ks){ks.forEach(function(k){caches.
 </section>
 
 <!-- SHOP -->
+<section id="printsheet" class="screen">
+  <div class="prnoprint">
+    <div style="font-size:18px;font-weight:900;color:var(--ink);margin-bottom:2px;">プリント</div>
+    <div class="prnote">きゅうを えらんで、たんご20こを A4の かみに いんさつ できます。<br>おうちの ひとが まるつけ できるように、みぎに いみが はいっています。</div>
+    <div class="prgrades" id="prGrades">
+      <button class="gbtn" data-g="g3">英検3級</button>
+      <button class="gbtn" data-g="jun2">英検準2級</button>
+      <button class="gbtn" data-g="g2">英検2級</button>
+      <button class="gbtn" data-g="g1">英検1級</button>
+    </div>
+    <div class="prrow">
+      <button class="prbtn" id="prShuffle">↻ ちがう20こ</button>
+      <button class="prbtn" id="prHide">こたえを かくす</button>
+    </div>
+    <div class="prrow"><button class="prbtn main" id="prPrint">この かみを いんさつ</button></div>
+  </div>
+  <div id="prSheet"></div>
+</section>
 <section id="okane" class="screen">
   <h2 style="font-size:22px;font-weight:900;color:var(--ink);margin:4px 0 14px;">おこづかい</h2>
   <div style="text-align:center;padding:20px 18px;background:linear-gradient(135deg,#fff7ed,#ffedd5);border:2px solid #fed7aa;border-radius:14px;margin-bottom:14px;">
@@ -614,6 +668,12 @@ if(window.caches){caches.keys().then(function(ks){ks.forEach(function(k){caches.
         <svg width="20" height="20" viewBox="0 0 20 20" shape-rendering="crispEdges"><rect x="4" y="1" width="12" height="18" fill="currentColor"/><rect x="6" y="3" width="8" height="14" fill="#fff7ed"/><rect x="9" y="5" width="2" height="10" fill="currentColor"/><rect x="7" y="7" width="6" height="2" fill="currentColor"/><rect x="7" y="11" width="6" height="2" fill="currentColor"/></svg>
       </span>
       おこづかい
+    </button>
+    <button class="tab" data-s="printsheet">
+      <span class="ti">
+        <svg width="20" height="20" viewBox="0 0 20 20" shape-rendering="crispEdges"><rect x="4" y="0" width="12" height="5" fill="currentColor"/><rect x="0" y="5" width="20" height="9" fill="currentColor"/><rect x="2" y="7" width="4" height="2" fill="#fff7ed"/><rect x="4" y="11" width="12" height="9" fill="currentColor"/><rect x="6" y="13" width="8" height="2" fill="#fff7ed"/><rect x="6" y="16" width="8" height="2" fill="#fff7ed"/></svg>
+      </span>
+      プリント
     </button>
     <button class="tab" data-s="admin">
       <span class="ti">
