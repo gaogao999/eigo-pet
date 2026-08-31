@@ -125,6 +125,14 @@ if(window.caches){caches.keys().then(function(ks){ks.forEach(function(k){caches.
     .prmeta{font-size:11px;color:#555;font-weight:700;text-align:right;line-height:1.7;white-space:nowrap;}
     .prfields{display:flex;gap:16px;font-size:12px;font-weight:700;color:#333;margin:10px 0 12px;}
     .prfields span{border-bottom:1px solid #999;flex:1;padding-bottom:2px;}
+    #prHist{margin-bottom:12px;max-height:340px;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+    .prhempty{font-size:12px;color:var(--mut);font-weight:700;padding:8px 2px;}
+    .prhitem{border:2px solid var(--bdr);background:var(--card);border-radius:10px;padding:9px 10px;margin-bottom:8px;}
+    .prhhead{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:900;color:var(--ink);margin-bottom:6px;}
+    .prhn{margin-left:auto;font-size:11px;color:var(--mut);font-weight:800;}
+    .prhws{display:flex;flex-wrap:wrap;gap:5px;}
+    .prhw{font-size:12px;font-weight:800;color:var(--ink);background:var(--bg);border:1px solid var(--bdr);border-radius:6px;padding:3px 7px;cursor:pointer;-webkit-tap-highlight-color:transparent;}
+    .prhw.sp{background:#dcfce7;}
     .prstat{font-size:12px;color:var(--mut);font-weight:800;margin-bottom:8px;}
     .prmsg{font-size:12px;color:#92400e;background:#fff7ed;border:2px solid #fed7aa;border-radius:8px;padding:8px 10px;font-weight:800;line-height:1.5;margin-bottom:10px;}
     table.prtbl{width:100%;border-collapse:collapse;table-layout:fixed;}
@@ -516,8 +524,10 @@ if(window.caches){caches.keys().then(function(ks){ks.forEach(function(k){caches.
     <div class="prrow">
       <button class="prbtn" id="prShuffle">↻ ちがう20こ</button>
       <button class="prbtn" id="prHide">こたえを かくす</button>
+      <button class="prbtn" id="prHistBtn">きろくを みる</button>
       <button class="prbtn" id="prReset">きろくを けす</button>
     </div>
+    <div id="prHist" style="display:none;"></div>
     <div id="prStat" class="prstat"></div>
     <div id="prMsg" class="prmsg" style="display:none;"></div>
     <div class="prrow"><button class="prbtn main" id="prPrint">この かみを いんさつ</button></div>

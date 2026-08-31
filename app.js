@@ -2438,7 +2438,7 @@ window._eigoPetInit = function() {
      ひだり＝英単語／まんなか＝品詞／みぎ＝いみ。
      「こたえを かくす」で みぎを 白くして 問題用紙に できる。
      いちど 出した語は state.prDone に のこして 二度と 出さない。 */
-  var PR_N=20, prGrade='jun2', prWords=[], prHide=false, prMsg='';
+  var PR_N=20, PR_LOG_MAX=60, prGrade='jun2', prWords=[], prHide=false, prMsg='', prHistOn=false;
 
   /* 品詞：もとデータの pos は noun が ごみ箱に なっていて（動詞283語 対 名詞5854語）、
      demonstrate が「名詞」など まちがいが 多い。
@@ -2476,7 +2476,34 @@ window._eigoPetInit = function() {
     if(!prWords.length) return;
     var done=prDoneSet(prGrade);
     prWords.forEach(function(w){ if(done.indexOf(w[0])<0) done.push(w[0]); });
+    if(!state.prLog) state.prLog=[];                       // 何を いつ 印刷したかの りれき
+    state.prLog.unshift({ t:Date.now(), g:prGrade, ws:prWords.map(function(w){ return w[0]; }) });
+    if(state.prLog.length>PR_LOG_MAX) state.prLog.length=PR_LOG_MAX;
     save(); prRender();
+  }
+
+  function prLogDate(t){
+    var d=new Date(t), z=function(n){ return (n<10?'0':'')+n; };
+    return d.getFullYear()+'.'+(d.getMonth()+1)+'.'+d.getDate()+' '+z(d.getHours())+':'+z(d.getMinutes());
+  }
+
+  function prHistRender(){
+    var box=document.getElementById('prHist'); if(!box) return;
+    var hb=document.getElementById('prHistBtn');
+    if(hb) hb.textContent=prHistOn?'きろくを とじる':'きろくを みる';
+    box.style.display=prHistOn?'block':'none';
+    if(!prHistOn) return;
+    var log=state.prLog||[];
+    if(!log.length){ box.innerHTML='<div class="prhempty">まだ いんさつした きろくは ありません。</div>'; return; }
+    box.innerHTML=log.map(function(e,i){
+      var lab=(WORDBANK[e.g]&&WORDBANK[e.g].label)||e.g;
+      var ws=(e.ws||[]).map(function(en){
+        return '<span class="prhw" data-en="'+escJa(en)+'">'+escJa(en)+'</span>';
+      }).join('');
+      return '<div class="prhitem"><div class="prhhead">'+escJa(lab)+'　'+prLogDate(e.t)
+           +'<span class="prhn">'+(e.ws||[]).length+'こ</span></div>'
+           +'<div class="prhws">'+ws+'</div></div>';
+    }).join('');
   }
 
   function prRender(){
@@ -2490,6 +2517,7 @@ window._eigoPetInit = function() {
     if(st) st.textContent='いんさつずみ '+done+' ／ '+total+' こ　（のこり '+(total-done)+'）';
     var mg=document.getElementById('prMsg');
     if(mg){ mg.textContent=prMsg; mg.style.display=prMsg?'block':'none'; }
+    prHistRender();
 
     var lab=(WORDBANK[prGrade]&&WORDBANK[prGrade].label)||'';
     var d=new Date(), date=d.getFullYear()+'.'+(d.getMonth()+1)+'.'+d.getDate();
@@ -2519,8 +2547,17 @@ window._eigoPetInit = function() {
     document.getElementById('prShuffle').onclick=function(){ prWords=prPick(prGrade); prRender(); sfx('correct'); };
     document.getElementById('prHide').onclick=function(){ prHide=!prHide; prRender(); };
     document.getElementById('prReset').onclick=function(){
-      if(!confirm('「いんさつずみ」の きろくを けして、さいしょから えらべるように しますか？')) return;
-      if(state.prDone) state.prDone[prGrade]=[]; save(); prWords=prPick(prGrade); prRender(); bubble('きろくを けしました');
+      if(!confirm('「いんさつずみ」の きろくと りれきを けして、さいしょから えらべるように しますか？')) return;
+      if(state.prDone) state.prDone[prGrade]=[];
+      if(state.prLog) state.prLog=state.prLog.filter(function(e){ return e.g!==prGrade; });
+      save(); prWords=prPick(prGrade); prRender(); bubble('きろくを けしました');
+    };
+    document.getElementById('prHistBtn').onclick=function(){ prHistOn=!prHistOn; prHistRender(); };
+    var hbox=document.getElementById('prHist');
+    if(hbox) hbox.onclick=function(e){
+      var sp=e.target.closest('.prhw'); if(!sp) return;
+      speak(sp.getAttribute('data-en'));
+      sp.classList.add('sp'); setTimeout(function(){ sp.classList.remove('sp'); },600);
     };
     document.getElementById('prPrint').onclick=function(){ prMark(); window.print(); };
     /* 英単語を タップすると 読み上げる（紙に する まえの かくにん用） */
