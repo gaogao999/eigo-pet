@@ -130,7 +130,8 @@ if(window.caches){caches.keys().then(function(ks){ks.forEach(function(k){caches.
     table.prtbl{width:100%;border-collapse:collapse;table-layout:fixed;}
     table.prtbl td{border:1px solid #333;padding:9px 8px;vertical-align:middle;}
     td.prno{width:30px;text-align:center;font-size:12px;color:#666;font-weight:700;}
-    td.pren{width:37%;font-size:16px;font-weight:800;word-break:break-word;}
+    td.pren{width:37%;font-size:16px;font-weight:800;word-break:break-word;cursor:pointer;-webkit-tap-highlight-color:transparent;}
+    td.pren.sp{background:#dcfce7;}
     td.prp{width:26px;text-align:center;font-size:11px;font-weight:800;color:#333;}
     td.prja{font-size:14px;color:#111;}
     body.pr-hide td.prja{color:transparent;}
@@ -145,7 +146,7 @@ if(window.caches){caches.keys().then(function(ks){ks.forEach(function(k){caches.
       #printsheet{display:block!important;max-width:none;padding:0;margin:0;}
       #prSheet{border:none;border-radius:0;padding:0;}
       table.prtbl td{padding:9pt 7pt;}
-      td.pren{font-size:12.5pt;}
+      td.pren{font-size:12.5pt;background:none!important;}
       td.prja{font-size:11pt;}
       td.prp{font-size:8.5pt;}
       .prtitle{font-size:15pt;}
@@ -505,7 +506,7 @@ if(window.caches){caches.keys().then(function(ks){ks.forEach(function(k){caches.
 <section id="printsheet" class="screen">
   <div class="prnoprint">
     <div style="font-size:18px;font-weight:900;color:var(--ink);margin-bottom:2px;">プリント</div>
-    <div class="prnote">きゅうを えらんで、たんご20こを A4の かみに いんさつ できます。<br>おうちの ひとが まるつけ できるように、みぎに いみが はいっています。<br>いちど いんさつした たんごは、つぎからは 出てきません。</div>
+    <div class="prnote">きゅうを えらんで、たんご20こを A4の かみに いんさつ できます。<br>おうちの ひとが まるつけ できるように、みぎに いみが はいっています。<br>いちど いんさつした たんごは、つぎからは 出てきません。<br>えいごを タップすると よみあげます。</div>
     <div class="prgrades" id="prGrades">
       <button class="gbtn" data-g="g3">英検3級</button>
       <button class="gbtn" data-g="jun2">英検準2級</button>

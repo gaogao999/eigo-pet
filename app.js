@@ -2495,7 +2495,7 @@ window._eigoPetInit = function() {
     var d=new Date(), date=d.getFullYear()+'.'+(d.getMonth()+1)+'.'+d.getDate();
     var rows=prWords.map(function(w,i){
       return '<tr><td class="prno">'+(i+1)+'</td>'
-           +'<td class="pren">'+escJa(w[0])+'</td>'
+           +'<td class="pren" data-en="'+escJa(w[0])+'">'+escJa(w[0])+'</td>'
            +'<td class="prp">'+prPos(w)+'</td>'
            +'<td class="prja">'+escJa(splitSenses(w[1]).join('，'))+'</td></tr>';
     }).join('');
@@ -2523,6 +2523,14 @@ window._eigoPetInit = function() {
       if(state.prDone) state.prDone[prGrade]=[]; save(); prWords=prPick(prGrade); prRender(); bubble('きろくを けしました');
     };
     document.getElementById('prPrint').onclick=function(){ prMark(); window.print(); };
+    /* 英単語を タップすると 読み上げる（紙に する まえの かくにん用） */
+    var sh=document.getElementById('prSheet');
+    if(sh) sh.onclick=function(e){
+      var td=e.target.closest('td.pren'); if(!td) return;
+      var en=td.getAttribute('data-en'); if(!en) return;
+      speak(en);
+      td.classList.add('sp'); setTimeout(function(){ td.classList.remove('sp'); },600);
+    };
   })();
 
   function show(id){ document.querySelectorAll('.screen').forEach(function(s){ s.classList.remove('on'); }); document.getElementById(id).classList.add('on'); var tb=document.getElementById('tabbar'); if(MAIN_TABS.indexOf(id)>=0){ tb.classList.add('on'); document.querySelectorAll('#tabbar .tab').forEach(function(b){ b.classList.toggle('sel',b.dataset.s===id); }); } else { tb.classList.remove('on'); } window.scrollTo(0,0); }
