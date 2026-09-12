@@ -477,17 +477,18 @@ window._eigoPetInit = function() {
        （1週間後の再生率 テスト継続80% / 再学習のみ36%）→ おぼえた語も 引退させず
        間隔を のばして 出しつづける
      ・Cepeda et al. (2008)：最適な復習間隔は「おぼえていたい期間」の 10〜20%
-       → 数か月〜1年 もたせる想定で 1→3→7→14→30→60日 の階段
+       → 数年 もたせる想定で 1→4→12→35→90→210→450日 の階段。
+         60日どまりだと 覚えきった語が 2か月ごとに もどってきて 新しい語の枠を うばう
      ・Nakata (2015) / Nakata & Webb (2016)：効くのは「間隔の量」。拡張か均等かの差は小さく、
        1回に学ぶ語数より 間隔のほうが大事 → 5問/回は そのまま、日をまたぐ間隔を入れる  */
-  var SRS_IVL=[1,3,7,14,30,60];                       // レベルごとの 日数
-  var SRS_MASTER_IVL=7;                               // これ以上のびたら「おぼえた」あつかい
+  var SRS_IVL=[1,4,12,35,90,210,450];                 // レベルごとの 日数（約2.5倍ずつ のばす）
+  var SRS_MASTER_IVL=12;                              // これ以上のびたら「おぼえた」あつかい
   function dayAdd(ds,n){ var d=new Date(ds); d.setDate(d.getDate()+n); return dayStr(d); }
   function srsDue(r){ return !r || !r.due || r.due<=today(); }
   function dayGain(){                                   // きょう ふえた数（日が かわったら リセット）
     if(!state.gain||state.gain.d!==today()) state.gain={d:today(),m:0,seen:0};
     return state.gain; }
-  var SRS_KNOWN_LV=3, SRS_SURE_LV=5;                   // 知っていそう→14日／たしかに知っている→60日
+  var SRS_KNOWN_LV=3, SRS_SURE_LV=4;                   // 知っていそう→35日／たしかに知っている→90日
   function onAnswer(en,ok,fast){
     var k=(en||'').toLowerCase(); var r=state.learn[k]||{c:0,w:false,m:false,lv:0};
     var wasNew=!state.learn[k], wasM=!!r.m, g=dayGain();
@@ -496,16 +497,18 @@ window._eigoPetInit = function() {
     if(ok){
       r.c=(r.c||0)+1;
       r.fn=fast?((r.fn||0)+1):0;                        // そっこう正解が つづいた回数
-      if(fast&&wasNew) r.lv=SRS_KNOWN_LV;                       // 初回から そっこう → 14日
-      else if(fast&&r.fn>=2&&r.lv<=SRS_KNOWN_LV) r.lv=SRS_SURE_LV;  // 2回つづけば 60日
-      else r.lv=(r.ivl>0)?Math.min(SRS_IVL.length-1,r.lv+1):0;   // はじめて／まちがえた直後は レベル0（1日後）から
+      if(fast&&wasNew) r.lv=SRS_KNOWN_LV;                       // 初回から そっこう → 35日
+      else if(fast&&r.fn>=2&&r.lv<=SRS_KNOWN_LV) r.lv=SRS_SURE_LV;  // 2回つづけば 90日
+      else if(r.ivl>0) r.lv=Math.min(SRS_IVL.length-1,r.lv+1);
+      else r.lv=(r.lv||0);   // はじめて＝レベル0（1日後）／まちがえた直後は 2段もどした レベルから やりなおし
       r.ivl=SRS_IVL[r.lv];
       r.due=dayAdd(today(),r.ivl);
       r.m=(r.ivl>=SRS_MASTER_IVL);
       if(!wasM&&r.m) g.m++;                              // ⭐に なった瞬間だけ 数える
     } else {
       r.c=0; r.w=true; r.m=false; r.fn=0;
-      r.lv=0; r.ivl=0; r.due=today();                 // にがては すぐ また出す
+      r.lv=Math.max(0,(r.lv||0)-2);                   // 全部もどさず 2段だけ もどす（90日→12日）
+      r.ivl=0; r.due=today();                         // にがては すぐ また出す
     }
     state.learn[k]=r;
   }
