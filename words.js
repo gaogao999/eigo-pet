@@ -1,5 +1,5 @@
 /* eiken words + yomi + pos  src:eiken-csv / yomi:pykakasi (補正・不適切語除去済み) */
-var APP_REV = "rev219";
+var APP_REV = "rev220";
 var POS_JA = {"noun":"名詞","verb":"動詞","adjective":"形容詞","adverb":"副詞","phrase":"熟語","preposition":"前置詞","conjunction":"接続詞","pronoun":"代名詞"};
 var WORDBANK = {
   g3: {
@@ -1666,7 +1666,7 @@ var WORDBANK = {
 ["perpetrate","犯す、違反する、犯罪を犯す","","noun"],
 ["kick off","始める，追い払う","","phrase"],
 ["purport","趣旨、目的、意図","","noun"],
-["waver 単語を覚えるコツ","揺らぐ、安定していない、ぐらつく","","phrase"],
+["waver","揺らぐ，ぐらつく","ゆらぐ","verb"],
 ["luncheon","昼食、正午頃に食べる食事","","noun"],
 ["espionage","スパイ活動、情報を秘密裏に収集する活動","","noun"],
 ["genesis","起源、始まり、出発点","","noun"],
@@ -3357,7 +3357,7 @@ var WORDBANK = {
 ["have a flat tire","タイヤがパンクする","","phrase"],
 ["amplitude","広さ、振幅","","noun"],
 ["make matters worse","問題を悪化させる","","phrase"],
-["英検1級の出た単語一覧 virile","男らしい","","phrase"],
+["virile","男らしい","おとこらしい","adjective"],
 ["budge","少し動く","","noun"],
 ["filth","汚物","","noun"],
 ["chastise","懲らしめる","","noun"],

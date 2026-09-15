@@ -3185,4 +3185,11 @@ var EASY = {
   "widespread": "ひろく いきわたった",
   "wire": "ほそい きんぞくの ひも",
   "workday": "しごとを する ひ",
+  "let A do": "Aに ～させる",
+  "Jewish": "ユダヤじんの",
+  "not only A but also B": "Aだけでなく Bも",
+  "What is more": "そのうえ",
+  "between A and B": "AとBの あいだ",
+  "Mexican": "メキシコの",
+  "How come": "どうして"
 };
