@@ -377,7 +377,7 @@ window._eigoPetInit = function() {
     rows.forEach(function(r){
       var mode=r[4], ok=r[5];
       byMode[mode][0]++; byMode[mode][1]+=ok;
-      var iv=r[9]; if(iv>=0){ var key=String(iv); if(!byIvl[key]) byIvl[key]=[0,0]; byIvl[key][0]++; byIvl[key][1]+=ok; }
+      var iv=r[9]; if(iv>=0){ var key=String(iv); if(!byIvl[key]) byIvl[key]=[0,0]; byIvl[key][0]++; byIvl[key][1]+=ok; }  // iv は 日数
       if(r[7]===1){ var L=r[10], b=L<=0?'0':(L<=2?'1-2':(L<=6?'3-6':'7+'));
         byLate[b][0]++; byLate[b][1]+=ok; revOk[0]++; revOk[1]+=ok; } else { newOk[0]++; newOk[1]+=ok; }
       var h=new Date(r[0]).getHours(); if(!byHour[h]) byHour[h]=[0,0]; byHour[h][0]++; byHour[h][1]+=ok;
@@ -393,6 +393,72 @@ window._eigoPetInit = function() {
       newOk:newOk, revOk:revOk, dk:dk, perDay:Math.round(rows.length/Math.max(1,Object.keys(days).length)) };
   }
   function okPct(a){ return a[0]?Math.round(100*a[1]/a[0])+'%':'—'; }   // 正答率（既存の pct と 名前がかぶらないように）
+
+  /* ===== この1しゅうかん（曜日ごとの ようす） =====
+     ログ1行ごとに「こたえた直前の SRS状態」が のこっているので、
+     そこから その日に なにが 起きたかを 組みなおす。
+     ・おぼえた   ＝ その回答で かんかくが SRS_MASTER_IVL日 いじょうに なった（＝⭐が ついた）
+     ・おぼえかけ ＝ はじめて 出あって、まだ ⭐に とどかなかった語
+     ・わすれた   ＝ ⭐が ついていた語を まちがえて ⭐が とれた
+     ・まちがえ   ＝ その日の 誤答の数                                        */
+  var DOW_JA=['にち','げつ','か','すい','もく','きん','ど'];
+  function lvAfterOk(lvBefore,ivlBefore,wasNew,fast){       // onAnswer の 正解ぶんを なぞる
+    if(fast&&wasNew) return SRS_KNOWN_LV;
+    if(ivlBefore>0) return Math.min(SRS_IVL.length-1,lvBefore+1);
+    return wasNew?0:lvBefore;                               // まちがえた直後は 2段もどした ところから
+  }
+  function weekStats(n){
+    var days=[], idx={}, i, d=new Date(today());
+    d.setDate(d.getDate()-(n-1));
+    for(i=0;i<n;i++){
+      var ds=dayStr(d);
+      idx[ds]=days.length;
+      days.push({ day:ds, dow:d.getDay(), q:0, ok:0, wrong:0, mastered:0, learning:0, forgot:0, words:{} });
+      d.setDate(d.getDate()+1);
+    }
+    logAll().forEach(function(r){
+      var e=days[idx[r[1]]]; if(!e) return;
+      var wasNew=(r[7]!==1), lvB=r[8]<0?0:r[8], ivlB=r[9]<0?0:r[9], ok=(r[5]===1);
+      e.q++; e.words[r[2]]=1;
+      if(ok){
+        e.ok++;
+        var ivlA=SRS_IVL[lvAfterOk(lvB,ivlB,wasNew,r[15]===1)]||0;
+        if(ivlA>=SRS_MASTER_IVL&&ivlB<SRS_MASTER_IVL) e.mastered++;       // ⭐が ついた しゅんかん
+        else if(wasNew) e.learning++;                                      // はじめて だけど まだ ⭐じゃない
+      } else {
+        e.wrong++;
+        if(ivlB>=SRS_MASTER_IVL) e.forgot++;                               // ⭐が とれた
+        else if(wasNew) e.learning++;
+      }
+    });
+    days.forEach(function(e){ e.uniq=Object.keys(e.words).length; delete e.words; });
+    return days;
+  }
+  function renderWeekStat(){
+    var el=document.getElementById('weekStat'); if(!el) return;
+    var ds=weekStats(7), max=1;
+    ds.forEach(function(e){ if(e.q>max) max=e.q; });
+    var sum={q:0,mastered:0,learning:0,wrong:0,forgot:0};
+    ds.forEach(function(e){ for(var k in sum) sum[k]+=e[k]; });
+    if(!sum.q){ el.innerHTML='<div style="color:var(--mut);font-weight:700;">この1しゅうかんは まだ べんきょうの きろくが ありません。</div>'; return; }
+    var rows=ds.map(function(e){
+      var md=e.day.slice(5).replace('-','/'), w=Math.round(100*e.q/max);
+      var today_=e.day===today();
+      return '<div class="wkrow'+(today_?' wknow':'')+'">'
+        +'<div class="wkd"><b>'+DOW_JA[e.dow]+'</b><span>'+md+'</span></div>'
+        +'<div class="wkbar"><i style="width:'+w+'%;"></i><em>'+(e.q?e.q+'問':'—')+'</em></div>'
+        +'<div class="wkn wkm">'+(e.mastered||'')+'</div>'
+        +'<div class="wkn wkl">'+(e.learning||'')+'</div>'
+        +'<div class="wkn wkw">'+(e.wrong||'')+'</div>'
+        +'</div>';
+    }).join('');
+    el.innerHTML='<div class="wkhead"><div class="wkd">ようび</div><div class="wkbar">といた かず</div>'
+      +'<div class="wkn wkm">⭐</div><div class="wkn wkl">かけ</div><div class="wkn wkw">✗</div></div>'
+      +rows
+      +'<div class="wksum">1しゅうかんで ⭐おぼえた <b>'+sum.mastered+'</b>こ ／ おぼえかけ <b>'+sum.learning
+      +'</b>こ ／ まちがえ <b>'+sum.wrong+'</b>回'+(sum.forgot?' ／ わすれた <b>'+sum.forgot+'</b>こ':'')+'</div>'
+      +'<div class="wknote">⭐＝その日に かんかくが '+SRS_MASTER_IVL+'日 いじょうに なった語　／　かけ＝はじめて 出あって まだ ⭐じゃない語　／　✗＝まちがえた かず</div>';
+  }
   function renderLogStat(){
     var el=document.getElementById('logStat'); if(!el) return;
     var s=logSummary();
@@ -408,7 +474,7 @@ window._eigoPetInit = function() {
       '<div style="height:6px;"></div>'+
       MODE_JA.map(function(m,i){ return row(m,okPct(s.byMode[i])+'（'+s.byMode[i][0]+'問）'); }).join('')+
       '<div style="height:6px;"></div>'+
-      ivKeys.map(function(k){ return row('かんかく '+(k<0?'—':SRS_IVL[k]+'日')+' の正答率',okPct(s.byIvl[k])+'（'+s.byIvl[k][0]+'問）'); }).join('')+
+      ivKeys.map(function(k){ return row('かんかく '+(k<=0?'はじめて':k+'日')+' の正答率',okPct(s.byIvl[k])+'（'+s.byIvl[k][0]+'問）'); }).join('')+
       '<div style="height:6px;"></div>'+
       Object.keys(s.byLate).map(function(k){ return row('おくれ '+k+'日',okPct(s.byLate[k])+'（'+s.byLate[k][0]+'問）'); }).join('')+
       '<div style="height:6px;"></div>'+
@@ -990,7 +1056,7 @@ window._eigoPetInit = function() {
       state.moneyTiers=readTiers(); save(); renderMoney(); bubble('せってい を ほぞんしたよ');
     };
   })();
-  function renderData(){ document.getElementById('dataStat').textContent='なまえ：'+state.name+' ／ レベル '+state.lv+' ／ おぼえた '+masteredCount()+'こ ／ 🔥'+displayStreak()+'にち'; document.getElementById('exportBox').style.display='none'; document.getElementById('btnCopy').style.display='none'; document.getElementById('importBox').value=''; document.getElementById('dataMsg').textContent=''; renderLogStat(); }
+  function renderData(){ document.getElementById('dataStat').textContent='なまえ：'+state.name+' ／ レベル '+state.lv+' ／ おぼえた '+masteredCount()+'こ ／ 🔥'+displayStreak()+'にち'; document.getElementById('exportBox').style.display='none'; document.getElementById('btnCopy').style.display='none'; document.getElementById('importBox').value=''; document.getElementById('dataMsg').textContent=''; renderWeekStat(); renderLogStat(); }
   function encodeState(){ return btoa(unescape(encodeURIComponent(JSON.stringify(state)))); }
   document.getElementById('btnExport').onclick=function(){ var box=document.getElementById('exportBox'); box.value=encodeState(); box.style.display='block'; document.getElementById('btnCopy').style.display='block'; };
   document.getElementById('btnCopy').onclick=function(){ var box=document.getElementById('exportBox'); box.select(); var ok=function(){ document.getElementById('dataMsg').style.color='var(--g)'; document.getElementById('dataMsg').textContent='コピーしました！'; }; if(navigator.clipboard){ navigator.clipboard.writeText(box.value).then(ok,function(){ try{ document.execCommand('copy'); ok(); }catch(e){} }); } else { try{ document.execCommand('copy'); ok(); }catch(e){} } };
@@ -1022,7 +1088,7 @@ window._eigoPetInit = function() {
       msg(dlFile('eigopet_log_'+stamp()+'.json',JSON.stringify(obj),'application/json')?(rows.length+'問ぶんを ほぞんしました'):'ほぞん できませんでした',false); };
     var cl=document.getElementById('btnLogClear'); if(cl) cl.onclick=function(){
       if(!confirm('がくしゅうログを ぜんぶ けします。よろしいですか？（そだてた しんちょくは けえません）')) return;
-      logClear(); renderLogStat(); msg('けしました'); };
+      logClear(); renderWeekStat(); renderLogStat(); msg('けしました'); };
   })();
   document.getElementById('atabs').onclick=function(e){ var b=e.target.closest('.atab'); if(!b) return; setAdminTab(b.dataset.t); };
   function buyReveal(id){

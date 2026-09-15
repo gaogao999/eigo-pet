@@ -133,6 +133,23 @@ if(window.caches){caches.keys().then(function(ks){ks.forEach(function(k){caches.
     .prhws{display:flex;flex-wrap:wrap;gap:5px;}
     .prhw{font-size:12px;font-weight:800;color:var(--ink);background:var(--bg);border:1px solid var(--bdr);border-radius:6px;padding:3px 7px;cursor:pointer;-webkit-tap-highlight-color:transparent;}
     .prhw.sp{background:#dcfce7;}
+    #weekStat{background:var(--gl);border:2px solid var(--bdr);border-radius:8px;padding:10px 12px;margin-bottom:6px;}
+    .wkhead,.wkrow{display:grid;grid-template-columns:52px 1fr 26px 26px 26px;gap:6px;align-items:center;}
+    .wkhead{font-size:10px;color:var(--mut);font-weight:800;padding-bottom:5px;border-bottom:2px solid var(--bdr);margin-bottom:4px;}
+    .wkrow{padding:4px 0;border-bottom:1px solid rgba(0,0,0,.06);}
+    .wkrow:last-of-type{border-bottom:none;}
+    .wkrow.wknow{background:rgba(41,166,94,.10);border-radius:6px;}
+    .wkd{font-size:11px;font-weight:800;color:var(--ink);line-height:1.25;}
+    .wkd b{font-size:13px;font-weight:900;}
+    .wkd span{display:block;font-size:9px;color:var(--mut);font-weight:700;}
+    .wkbar{position:relative;height:18px;background:rgba(0,0,0,.06);border-radius:5px;overflow:hidden;}
+    .wkbar i{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,#29a65e,#5cde94);border-radius:5px;}
+    .wkbar em{position:absolute;left:6px;top:0;line-height:18px;font-size:10px;font-weight:800;font-style:normal;color:var(--ink);}
+    .wkhead .wkbar{position:static;height:auto;background:none;}
+    .wkn{text-align:center;font-size:12px;font-weight:900;}
+    .wkm{color:#b45309;} .wkl{color:#2563eb;} .wkw{color:#dc2626;}
+    .wksum{font-size:11px;font-weight:800;color:var(--ink);margin-top:8px;padding-top:7px;border-top:2px solid var(--bdr);line-height:1.7;}
+    .wknote{font-size:10px;color:var(--mut);font-weight:700;line-height:1.6;margin-top:5px;}
     .prstat{font-size:12px;color:var(--mut);font-weight:800;margin-bottom:8px;}
     .prmsg{font-size:12px;color:#92400e;background:#fff7ed;border:2px solid #fed7aa;border-radius:8px;padding:8px 10px;font-weight:800;line-height:1.5;margin-bottom:10px;}
     table.prtbl{width:100%;border-collapse:collapse;table-layout:fixed;}
@@ -487,7 +504,9 @@ if(window.caches){caches.keys().then(function(ks){ks.forEach(function(k){caches.
     </div>
     <p style="font-size:13px;color:var(--mut);line-height:1.7;margin:4px 0 12px;font-weight:700;">しんちょくは この たんまつに ほぞんされています。ときどき バックアップを とっておくと あんしんです。</p>
     <div id="dataStat" style="font-size:13px;color:var(--ink);font-weight:800;background:var(--gl);border:2px solid var(--bdr);border-radius:8px;padding:12px 14px;margin-bottom:16px;"></div>
-    <h3 style="font-size:15px;font-weight:900;margin:4px 0 8px;color:var(--ink);">がくしゅうログ（分析用）</h3>
+    <h3 style="font-size:15px;font-weight:900;margin:4px 0 8px;color:var(--ink);">この1しゅうかん</h3>
+    <div id="weekStat"></div>
+    <h3 style="font-size:15px;font-weight:900;margin:14px 0 8px;color:var(--ink);">がくしゅうログ（分析用）</h3>
     <p style="font-size:12px;color:var(--mut);line-height:1.7;margin:0 0 8px;font-weight:700;">1問こたえるごとに「単語・形式・正誤・かかった時間・そのときの復習かんかく・おくれ日数」を <b>この たんまつの中だけ</b>に きろくします。どこにも おくりません。ダウンロードして 分析すると、出題の チューニングに つかえます。</p>
     <div id="logStat" style="font-size:12px;color:var(--ink);font-weight:700;line-height:1.9;background:var(--gl);border:2px solid var(--bdr);border-radius:8px;padding:12px 14px;margin-bottom:10px;"></div>
     <button id="btnLogCsv" style="width:100%;border:none;border-radius:10px;padding:14px;font-size:15px;font-weight:900;background:linear-gradient(135deg,#2563eb,#60a5fa);color:#fff;cursor:pointer;font-family:inherit;box-shadow:0 3px 10px rgba(37,99,235,.3);margin-bottom:8px;">📊 CSVで ダウンロード</button>
