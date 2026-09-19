@@ -1,12 +1,12 @@
 /* えいごペット — app logic (called from componentDidMount) */
 window._eigoPetInit = function() {
   /* おうちのひとコードで あける きゅう（ふだんは かくれている） */
-  var ADV_GRADES=['g3','jun1','g1'];
+  var ADV_GRADES=['jun1','g1'];
   if (window._eigoPetInitDone) return;
   window._eigoPetInitDone = true;
 
   const QPER = 5;
-  function currentWords() { return (WORDBANK[state.grade] || WORDBANK.g3).words; }
+  function currentWords() { return (WORDBANK[state.grade] || WORDBANK.jun2).words; }
 
   const PAL = { o: "#4a3526", w: "#faf6ec", g: "#d8cdb2" };
   const COLORS = [
@@ -291,6 +291,7 @@ window._eigoPetInit = function() {
     }
     s=sanitizeImport(s);                                  // 保存データ経由の すりかえも ふせぐ
     if(!WORDBANK[s.grade]) s.grade="jun2";
+    if(!WORDBANK[s.grade]) s.grade='jun2';                        // なくなった きゅう（3級など）を えらんでいた ばあい
     if(ADV_GRADES.indexOf(s.grade)>=0&&!s.advGrades) s.grade='jun2'; // 上級モードOFFなら 子供向けの きゅうに もどす
     // ライフサイクル改修(schemaV2)への移行：旧アダルト(lv4)→新アダルト(lv5)
     if(!s.schemaV || s.schemaV<2){ if(s.lv>=4) s.lv=5; if(typeof s.born!=='number') s.born=Date.now(); if(typeof s.stageSince!=='number') s.stageSince=Date.now(); if(typeof s.lifespanDays!=='number') s.lifespanDays=12; if(!Array.isArray(s.memories)) s.memories=[]; s.schemaV=2; }
@@ -2652,8 +2653,8 @@ window._eigoPetInit = function() {
   document.getElementById('sndset').onclick=function(e){ var b=e.target.closest('.optbtn'); if(!b) return; state.sound=b.dataset.v==='1'; save(); renderGoal(); if(state.sound) sfx('correct'); };
   document.getElementById('boxBtn').onclick=function(){ if(!boxAvailable()) return; state.lastBoxWeek=weekId(today()); state.food+=10; walletEarn(10); state.freezeTickets=Math.min(5,state.freezeTickets+1); addXp(20); bubble('たからばこ：えさ+10・おやすみ券+1！'); sfx('fanfare'); cheer(); save(); render(); };
   // 上級モード：おうちの人コードで 英検3級・1級を がくしゅうの きゅう選択に出す（子供には ふだん見えない）
-  function applyAdv(){ document.body.classList.toggle('advgrades',!!state.advGrades); var as=document.getElementById('advState'); if(as) as.innerHTML=state.advGrades?'<span style="color:var(--g);font-weight:900;">いま ON（3級・準1級・1級が えらべます）</span>':'いま OFF（準2級・2級のみ）'; }
-  (function(){ var bt=document.getElementById('advToggle'); if(!bt) return; bt.onclick=function(){ if(state.advGrades){ state.advGrades=false; if(ADV_GRADES.indexOf(state.grade)>=0) state.grade='jun2'; save(); applyAdv(); render(); bubble('上級モードを もどしました'); return; } var en=prompt('おうちのひとコードを いれてね'); if(en===null) return; if((en||'').replace(/\D/g,'')==='0785770131'){ state.advGrades=true; save(); applyAdv(); render(); bubble('上級モード ON：3級・準1級・1級が えらべます'); } else bubble('コードが ちがいます'); }; applyAdv(); })();
+  function applyAdv(){ document.body.classList.toggle('advgrades',!!state.advGrades); var as=document.getElementById('advState'); if(as) as.innerHTML=state.advGrades?'<span style="color:var(--g);font-weight:900;">いま ON（準1級・1級が えらべます）</span>':'いま OFF（準2級・2級のみ）'; }
+  (function(){ var bt=document.getElementById('advToggle'); if(!bt) return; bt.onclick=function(){ if(state.advGrades){ state.advGrades=false; if(ADV_GRADES.indexOf(state.grade)>=0) state.grade='jun2'; save(); applyAdv(); render(); bubble('上級モードを もどしました'); return; } var en=prompt('おうちのひとコードを いれてね'); if(en===null) return; if((en||'').replace(/\D/g,'')==='0785770131'){ state.advGrades=true; save(); applyAdv(); render(); bubble('上級モード ON：準1級・1級が えらべます'); } else bubble('コードが ちがいます'); }; applyAdv(); })();
   function renderTrophies(){ document.getElementById('trophyList').innerHTML=TITLES.map(function(t){ var got=state.titles.indexOf(t.id)>=0; return '<div class="trow2'+(got?' got':'')+'">'+(got?'★':'□')+' '+t.name+'</div>'; }).join(''); }
   document.getElementById('trophyChip').onclick=function(){ renderTrophies(); document.getElementById('trophyModal').style.display='flex'; };
   document.getElementById('trophyClose').onclick=function(){ document.getElementById('trophyModal').style.display='none'; };
