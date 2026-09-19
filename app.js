@@ -1,7 +1,5 @@
 /* えいごペット — app logic (called from componentDidMount) */
 window._eigoPetInit = function() {
-  /* おうちのひとコードで あける きゅう（ふだんは かくれている） */
-  var ADV_GRADES=['jun1','g1'];
   if (window._eigoPetInitDone) return;
   window._eigoPetInitDone = true;
 
@@ -269,7 +267,7 @@ window._eigoPetInit = function() {
     var s=null;
     var keys=[KEY, BAKKEY];
     for(var ki=0;ki<keys.length;ki++){ try{ var raw=localStorage.getItem(keys[ki]); if(raw){ s=JSON.parse(raw); break; } }catch(e){} }
-    var def={ name:"ぴよ",lv:1,xp:0,hunger:80,happy:80,food:0,dirty:false,streak:1,learned:0,last:today(),grade:"jun2",discipline:50,weight:5,careMiss:0,disciplineMiss:0,wagamama:false,babyType:null,childType:null,adultType:null,customImg:{},gameHi:0,dailyGoal:20,todayDate:today(),todayWords:[],lastGoalDate:null,metDates:[],wrongWords:[],petColor:'brown',bg:'meadow',freezeTickets:0,lastTicketDate:null,lastBoxWeek:null,titles:[],sound:true,mastery:{},learn:{},maxStreak:0,sick:false,sickSince:null,starveSince:null,gamesPlayed:0,genCorrect:0,sleepCount:0,dirtySince:null,poopDate:null,poopBits:0,voiceName:null,speechRate:0.8,advGrades:false,petNo:1,foodFrac:0,dblNext:null,dblSeen:null,ddSeen:null,tenSeen:null,lastPlay:Date.now(),mischiefAt:null,mischiefDate:null,mischiefN:0,born:Date.now(),stageSince:Date.now(),lifespanDays:12+Math.floor(Math.random()*3),youngType:null,memories:[],schemaV:2,lastBackupNudge:null,lastTick:Date.now(),keifuRevealed:[],moneyLog:[] };
+    var def={ name:"ぴよ",lv:1,xp:0,hunger:80,happy:80,food:0,dirty:false,streak:1,learned:0,last:today(),grade:"jun2",visGrades:["jun2","g2"],discipline:50,weight:5,careMiss:0,disciplineMiss:0,wagamama:false,babyType:null,childType:null,adultType:null,customImg:{},gameHi:0,dailyGoal:20,todayDate:today(),todayWords:[],lastGoalDate:null,metDates:[],wrongWords:[],petColor:'brown',bg:'meadow',freezeTickets:0,lastTicketDate:null,lastBoxWeek:null,titles:[],sound:true,mastery:{},learn:{},maxStreak:0,sick:false,sickSince:null,starveSince:null,gamesPlayed:0,genCorrect:0,sleepCount:0,dirtySince:null,poopDate:null,poopBits:0,voiceName:null,speechRate:0.8,advGrades:false,petNo:1,foodFrac:0,dblNext:null,dblSeen:null,ddSeen:null,tenSeen:null,lastPlay:Date.now(),mischiefAt:null,mischiefDate:null,mischiefN:0,born:Date.now(),stageSince:Date.now(),lifespanDays:12+Math.floor(Math.random()*3),youngType:null,memories:[],schemaV:2,lastBackupNudge:null,lastTick:Date.now(),keifuRevealed:[],moneyLog:[] };
     s=Object.assign({},def,s||{});
     s.dailyGoal=20; // 1日の目標は20に固定
     // おこづかい機能の初期化（家庭内でえさを買い取ってお金に）
@@ -292,7 +290,10 @@ window._eigoPetInit = function() {
     s=sanitizeImport(s);                                  // 保存データ経由の すりかえも ふせぐ
     if(!WORDBANK[s.grade]) s.grade="jun2";
     if(!WORDBANK[s.grade]) s.grade='jun2';                        // なくなった きゅう（3級など）を えらんでいた ばあい
-    if(ADV_GRADES.indexOf(s.grade)>=0&&!s.advGrades) s.grade='jun2'; // 上級モードOFFなら 子供向けの きゅうに もどす
+    if(!Array.isArray(s.visGrades)||s.visGrades.length!==2) s.visGrades=['jun2','g2'];  // 出す きゅうは 2つ
+    s.visGrades=s.visGrades.filter(function(g){ return WORDBANK[g]; });
+    if(s.visGrades.length!==2) s.visGrades=['jun2','g2'];
+    if(s.visGrades.indexOf(s.grade)<0) s.grade=s.visGrades[0];       // 出さない きゅうを えらんでいたら もどす
     // ライフサイクル改修(schemaV2)への移行：旧アダルト(lv4)→新アダルト(lv5)
     if(!s.schemaV || s.schemaV<2){ if(s.lv>=4) s.lv=5; if(typeof s.born!=='number') s.born=Date.now(); if(typeof s.stageSince!=='number') s.stageSince=Date.now(); if(typeof s.lifespanDays!=='number') s.lifespanDays=12; if(!Array.isArray(s.memories)) s.memories=[]; s.schemaV=2; }
     // 間隔反復(schemaV3)への移行：これまでの おぼえた/にがて を SRSの レベルに 割りあてる
@@ -2608,7 +2609,7 @@ window._eigoPetInit = function() {
   }
 
   function prOpen(){
-    if(!state.advGrades&&ADV_GRADES.indexOf(prGrade)>=0) prGrade='jun2';
+    if(visGrades().indexOf(prGrade)<0) prGrade=visGrades()[0];
     if(!prWords.length) prWords=prPick(prGrade);
     prRender();
   }
@@ -2653,8 +2654,47 @@ window._eigoPetInit = function() {
   document.getElementById('sndset').onclick=function(e){ var b=e.target.closest('.optbtn'); if(!b) return; state.sound=b.dataset.v==='1'; save(); renderGoal(); if(state.sound) sfx('correct'); };
   document.getElementById('boxBtn').onclick=function(){ if(!boxAvailable()) return; state.lastBoxWeek=weekId(today()); state.food+=10; walletEarn(10); state.freezeTickets=Math.min(5,state.freezeTickets+1); addXp(20); bubble('たからばこ：えさ+10・おやすみ券+1！'); sfx('fanfare'); cheer(); save(); render(); };
   // 上級モード：おうちの人コードで 英検3級・1級を がくしゅうの きゅう選択に出す（子供には ふだん見えない）
-  function applyAdv(){ document.body.classList.toggle('advgrades',!!state.advGrades); var as=document.getElementById('advState'); if(as) as.innerHTML=state.advGrades?'<span style="color:var(--g);font-weight:900;">いま ON（準1級・1級が えらべます）</span>':'いま OFF（準2級・2級のみ）'; }
-  (function(){ var bt=document.getElementById('advToggle'); if(!bt) return; bt.onclick=function(){ if(state.advGrades){ state.advGrades=false; if(ADV_GRADES.indexOf(state.grade)>=0) state.grade='jun2'; save(); applyAdv(); render(); bubble('上級モードを もどしました'); return; } var en=prompt('おうちのひとコードを いれてね'); if(en===null) return; if((en||'').replace(/\D/g,'')==='0785770131'){ state.advGrades=true; save(); applyAdv(); render(); bubble('上級モード ON：準1級・1級が えらべます'); } else bubble('コードが ちがいます'); }; applyAdv(); })();
+  /* ===== 出す きゅうを 2つ えらぶ =====
+     ふだんは 準2級・2級の 2つだけ 見せる。おうちの人が 上級モードを あけると、
+     4つの きゅうから すきな 2つに 入れかえられる（3つめを えらぶと いちばん ふるいものが はずれる）。
+     えらび直しても state.learn は きゅうに 関係なく 語ごとに のこるので、
+     もどせば いつでも つづきから できる。 */
+  var ALL_GRADES=['jun2','g2','jun1','g1'];
+  function visGrades(){
+    var v=(state.visGrades||[]).filter(function(g){ return ALL_GRADES.indexOf(g)>=0; });
+    if(v.length!==2) v=['jun2','g2'];
+    return v;
+  }
+  function applyVis(){
+    var v=visGrades();
+    document.querySelectorAll('.gbtn[data-g]').forEach(function(b){
+      b.classList.toggle('ghide',v.indexOf(b.dataset.g)<0); });
+    document.querySelectorAll('#visGrades .visbtn').forEach(function(b){
+      b.classList.toggle('sel',v.indexOf(b.dataset.g)>=0); });
+    if(v.indexOf(state.grade)<0){ state.grade=v[0]; save(); }
+    if(v.indexOf(prGrade)<0){ prGrade=v[0]; prWords=[]; }
+    if(typeof wlGrade!=='undefined'&&v.indexOf(wlGrade)<0) wlGrade=v[0];
+  }
+  function applyAdv(){
+    document.body.classList.toggle('advgrades',!!state.advGrades);
+    var as=document.getElementById('advState');
+    if(as) as.innerHTML=state.advGrades?'<span style="color:var(--g);font-weight:900;">いま ON（出す きゅうを えらべます）</span>':'いま OFF';
+    var vb=document.getElementById('visBox'); if(vb) vb.style.display=state.advGrades?'block':'none';
+    applyVis();
+  }
+  (function(){
+    var g=document.getElementById('visGrades'); if(!g) return;
+    g.onclick=function(e){
+      var b=e.target.closest('.visbtn'); if(!b) return;
+      var k=b.dataset.g, v=visGrades().slice(), i=v.indexOf(k);
+      if(i>=0){ if(v.length<=1) return; v.splice(i,1); }   // 0こには できない
+      else { v.push(k); while(v.length>2) v.shift(); }     // 3つめは いちばん ふるいものを おす
+      if(v.length<2){ v=v.concat(ALL_GRADES.filter(function(x){ return v.indexOf(x)<0; })).slice(0,2); }
+      state.visGrades=v; save(); applyVis(); render();
+      bubble('出す きゅう：'+v.map(function(x){ return WORDBANK[x].label; }).join('・'));
+    };
+  })();
+  (function(){ var bt=document.getElementById('advToggle'); if(!bt) return; bt.onclick=function(){ if(state.advGrades){ state.advGrades=false; save(); applyAdv(); render(); bubble('上級モードを もどしました'); return; } var en=prompt('おうちのひとコードを いれてね'); if(en===null) return; if((en||'').replace(/\D/g,'')==='0785770131'){ state.advGrades=true; save(); applyAdv(); render(); bubble('上級モード ON：出す きゅうを えらべます'); } else bubble('コードが ちがいます'); }; applyAdv(); })();
   function renderTrophies(){ document.getElementById('trophyList').innerHTML=TITLES.map(function(t){ var got=state.titles.indexOf(t.id)>=0; return '<div class="trow2'+(got?' got':'')+'">'+(got?'★':'□')+' '+t.name+'</div>'; }).join(''); }
   document.getElementById('trophyChip').onclick=function(){ renderTrophies(); document.getElementById('trophyModal').style.display='flex'; };
   document.getElementById('trophyClose').onclick=function(){ document.getElementById('trophyModal').style.display='none'; };
