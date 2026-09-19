@@ -107,8 +107,8 @@ if(window.caches){caches.keys().then(function(ks){ks.forEach(function(k){caches.
     .ehlabel{font-size:12px;font-weight:800;color:#92400e;}
     .ehmean{font-size:20px;font-weight:900;color:#15803d;margin-top:4px;line-height:1.4;}
     .gbtn{border:2px solid var(--bdr);background:var(--card);border-radius:8px;padding:13px 0;font-size:14px;font-weight:800;color:var(--mut);cursor:pointer;font-family:inherit;transition:.15s;}
-    .gbtn[data-g="g3"],.gbtn[data-g="g1"]{display:none;}
-    body.advgrades .gbtn[data-g="g3"],body.advgrades .gbtn[data-g="g1"]{display:block;}
+    .gbtn[data-g="g3"],.gbtn[data-g="jun1"],.gbtn[data-g="g1"]{display:none;}
+    body.advgrades .gbtn[data-g="g3"],body.advgrades .gbtn[data-g="jun1"],body.advgrades .gbtn[data-g="g1"]{display:block;}
     .gbtn.sel{background:var(--g);color:#fff;border-color:var(--g);box-shadow:0 2px 8px rgba(41,166,94,.3);}
     .gbtn:active{transform:scale(.96);}
     /* ===== プリント（おうちのひとが 紙でテストする） ===== */
@@ -396,6 +396,7 @@ if(window.caches){caches.keys().then(function(ks){ks.forEach(function(k){caches.
     <button class="gbtn" data-g="g3">英検3級</button>
     <button class="gbtn" data-g="jun2">英検準2級</button>
     <button class="gbtn" data-g="g2">英検2級</button>
+    <button class="gbtn" data-g="jun1">英検準1級</button>
     <button class="gbtn" data-g="g1">英検1級</button>
   </div>
 
@@ -478,6 +479,7 @@ if(window.caches){caches.keys().then(function(ks){ks.forEach(function(k){caches.
       <button class="gbtn" data-g="g3">英検3級</button>
       <button class="gbtn" data-g="jun2">英検準2級</button>
       <button class="gbtn" data-g="g2">英検2級</button>
+      <button class="gbtn" data-g="jun1">英検準1級</button>
       <button class="gbtn" data-g="g1">英検1級</button>
     </div>
     <input id="wlSearch" type="search" placeholder="さがす（えいご・いみ）" style="width:100%;margin:10px 0 8px;padding:11px 14px;border:2px solid var(--bdr);border-radius:8px;font-size:15px;font-family:inherit;background:var(--card);color:var(--ink);outline:none;">
@@ -500,7 +502,7 @@ if(window.caches){caches.keys().then(function(ks){ks.forEach(function(k){caches.
       <div style="font-weight:900;color:var(--ink);margin-bottom:4px;">上級モード（おうちの人）</div>
       <div id="advState" style="margin-bottom:8px;"></div>
       <button id="advToggle" class="optbtn">かいじょ / もどす</button>
-      <div style="font-size:11px;margin-top:6px;">ONにすると がくしゅうの きゅう選択に <strong>英検3級・英検1級</strong> が ふえます（おうちのひとコードが ひつよう）。</div>
+      <div style="font-size:11px;margin-top:6px;">ONにすると がくしゅうの きゅう選択に <strong>英検3級・英検準1級・英検1級</strong> が ふえます（おうちのひとコードが ひつよう）。</div>
     </div>
     <p style="font-size:13px;color:var(--mut);line-height:1.7;margin:4px 0 12px;font-weight:700;">しんちょくは この たんまつに ほぞんされています。ときどき バックアップを とっておくと あんしんです。</p>
     <div id="dataStat" style="font-size:13px;color:var(--ink);font-weight:800;background:var(--gl);border:2px solid var(--bdr);border-radius:8px;padding:12px 14px;margin-bottom:16px;"></div>
@@ -538,6 +540,7 @@ if(window.caches){caches.keys().then(function(ks){ks.forEach(function(k){caches.
       <button class="gbtn" data-g="g3">英検3級</button>
       <button class="gbtn" data-g="jun2">英検準2級</button>
       <button class="gbtn" data-g="g2">英検2級</button>
+      <button class="gbtn" data-g="jun1">英検準1級</button>
       <button class="gbtn" data-g="g1">英検1級</button>
     </div>
     <div class="prrow">
