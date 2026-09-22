@@ -1,5 +1,15 @@
 /* えいごペット — app logic (called from componentDidMount) */
 window._eigoPetInit = function() {
+  /* きゅうの 設定を ととのえる（よみこみ・ふっかつ の どちらでも つかう）
+     ・なくなった きゅう（3級など）は すてる　・出す きゅうは 1つか 2つ
+     ・出していない きゅうを えらんでいたら 出している ほうへ */
+  function fixGrades(s){
+    var v=Array.isArray(s.visGrades)?s.visGrades.filter(function(g,i,a){ return WORDBANK[g]&&a.indexOf(g)===i; }):[];
+    if(v.length>2) v=v.slice(-2);                  // 2つまで（あたらしい ほうを のこす）
+    if(!v.length) v=['jun2','g2'];
+    s.visGrades=v;
+    if(!WORDBANK[s.grade]||v.indexOf(s.grade)<0) s.grade=v[0];
+  }
   if (window._eigoPetInitDone) return;
   window._eigoPetInitDone = true;
 
@@ -289,11 +299,7 @@ window._eigoPetInit = function() {
     }
     s=sanitizeImport(s);                                  // 保存データ経由の すりかえも ふせぐ
     if(!WORDBANK[s.grade]) s.grade="jun2";
-    if(!WORDBANK[s.grade]) s.grade='jun2';                        // なくなった きゅう（3級など）を えらんでいた ばあい
-    if(!Array.isArray(s.visGrades)||s.visGrades.length!==2) s.visGrades=['jun2','g2'];  // 出す きゅうは 2つ
-    s.visGrades=s.visGrades.filter(function(g){ return WORDBANK[g]; });
-    if(s.visGrades.length!==2) s.visGrades=['jun2','g2'];
-    if(s.visGrades.indexOf(s.grade)<0) s.grade=s.visGrades[0];       // 出さない きゅうを えらんでいたら もどす
+    fixGrades(s);
     // ライフサイクル改修(schemaV2)への移行：旧アダルト(lv4)→新アダルト(lv5)
     if(!s.schemaV || s.schemaV<2){ if(s.lv>=4) s.lv=5; if(typeof s.born!=='number') s.born=Date.now(); if(typeof s.stageSince!=='number') s.stageSince=Date.now(); if(typeof s.lifespanDays!=='number') s.lifespanDays=12; if(!Array.isArray(s.memories)) s.memories=[]; s.schemaV=2; }
     // 間隔反復(schemaV3)への移行：これまでの おぼえた/にがて を SRSの レベルに 割りあてる
@@ -1076,9 +1082,9 @@ window._eigoPetInit = function() {
       clean[k]=sanitizeImport(v[k],depth+1); }
     return clean;
   }
-  document.getElementById('btnImport').onclick=function(){ var msg=document.getElementById('dataMsg'); var code=(document.getElementById('importBox').value||'').trim(); if(!code){ msg.style.color='#9b2222'; msg.textContent='コードを はりつけてね'; return; } var obj=null; try{ obj=JSON.parse(decodeURIComponent(escape(atob(code)))); }catch(e){ try{ obj=JSON.parse(code); }catch(e2){} } obj=sanitizeImport(obj); if(!obj||typeof obj!=='object'||(obj.lv===undefined&&obj.learned===undefined)){ msg.style.color='#9b2222'; msg.textContent='この コードは よみこめません'; return; } if(!confirm('いまの データを この バックアップで 上書きします。よろしいですか？')) return; state=Object.assign({},state,obj); if(!WORDBANK[state.grade]) state.grade='jun2'; save(); msg.style.color='var(--g)'; msg.textContent='ふっかつしました！'; renderData(); render(); };
+  document.getElementById('btnImport').onclick=function(){ var msg=document.getElementById('dataMsg'); var code=(document.getElementById('importBox').value||'').trim(); if(!code){ msg.style.color='#9b2222'; msg.textContent='コードを はりつけてね'; return; } var obj=null; try{ obj=JSON.parse(decodeURIComponent(escape(atob(code)))); }catch(e){ try{ obj=JSON.parse(code); }catch(e2){} } obj=sanitizeImport(obj); if(!obj||typeof obj!=='object'||(obj.lv===undefined&&obj.learned===undefined)){ msg.style.color='#9b2222'; msg.textContent='この コードは よみこめません'; return; } if(!confirm('いまの データを この バックアップで 上書きします。よろしいですか？')) return; state=Object.assign({},state,obj); fixGrades(state); save(); applyAdv(); msg.style.color='var(--g)'; msg.textContent='ふっかつしました！'; renderData(); render(); };
   document.getElementById('btnDownload').onclick=function(){ var msg=document.getElementById('dataMsg'); try{ var blob=new Blob([JSON.stringify(state)],{type:'application/json'}); var url=URL.createObjectURL(blob); var a=document.createElement('a'); var d=new Date(), ds=d.getFullYear()+('0'+(d.getMonth()+1)).slice(-2)+('0'+d.getDate()).slice(-2); a.href=url; a.download='eigopet_backup_'+ds+'.json'; document.body.appendChild(a); a.click(); document.body.removeChild(a); setTimeout(function(){ URL.revokeObjectURL(url); },1500); msg.style.color='var(--g)'; msg.textContent='ファイルに ほぞんしました！'; }catch(e){ msg.style.color='#9b2222'; msg.textContent='ほぞん できないときは コードを つかってね'; } };
-  document.getElementById('fileImport').onchange=function(e){ var f=e.target.files&&e.target.files[0]; var msg=document.getElementById('dataMsg'); if(!f) return; var r=new FileReader(); r.onload=function(){ var obj=null; try{ obj=JSON.parse(r.result); }catch(err){} obj=sanitizeImport(obj); if(!obj||typeof obj!=='object'||(obj.lv===undefined&&obj.learned===undefined)){ msg.style.color='#9b2222'; msg.textContent='この ファイルは よみこめません'; return; } if(!confirm('いまの データを この バックアップで 上書きします。よろしいですか？')) return; state=Object.assign({},state,obj); if(!WORDBANK[state.grade]) state.grade='jun2'; save(); msg.style.color='var(--g)'; msg.textContent='ふっかつしました！'; renderData(); render(); }; r.readAsText(f); e.target.value=''; };
+  document.getElementById('fileImport').onchange=function(e){ var f=e.target.files&&e.target.files[0]; var msg=document.getElementById('dataMsg'); if(!f) return; var r=new FileReader(); r.onload=function(){ var obj=null; try{ obj=JSON.parse(r.result); }catch(err){} obj=sanitizeImport(obj); if(!obj||typeof obj!=='object'||(obj.lv===undefined&&obj.learned===undefined)){ msg.style.color='#9b2222'; msg.textContent='この ファイルは よみこめません'; return; } if(!confirm('いまの データを この バックアップで 上書きします。よろしいですか？')) return; state=Object.assign({},state,obj); fixGrades(state); save(); applyAdv(); msg.style.color='var(--g)'; msg.textContent='ふっかつしました！'; renderData(); render(); }; r.readAsText(f); e.target.value=''; };
   (function(){
     var stamp=function(){ var d=new Date(); return d.getFullYear()+('0'+(d.getMonth()+1)).slice(-2)+('0'+d.getDate()).slice(-2); };
     var msg=function(t,bad){ var m=document.getElementById('logMsg'); if(!m) return; m.style.color=bad?'#9b2222':'var(--g)'; m.textContent=t; };
@@ -2569,7 +2575,7 @@ window._eigoPetInit = function() {
     var log=state.prLog||[];
     if(!log.length){ box.innerHTML='<div class="prhempty">まだ いんさつした きろくは ありません。</div>'; return; }
     box.innerHTML=log.map(function(e,i){
-      var lab=(WORDBANK[e.g]&&WORDBANK[e.g].label)||e.g;
+      var lab=(WORDBANK[e.g]&&WORDBANK[e.g].label)||({g3:'英検3級'})[e.g]||e.g;   // 3級は もう ないが りれきは のこす
       var ws=(e.ws||[]).map(function(en){
         return '<span class="prhw" data-en="'+escJa(en)+'">'+escJa(en)+'</span>';
       }).join('');
@@ -2656,13 +2662,13 @@ window._eigoPetInit = function() {
   // 上級モード：おうちの人コードで 英検3級・1級を がくしゅうの きゅう選択に出す（子供には ふだん見えない）
   /* ===== 出す きゅうを 2つ えらぶ =====
      ふだんは 準2級・2級の 2つだけ 見せる。おうちの人が 上級モードを あけると、
-     4つの きゅうから すきな 2つに 入れかえられる（3つめを えらぶと いちばん ふるいものが はずれる）。
+     4つの きゅうから 1つか 2つ えらべる（3つめを えらぶと いちばん ふるいものが はずれる）。
      えらび直しても state.learn は きゅうに 関係なく 語ごとに のこるので、
      もどせば いつでも つづきから できる。 */
   var ALL_GRADES=['jun2','g2','jun1','g1'];
   function visGrades(){
     var v=(state.visGrades||[]).filter(function(g){ return ALL_GRADES.indexOf(g)>=0; });
-    if(v.length!==2) v=['jun2','g2'];
+    if(!v.length||v.length>2) v=['jun2','g2'];
     return v;
   }
   function applyVis(){
@@ -2687,9 +2693,8 @@ window._eigoPetInit = function() {
     g.onclick=function(e){
       var b=e.target.closest('.visbtn'); if(!b) return;
       var k=b.dataset.g, v=visGrades().slice(), i=v.indexOf(k);
-      if(i>=0){ if(v.length<=1) return; v.splice(i,1); }   // 0こには できない
+      if(i>=0){ if(v.length<=1) return; v.splice(i,1); }   // はずす（さいごの 1つは はずせない）
       else { v.push(k); while(v.length>2) v.shift(); }     // 3つめは いちばん ふるいものを おす
-      if(v.length<2){ v=v.concat(ALL_GRADES.filter(function(x){ return v.indexOf(x)<0; })).slice(0,2); }
       state.visGrades=v; save(); applyVis(); render();
       bubble('出す きゅう：'+v.map(function(x){ return WORDBANK[x].label; }).join('・'));
     };
