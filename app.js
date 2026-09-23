@@ -832,7 +832,7 @@ window._eigoPetInit = function() {
       sm.style.display=sulk?'block':'none';
       var why=document.getElementById('sulkwhy'); if(why){ why.textContent=''; why.style.display='none'; } }
     document.getElementById('medCnt').textContent=state.sick?('えさ'+MED_COST+'で なおす'):('げんき／えさ'+MED_COST);
-    document.querySelectorAll('.gbtn').forEach(function(b){ b.classList.toggle('sel',b.dataset.g===state.grade); });
+    document.querySelectorAll('#grades .gbtn').forEach(function(b){ b.classList.toggle('sel',b.dataset.g===state.grade); });   // がくしゅうの ボタンだけ（プリント・たんごリストは それぞれ じぶんで つける）
     drawPet();
     renderGoal();
   }
@@ -2517,7 +2517,7 @@ window._eigoPetInit = function() {
      ひだり＝英単語／まんなか＝品詞／みぎ＝いみ。
      「こたえを かくす」で みぎを 白くして 問題用紙に できる。
      いちど 出した語は state.prDone に のこして 二度と 出さない。 */
-  var PR_N=20, PR_LOG_MAX=60, prGrade='jun2', prWords=[], prHide=false, prMsg='', prHistOn=false;
+  var PR_N=20, PR_LOG_MAX=60, prGrade='jun2', prWords=[], prHide=false, prMsg='', prHistOn=false, prCarry={};  // prCarry：1しゅうめの のこり（2しゅうめの きろくには 入れない）
 
   /* 品詞：もとデータの pos は noun が ごみ箱に なっていて（動詞283語 対 名詞5854語）、
      demonstrate が「名詞」など まちがいが 多い。
@@ -2541,20 +2541,26 @@ window._eigoPetInit = function() {
     var pool=src.filter(function(w){ return w&&w[0]&&w[1]; });
     var done=prDoneSet(g), dset={}; done.forEach(function(k){ dset[k]=1; });
     var rest=pool.filter(function(w){ return !dset[w[0]]; });
-    prMsg='';
-    if(rest.length<PR_N){                                  // ぜんぶ 出しきったので さいしょから
-      state.prDone[g]=[]; save(); rest=pool;
-      prMsg='この きゅうの たんごを ぜんぶ 出しました。もういちど さいしょから えらびます。';
+    var shuf=function(x){ var a=x.slice();                 // フィッシャー・イェーツ
+      for(var i=a.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)),t=a[i]; a[i]=a[j]; a[j]=t; }
+      return a; };
+    prMsg=''; prCarry={};
+    if(rest.length<PR_N){                                  // のこりが 20こ より すくない
+      // まだ 出していない のこりを さきに ぜんぶ 入れて、たりない ぶんだけ 2しゅうめから たす
+      var left={}; rest.forEach(function(w){ left[w[0]]=1; });
+      prCarry=left;
+      var fill=shuf(pool.filter(function(w){ return !left[w[0]]; })).slice(0,PR_N-rest.length);
+      state.prDone[g]=[]; save();                          // 2しゅうめの はじまり
+      prMsg='この きゅうの たんごを ひととおり 出しおわります。のこり '+rest.length+'こ と、2しゅうめの たんごを まぜています。';
+      return shuf(rest).concat(fill);
     }
-    var a=rest.slice();                                    // フィッシャー・イェーツ
-    for(var i=a.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)),t=a[i]; a[i]=a[j]; a[j]=t; }
-    return a.slice(0,Math.min(PR_N,a.length));
+    return shuf(rest).slice(0,PR_N);
   }
 
   function prMark(){                                       // いんさつした語を きろくする
     if(!prWords.length) return;
     var done=prDoneSet(prGrade);
-    prWords.forEach(function(w){ if(done.indexOf(w[0])<0) done.push(w[0]); });
+    prWords.forEach(function(w){ if(!prCarry[w[0]]&&done.indexOf(w[0])<0) done.push(w[0]); });
     if(!state.prLog) state.prLog=[];                       // 何を いつ 印刷したかの りれき
     state.prLog.unshift({ t:Date.now(), g:prGrade, ws:prWords.map(function(w){ return w[0]; }) });
     if(state.prLog.length>PR_LOG_MAX) state.prLog.length=PR_LOG_MAX;
@@ -2659,7 +2665,7 @@ window._eigoPetInit = function() {
   document.body.addEventListener('touchend',function(e){ if(!swOn) return; swOn=false; var t=e.changedTouches[0],dx=t.clientX-swX,dy=t.clientY-swY; if(Math.abs(dx)>60&&Math.abs(dx)>Math.abs(dy)*1.5){ swipeTab(dx<0?1:-1); } },{passive:true});
   document.getElementById('sndset').onclick=function(e){ var b=e.target.closest('.optbtn'); if(!b) return; state.sound=b.dataset.v==='1'; save(); renderGoal(); if(state.sound) sfx('correct'); };
   document.getElementById('boxBtn').onclick=function(){ if(!boxAvailable()) return; state.lastBoxWeek=weekId(today()); state.food+=10; walletEarn(10); state.freezeTickets=Math.min(5,state.freezeTickets+1); addXp(20); bubble('たからばこ：えさ+10・おやすみ券+1！'); sfx('fanfare'); cheer(); save(); render(); };
-  // 上級モード：おうちの人コードで 英検3級・1級を がくしゅうの きゅう選択に出す（子供には ふだん見えない）
+  // 上級モード：おうちの人コードで 出す きゅうを えらべるように する（子供には ふだん見えない）
   /* ===== 出す きゅうを 2つ えらぶ =====
      ふだんは 準2級・2級の 2つだけ 見せる。おうちの人が 上級モードを あけると、
      4つの きゅうから 1つか 2つ えらべる（3つめを えらぶと いちばん ふるいものが はずれる）。
