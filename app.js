@@ -589,8 +589,14 @@ window._eigoPetInit = function() {
     state.learn[k]=r;
   }
   function isReviewWord(k){ var r=state.learn[k]; return !!(r&&!r.m); }
-  function masteredCount(){ var n=0; for(var k in state.learn){ if(state.learn[k].m) n++; } return n; }
-  function reviewCount(){ var n=0; for(var k in state.learn){ var r=state.learn[k]; if(!r.m) n++; } return n; }
+  // いま アプリに ある 単語だけを 数える（けした 3級だけの 語などは 数えない。きろく じたいは のこす）
+  var bankKeys=null;
+  function inBank(k){
+    if(!bankKeys){ bankKeys={}; for(var g in WORDBANK) WORDBANK[g].words.forEach(function(w){ bankKeys[w[0].toLowerCase()]=1; }); }
+    return !!bankKeys[k];
+  }
+  function masteredCount(){ var n=0; for(var k in state.learn){ if(state.learn[k].m&&inBank(k)) n++; } return n; }
+  function reviewCount(){ var n=0; for(var k in state.learn){ var r=state.learn[k]; if(!r.m&&inBank(k)) n++; } return n; }
   function dueCount(){ var n=0, ws=currentWords();     // きょう 復習の じゅんばんが きた語
     for(var i=0;i<ws.length;i++){ var r=state.learn[ws[i][0].toLowerCase()]; if(r&&srsDue(r)) n++; }
     return n; }
