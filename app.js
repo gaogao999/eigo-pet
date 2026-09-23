@@ -315,7 +315,32 @@ window._eigoPetInit = function() {
     }
     return s;
   })();
-  function save(){ try{ var js=JSON.stringify(state); localStorage.setItem(KEY,js); localStorage.setItem(BAKKEY,js); }catch(e){} }
+  /* ===== ほかの タブ・ホーム画面アプリとの あいだで ずれない ように =====
+     アプリが 2か所で ひらいていると（Safari の べつタブ、ホーム画面アイコン など）、
+     ふるい ほうが じぶんの ふるい データで 上書きして、上級モードや 学習きろくが
+     もどって しまう。そこで 保存のたびに 時刻を TSKEY に のこし、
+     ・じぶんが 知らない あたらしい 保存が あれば、上書きせずに そちらを 読みこむ
+     ・ほかの タブが 保存したら（storage）／この画面に もどったら（visibilitychange）読みなおす */
+  var TSKEY=KEY+'_ts';
+  var lastSavedAt=(function(){ try{ return +localStorage.getItem(TSKEY)||0; }catch(e){ return 0; } })();
+  function storedAt(){ try{ return +localStorage.getItem(TSKEY)||0; }catch(e){ return 0; } }
+  function adoptStored(){
+    var o=null; try{ o=JSON.parse(localStorage.getItem(KEY)||'null'); }catch(e){}
+    if(!o||typeof o!=='object') return false;
+    state=sanitizeImport(o); fixGrades(state); lastSavedAt=storedAt();
+    try{ applyAdv(); render(); }catch(e){}
+    return true;
+  }
+  function save(){ try{
+    if(storedAt()>lastSavedAt&&adoptStored()) return;   // ほかで あたらしく 保存されていた → 上書きしない
+    lastSavedAt=Date.now();
+    var js=JSON.stringify(state); localStorage.setItem(KEY,js); localStorage.setItem(BAKKEY,js); localStorage.setItem(TSKEY,String(lastSavedAt));
+  }catch(e){} }
+  try{
+    window.addEventListener('storage',function(e){ if(e.key===TSKEY&&storedAt()>lastSavedAt) adoptStored(); });
+    document.addEventListener('visibilitychange',function(){ if(!document.hidden&&storedAt()>lastSavedAt) adoptStored(); });
+    window.addEventListener('pageshow',function(){ if(storedAt()>lastSavedAt) adoptStored(); });
+  }catch(e){}
 
   /* ===== がくしゅうログ（この たんまつの中だけ・外には おくりません） =====
      1問こたえるごとに 1行ずつ 記録し、あとから CSV/JSON で とりだして
