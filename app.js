@@ -1642,11 +1642,8 @@ window._eigoPetInit = function() {
       (mode==='surv'?'サバイバル：ウェーブを たえぬけ！ ':'アーケード：モーデン将軍を たおせ！ ')+
       'A＝うつ（ちかくは じどうナイフ）、B＝ジャンプ、X＝ばくだん、▲うえうち／▼ふせる（▼＋Bで 足場を おりる）','ジャンプ');
     if(game) cancelAnimationFrame(game.raf);
-    // こまかく かくために キャンバスを 画面の 実ピクセルに あわせる（ゲームの 座標は 340x200 の まま）
-    var cssW=s.cv.clientWidth||340, K=Math.max(2,Math.min(4,cssW*(window.devicePixelRatio||1)/340));
-    s.cv.width=Math.round(340*K); s.cv.height=Math.round(200*K);
-    var vw=340/MA_Z, vh=200/MA_Z;
-    game={ mode:'ma', sub:mode, ctx:s.ctx, W:vw, H:vh, K:K, Z:MA_Z, camY:MA_GROUND-vh*0.83, levelW:MA_LEVEL_W, img:s.img, map:s.map, cell:s.cell,
+    var vh=200/MA_Z;
+    game={ mode:'ma', sub:mode, ctx:s.ctx, cv:s.cv, W:340/MA_Z, H:vh, K:2, SW:340, Z:MA_Z, camY:MA_GROUND-vh*0.83, levelW:MA_LEVEL_W, img:s.img, map:s.map, cell:s.cell,
       t:0, score:0, over:false, raf:0, cam:0, lockL:0, lockR:MA_LEVEL_W,
       enemies:[], pb:[], eb:[], nades:[], enades:[], booms:[], parts:[], pops:[], marks:[], beams:[], ghosts:[],
       props:[], slugs:[], pows:[], picks:[], plats:[], boss:null, spawnIdx:0,
@@ -1656,7 +1653,7 @@ window._eigoPetInit = function() {
           weapon:'pistol',ammo:Infinity,grenades:10,fireT:0,inv:mT(2),dead:false,deadT:0,
           dropT:0,knifeT:0,jumpBufT:0,coyoteT:0,recoil:0,inSlug:null,mountCd:0,
           left:false,right:false,up:false,down:false,jump:false,fire:false,firePressed:false,wantNade:false } };
-    var g=game;
+    var g=game; maFit(g);
     for(var i=0;i<MA_PLATS.length;i++) g.plats.push({x:mL(MA_PLATS[i][0]),y:mL(MA_PLATS[i][1]),w:mL(MA_PLATS[i][2])});
     if(mode==='surv'){
       g.cam=MA_ARENA_X; g.lockL=MA_ARENA_X; g.lockR=MA_ARENA_X+g.W;
@@ -1664,14 +1661,39 @@ window._eigoPetInit = function() {
       g.plats=[{x:MA_ARENA_X+mL(120),y:mL(392),w:mL(130)},{x:MA_ARENA_X+g.W-mL(250),y:mL(384),w:mL(140)}];
       maProp(g,MA_ARENA_X+mL(170),'barrel'); maProp(g,MA_ARENA_X+g.W-mL(170),'barrel');
     } else {
-      g.p.x=mL(120);
+      g.p.x=Math.max(mL(120),g.W*(g.camR||0.38));             // よこむきでは じゅうじキーに かくれない ところから
       for(var j=0;j<MA_SLUGS.length;j++) maSlug(g,mL(MA_SLUGS[j]));
       for(var k=0;k<MA_PROPS.length;k++) maProp(g,mL(MA_PROPS[k][0]),MA_PROPS[k][1]);
     }
     loopMetal();
   }
 
-  window.MA_DBG={W:MA_WPN,HP:MA_HP,PTS:MA_PTS,trig:MA_BOSS_TRIG,destroy:maDestroyProp};   // テスト用
+  /* キャンバスの 大きさを いまの 画面に あわせる。
+     たては いつも 200（論理px）。よこむき だと よこが ひろがって、みえる はんいが ふえる。
+     こまかく かくために 画面の 実ピクセルで かく。 */
+  function maFit(g){
+    var cv=g.cv, cw=cv.clientWidth||340, ch=cv.clientHeight||200;
+    var land=document.body.classList.contains('ma-land');
+    var SW=land?Math.max(300,Math.min(520,200*cw/ch)):340;
+    var K=Math.max(2,Math.min(4,cw*(window.devicePixelRatio||1)/SW));
+    if(cv.width!==Math.round(SW*K)) cv.width=Math.round(SW*K);
+    if(cv.height!==Math.round(200*K)) cv.height=Math.round(200*K);
+    g.SW=SW; g.K=K; g.W=SW/MA_Z; g.land=land;
+    g.camY=MA_GROUND-g.H*(land?0.70:0.83);                  // よこむきは 地面を 上げて、下の ボタンと かさならない ように
+    g.camR=land?0.42:0.38;                                   // プレイヤーの よこ位置（よこむきは じゅうじキーより みぎ）
+    if(g.p&&g.cam<=0.5&&g.p.x<g.W*g.camR) g.p.x=g.W*g.camR;
+    if(g.sub!=='surv'&&g.lockR-g.lockL<g.W) g.lockL=Math.max(0,g.lockR-g.W);
+  }
+  function maLandCheck(){                                  // よこむき なら ぜんがめん レイアウトに
+    var onGame=document.getElementById('game').classList.contains('on');
+    var land=onGame&&window.innerWidth>window.innerHeight&&window.innerHeight<=620;
+    document.body.classList.toggle('ma-land',land);
+    var hint=document.getElementById('gRotate'); if(hint) hint.style.display=(onGame&&!land&&window.innerWidth<700)?'block':'none';
+    if(game&&game.mode==='ma'&&!game.over) requestAnimationFrame(function(){ maFit(game); });
+  }
+  window.addEventListener('resize',function(){ clearTimeout(maLandCheck.t); maLandCheck.t=setTimeout(maLandCheck,80); });
+  window.addEventListener('orientationchange',function(){ setTimeout(maLandCheck,250); });
+  window.MA_DBG={W:MA_WPN,HP:MA_HP,PTS:MA_PTS,trig:MA_BOSS_TRIG,destroy:maDestroyProp,fit:function(){ maLandCheck(); }};   // テスト用
   function maSet(k,v){ var g=game; if(!g||g.over||g.mode!=='ma') return; var p=g.p;
     if(k==='L'){ p.left=v; if(v) p.face=-1; }
     else if(k==='R'){ p.right=v; if(v) p.face=1; }
@@ -1811,7 +1833,7 @@ window._eigoPetInit = function() {
     for(var pp=g.pops.length-1;pp>=0;pp--){ g.pops[pp].t++; if(g.pops[pp].t>45) g.pops.splice(pp,1); }
     if(g.banner>0) g.banner--;
     // カメラ
-    var want=Math.max(g.lockL,Math.min(g.lockR-g.W,p.x-g.W*0.38));
+    var want=Math.max(g.lockL,Math.min(g.lockR-g.W,p.x-g.W*(g.camR||0.38)));
     g.cam+=(want-g.cam)*(g.sub==='surv'?1:0.12);
     if(g.sub==='surv') g.cam=MA_ARENA_X;
     drawMetal(g);
@@ -1824,7 +1846,7 @@ window._eigoPetInit = function() {
     var cam=g.cam, camY=g.camY;
     function vis(x,m){ return x>cam-(m||30)&&x<cam+g.W+(m||30); }
     ctx.setTransform(K,0,0,K,0,0); ctx.imageSmoothingEnabled=true;
-    A.sky(ctx,g,340,200);
+    A.sky(ctx,g,g.SW,200);
     // ---- ワールド（ズーム） ----
     ctx.setTransform(K*Z,0,0,K*Z,(-cam+sx)*K*Z,(-camY+sy)*K*Z);
     A.parallax(ctx,g,GY,g.W);
@@ -2098,7 +2120,7 @@ window._eigoPetInit = function() {
     };
   })();
 
-  function show(id){ document.querySelectorAll('.screen').forEach(function(s){ s.classList.remove('on'); }); document.getElementById(id).classList.add('on'); var tb=document.getElementById('tabbar'); if(MAIN_TABS.indexOf(id)>=0){ tb.classList.add('on'); document.querySelectorAll('#tabbar .tab').forEach(function(b){ b.classList.toggle('sel',b.dataset.s===id); }); } else { tb.classList.remove('on'); } window.scrollTo(0,0); }
+  function show(id){ document.querySelectorAll('.screen').forEach(function(s){ s.classList.remove('on'); }); document.getElementById(id).classList.add('on'); if(typeof maLandCheck==='function') maLandCheck(); var tb=document.getElementById('tabbar'); if(MAIN_TABS.indexOf(id)>=0){ tb.classList.add('on'); document.querySelectorAll('#tabbar .tab').forEach(function(b){ b.classList.toggle('sel',b.dataset.s===id); }); } else { tb.classList.remove('on'); } window.scrollTo(0,0); }
   function gotoTab(s){ if(s==='printsheet'){ prOpen(); } if(s==='admin'){ renderAdmin(); wlGrade=state.grade; setAdminTab('zukan'); } if(s==='okane'){ renderMoney(); } if(s==='learn'){ announceBonuses(); } show(s); render(); } // 単語一覧(最大2258行)は たんごタブを開いたときだけ描画
   document.getElementById('tabbar').onclick=function(e){ var b=e.target.closest('.tab'); if(!b) return; gotoTab(b.dataset.s); };
   var ADMIN_TABS=['zukan','kisekae','keifu','tango','data'];

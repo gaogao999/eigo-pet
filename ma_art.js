@@ -458,11 +458,11 @@ A.sky=function(ctx,g,W,H){ // スクリーン座標
   ctx.fillStyle=gr; ctx.fillRect(0,0,W,H);
   // たいよう
   var sy=38+Math.min(40,ux/200);
-  ctx.save(); ctx.globalAlpha=0.9; ctx.fillStyle='rgba(255,236,170,.35)'; ctx.beginPath(); ctx.arc(250,sy,22,0,7); ctx.fill();
-  ctx.fillStyle='#fff3c4'; ctx.beginPath(); ctx.arc(250,sy,11,0,7); ctx.fill(); ctx.restore();
+  ctx.save(); ctx.globalAlpha=0.9; ctx.fillStyle='rgba(255,236,170,.35)'; ctx.beginPath(); ctx.arc(W*0.74,sy,22,0,7); ctx.fill();
+  ctx.fillStyle='#fff3c4'; ctx.beginPath(); ctx.arc(W*0.74,sy,11,0,7); ctx.fill(); ctx.restore();
   // くも
   ctx.fillStyle='rgba(255,255,255,.55)';
-  for(var i=0;i<5;i++){ var cx=((i*97-g.cam*0.05-g.t*0.03)%460+460)%460-60, cy=18+hash(i)*40;
+  for(var i=0;i<5;i++){ var cx=((i*97-g.cam*0.05-g.t*0.03)%(W+120)+(W+120))%(W+120)-60, cy=18+hash(i)*40;
     ctx.beginPath(); ctx.arc(cx,cy,8,0,7); ctx.arc(cx+9,cy-3,10,0,7); ctx.arc(cx+20,cy,7,0,7); ctx.fill(); }
 };
 A.parallax=function(ctx,g,gy,W){ // ワールド座標（ズーム済み）で。cam からの ずれで 奥行き
@@ -515,12 +515,12 @@ A.mark=function(ctx,M,gy){ var bl=Math.floor(M.t/5)%2===0, r=6+Math.sin(M.t*0.25
   ctx.beginPath(); ctx.moveTo(M.x-r,gy-1); ctx.lineTo(M.x+r,gy-1); ctx.moveTo(M.x,gy-1-r*0.4); ctx.lineTo(M.x,gy-1+r*0.4); ctx.stroke();
   ctx.fillStyle='#ff4040'; ctx.font='bold 7px sans-serif'; ctx.textAlign='center'; ctx.fillText('!',M.x,gy-10-Math.abs(Math.sin(M.t*0.2))*3); ctx.textAlign='left'; ctx.restore(); };
 
-/* ================= HUD（スクリーン座標 340x200） ================= */
+/* ================= HUD（スクリーン座標 よこ SW × たて 200） ================= */
 function otext(ctx,s,x,y,fill,size,align,ow){ ctx.font='900 '+size+'px "M PLUS Rounded 1c","Hiragino Maru Gothic ProN",sans-serif'; ctx.textAlign=align||'left';
   ctx.lineWidth=ow||2.6; ctx.strokeStyle='rgba(20,16,12,.9)'; ctx.lineJoin='round'; ctx.strokeText(s,x,y); ctx.fillStyle=fill; ctx.fillText(s,x,y); ctx.textAlign='left'; }
 A.otext=otext;
 A.hud=function(ctx,g,WPN){
-  var p=g.p;
+  var p=g.p, R=(g.SW||340)-10, SW=g.SW||340;
   // のこり
   for(var i=0;i<3;i++){ var on=i<Math.max(0,g.lives); ctx.save(); ctx.translate(10+i*12,9);
     ctx.fillStyle=on?'#ff4d5e':'rgba(0,0,0,.3)'; ctx.strokeStyle='#1d1712'; ctx.lineWidth=1.1;
@@ -540,19 +540,19 @@ A.hud=function(ctx,g,WPN){
   ctx.fillStyle='#5d7a3a'; ctx.beginPath(); ctx.arc(15,50,3.4,0,7); ctx.fill(); ctx.strokeStyle='#1d1712'; ctx.lineWidth=0.8; ctx.stroke();
   otext(ctx,'×'+p.grenades,21,53.5,'#fff',7.5);
   // スコア
-  otext(ctx,String(g.score),330,17,'#ffe38a',13,'right',3);
-  otext(ctx,'SCORE',330,26,'#fff',6,'right',2);
+  otext(ctx,String(g.score),R,17,'#ffe38a',13,'right',3);
+  otext(ctx,'SCORE',R,26,'#fff',6,'right',2);
   // すすみぐあい
-  if(g.sub!=='surv'){ var pr=Math.max(0,Math.min(1,p.x/g.levelW)); ctx.fillStyle='rgba(0,0,0,.45)'; ctx.fillRect(250,31,80,3.4);
-    ctx.fillStyle='#9ee7ff'; ctx.fillRect(250,31,80*pr,3.4); ctx.fillStyle='#ff5c5c'; ctx.fillRect(327,29.5,3,6.4); }
-  else otext(ctx,'WAVE '+g.wave,330,38,'#9ee7ff',8,'right');
+  if(g.sub!=='surv'){ var pr=Math.max(0,Math.min(1,p.x/g.levelW)); ctx.fillStyle='rgba(0,0,0,.45)'; ctx.fillRect(R-80,31,80,3.4);
+    ctx.fillStyle='#9ee7ff'; ctx.fillRect(R-80,31,80*pr,3.4); ctx.fillStyle='#ff5c5c'; ctx.fillRect(R-3,29.5,3,6.4); }
+  else otext(ctx,'WAVE '+g.wave,R,38,'#9ee7ff',8,'right');
   if(g.combo.n>=2){ var sc=1+Math.max(0,(g.combo.t-mT2(1.9))/mT2(0.3))*0.4;
-    ctx.save(); ctx.translate(330,50); ctx.scale(sc,sc);
+    ctx.save(); ctx.translate(R,50); ctx.scale(sc,sc);
     otext(ctx,'CHAIN ×'+g.combo.n,0,0,'#7fe3ff',10,'right',3); ctx.restore(); }
   if(g.banner>0){ var a=Math.min(1,g.banner/10);
-    ctx.save(); ctx.globalAlpha=a; ctx.fillStyle='rgba(0,0,0,.6)'; ctx.fillRect(0,86,340,28);
-    ctx.fillStyle='#f2c230'; for(var s=0;s<340;s+=14){ ctx.fillRect(s,86,7,2); ctx.fillRect(s+7,112,7,2); }
-    otext(ctx,g.bannerTxt,170,105,'#ffe38a',13,'center',3.4); ctx.restore(); }
+    ctx.save(); ctx.globalAlpha=a; ctx.fillStyle='rgba(0,0,0,.6)'; ctx.fillRect(0,86,SW,28);
+    ctx.fillStyle='#f2c230'; for(var s=0;s<SW;s+=14){ ctx.fillRect(s,86,7,2); ctx.fillRect(s+7,112,7,2); }
+    otext(ctx,g.bannerTxt,SW/2,105,'#ffe38a',13,'center',3.4); ctx.restore(); }
 };
 function mT2(s){ return s*60; }
 
