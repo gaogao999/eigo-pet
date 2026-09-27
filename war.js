@@ -1,7 +1,7 @@
 /* えいごウォー — はしの うえで ぐんだんを ふやして てきの ぐんだんと たたかう 3D ゲーム（Three.js）
    ・よこに ドラッグで いどう。みかたは じどうで うつ
    ・かずの ゲート（+10 ×2 −8）を くぐると ぐんだんの かずが かわる。うつと ゲートの かずが ふえる
-   ・えいごゲート：うえの えいごの いみの ほうを くぐると ×2、まちがえると へる
+   ・えいごゲート：うえの えいごの いみの ほうを くぐると なかまが すこし ふえる（+20%・5〜15人）、まちがえると へる
    ・さいごに ボス。たおすと ステージクリア
    app.js から EigoWar.start({...}) で よぶ。THREE は さきに 読みこんでおく。 */
 (function(){
@@ -144,7 +144,7 @@ function start(opt){
       else if(r<0.5||i===0){ var a=pickGood(i), b=Math.random()<0.55?pickBad(i):pickGood(i);
         if(Math.random()<0.5){ var tmp=a; a=b; b=tmp; }
         S.gates.push({wz:z,kind:'num',L:a,R:b,done:false}); }
-      else { var cnt=Math.round((12+stage*7+i*5)*rnd(0.8,1.25)), w=Math.random()<0.35?HW*2-0.6:rnd(3.4,6);
+      else { var cnt=Math.round((10+stage*7+i*5)*rnd(0.8,1.2)), w=Math.random()<0.35?HW*2-0.6:rnd(3.4,6);
         var cx=w>HW*2-1?0:rnd(-HW+w/2,HW-w/2); S.groups.push(makeGroup(z,cx,w,cnt)); }
       z+=rnd(34,44);
     }
@@ -152,8 +152,9 @@ function start(opt){
     S.boss={wz:S.len,hp:Math.round(80+stage*55),max:0,alive:true,x:0};
     S.boss.max=S.boss.hp;
   })();
-  function pickGood(i){ var r=Math.random(); if(r<0.22) return {op:'×',v:2}; if(r<0.28&&i>3) return {op:'×',v:3}; return {op:'+',v:Math.round(rnd(4,10)+i*1.5)}; }
-  function pickBad(i){ var r=Math.random(); if(r<0.2) return {op:'÷',v:2}; return {op:'−',v:Math.round(rnd(5,10)+i*1.5)}; }
+  // かずの ゲート：ふえすぎない ように ひかえめ（×2 は たまに、×3 は ステージ3から）
+  function pickGood(i){ var r=Math.random(); if(r<0.12) return {op:'×',v:2}; if(r<0.15&&stage>=3) return {op:'×',v:3}; return {op:'+',v:Math.round(rnd(3,7)+i*0.8)}; }
+  function pickBad(i){ var r=Math.random(); if(r<0.15) return {op:'÷',v:2}; return {op:'−',v:Math.round(rnd(4,8)+i*1.0)}; }
   function makeGroup(wz,x,w,cnt){
     var offs=[], cols=Math.max(3,Math.round(w/0.62)), rows=Math.ceil(cnt/cols);
     for(var i=0;i<cnt;i++){ var c=i%cols, r=Math.floor(i/cols);
@@ -162,7 +163,8 @@ function start(opt){
     return {wz:wz,x:x,w:w,total:cnt,count:cnt,offs:offs,depth:rows*0.62,melee:false,passed:false,lab:null};
   }
   // ゲートの メッシュ
-  S.gates.forEach(function(g){ g.mesh=new THREE.Group(); scene.add(g.mesh); g.hitL=0; g.hitR=0; });
+  S.gates.forEach(function(g){ g.mesh=new THREE.Group(); scene.add(g.mesh); g.hitL=0; g.hitR=0; g.upL=0; g.upR=0; });
+  var GATE_HITS=10, GATE_UP_MAX=8;                                 // 10ぱつで +1、1つの ゲートは +8 まで
   function gateText(o){ return o.op+o.v; }
   function isGood(o){ return o.op==='+'||o.op==='×'; }
   function buildGateMesh(g){
@@ -214,12 +216,14 @@ function start(opt){
     say((txt?txt+'<br>':'')+'<span style="font-size:24px;">'+(dlt>=0?'+':'')+dlt+'</span>',good?'#bfdbfe':'#fecaca',900); snd(good?'coin':'wrong');
     if(S.n<=0) finish(false); }
 
+  // えいごゲートの ごほうび：すこし ふえる（+20%、5〜15人）
+  function engBonus(){ return Math.max(5,Math.min(15,Math.round(S.n*0.2))); }
   // えいごゲートの 問題を よういする（ちかづいた ときに）
   function prepEng(g){ if(g.q!==undefined) return; var q=opt.getQuestion&&opt.getQuestion();
     if(!q){ g.q=null; g.kind='num'; g.L={op:'+',v:5}; g.R={op:'−',v:5}; buildGateMesh(g); return; }
     q.order=Math.random()<0.5?[0,1]:[1,0]; g.q=q; g.shownAt=Date.now(); buildGateMesh(g);
     var lab=function(side,t){ return '<div style="flex:1;min-width:0;background:#dbeafe;border:2px solid #93c5fd;border-radius:9px;padding:4px 6px;font-size:14px;line-height:1.25;word-break:break-all;"><div style="font-size:9px;opacity:.6;">'+side+'</div>'+escH(t)+'</div>'; };
-    qBanner.innerHTML='<div style="font-size:11px;opacity:.7;white-space:nowrap;">えいごゲート　せいかいで <span style="color:#2563eb">×2</span></div><div style="font-size:28px;line-height:1.2;font-family:Arial,Helvetica,sans-serif;">'+escH(q.en)+'</div>'+
+    qBanner.innerHTML='<div style="font-size:11px;opacity:.7;white-space:nowrap;">えいごゲート　せいかいで <span style="color:#2563eb">なかま ＋'+engBonus()+'</span></div><div style="font-size:28px;line-height:1.2;font-family:Arial,Helvetica,sans-serif;">'+escH(q.en)+'</div>'+
       '<div style="display:flex;gap:6px;margin-top:6px;">'+lab('ひだり',q.choices[q.order[0]])+lab('みぎ',q.choices[q.order[1]])+'</div>';
     qBanner.style.display='block'; try{ opt.speak&&opt.speak(q.en); }catch(e){} }
 
@@ -244,10 +248,10 @@ function start(opt){
     var r0=squadR(); var lim=HW-Math.min(r0,HW-0.6);
     S.x+=(Math.max(-lim,Math.min(lim,S.tx))-S.x)*Math.min(1,dt*9);
     // うつ
-    if(run){ S.fireAcc+=Math.min(S.n,45)*2.2*dt;
+    if(run){ S.fireAcc+=(4+Math.sqrt(S.n)*1.6)*dt;                         // なかまが ふえても うつ かずは ゆっくり ふえる
       while(S.fireAcc>=1&&S.bullets.length<MAX_B){ S.fireAcc-=1;
         var a=Math.random()*Math.PI*2, rr=Math.sqrt(Math.random())*r0*0.9;
-        S.bullets.push({x:S.x+Math.cos(a)*rr,wz:S.dist+0.4,life:1.1}); }
+        S.bullets.push({x:S.x+Math.cos(a)*rr,wz:S.dist+0.4,life:0.6}); }        // とどくのは 20m くらい
       if(S.fireAcc>3) S.fireAcc=3; }
     // たま
     for(var i=S.bullets.length-1;i>=0;i--){ var b=S.bullets[i]; b.wz+=34*dt; b.life-=dt; var hit=false;
@@ -256,8 +260,8 @@ function start(opt){
           if(G.count<=0) snd('coin'); } }
       for(var k=0;k<S.gates.length&&!hit;k++){ var g=S.gates[k]; if(g.done||g.kind!=='num') continue;
         if(Math.abs(b.wz-g.wz)<0.5){ hit=true; var sd=b.x<0?'L':'R', o=g[sd];
-          g['hit'+sd]++; if(g['hit'+sd]%3===0&&(o.op==='+'||o.op==='−')){                 // うつと ゲートの かずが ふえる
-            if(o.op==='−'){ o.v--; if(o.v<=0){ o.op='+'; o.v=1; } } else o.v++; g.dirty=true; } } }
+          g['hit'+sd]++; if(g['hit'+sd]%GATE_HITS===0&&g['up'+sd]<GATE_UP_MAX&&(o.op==='+'||o.op==='−')){   // うつと ゲートの かずが すこし ふえる
+            g['up'+sd]++; if(o.op==='−'){ o.v--; if(o.v<=0){ o.op='+'; o.v=1; } } else o.v++; g.dirty=true; } } }
       if(!hit&&S.boss.alive&&b.wz>=S.boss.wz-1&&Math.abs(b.x-S.boss.x)<1.8){ hit=true; S.boss.hp--; S.boss.flash=0.08; }
       if(hit||b.life<=0) S.bullets.splice(i,1);
     }
@@ -278,7 +282,7 @@ function start(opt){
       if(S.dist>=g.wz){ g.done=true; var left=S.x<0;
         if(g.kind==='eng'&&g.q){ var ci=g.q.order[left?0:1], ok=ci===0;
           try{ opt.onAnswer&&opt.onAnswer(g.q.en,ok,Date.now()-(g.shownAt||Date.now())); }catch(e){}
-          if(ok){ S.right++; changeN(Math.min(MAX_SQUAD,Math.max(S.n*2,S.n+10)),'せいかい！ ×2',true); snd('correct'); }
+          if(ok){ S.right++; changeN(Math.min(MAX_SQUAD,S.n+engBonus()),'せいかい！',true); snd('correct'); }
           else { S.wrong++; changeN(Math.max(1,Math.floor(S.n*0.7)),'<span style="font-size:20px;">'+escH(g.q.en)+' ＝ '+escH(g.q.choices[0])+'</span>',false); }
           setTimeout(function(){ qBanner.style.display='none'; },700); }
         else if(g.kind==='num'){ var o=left?g.L:g.R; changeN(apply(o),gateText(o),isGood(o)); }
