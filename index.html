@@ -268,6 +268,7 @@ if(window.caches){caches.keys().then(function(ks){ks.forEach(function(k){caches.
   <script src="./words.js"></script>
   <script src="./easy.js"></script>
   <script src="./runner.js"></script>
+  <script src="./war.js"></script>
   <script src="./ma_art.js"></script>
   <script src="./app.js"></script>
 </helmet>
@@ -619,10 +620,12 @@ if(window.caches){caches.keys().then(function(ks){ks.forEach(function(k){caches.
   </div>
   <p style="text-align:center;font-size:13px;color:var(--mut);font-weight:700;margin:0 0 24px;">あそぶ（えさ1）</p>
   <button id="selRun" style="width:100%;border:none;border-radius:12px;padding:22px;font-size:19px;font-weight:900;background:linear-gradient(135deg,#1f6f66,#2f9e8f);color:#fff;cursor:pointer;font-family:inherit;box-shadow:0 3px 14px rgba(31,111,102,.35);">えいごダッシュ <span style="font-size:11px;background:#f5c542;color:#5a3d00;border-radius:6px;padding:2px 6px;vertical-align:3px;">3D</span><div style="font-size:11px;font-weight:700;opacity:.85;margin-top:4px;">せんろを はしって、えいごの いみの レーンへ！</div></button>
+  <button id="selWar" style="width:100%;margin-top:12px;border:none;border-radius:12px;padding:22px;font-size:19px;font-weight:900;background:linear-gradient(135deg,#1d4ed8,#3b82f6);color:#fff;cursor:pointer;font-family:inherit;box-shadow:0 3px 14px rgba(29,78,216,.35);">えいごウォー <span style="font-size:11px;background:#f5c542;color:#5a3d00;border-radius:6px;padding:2px 6px;vertical-align:3px;">3D</span><div id="selWarSub" style="font-size:11px;font-weight:700;opacity:.85;margin-top:4px;">なかまを ふやして てきの ぐんだんを たおせ！</div></button>
   <button id="selMetalA" style="width:100%;margin-top:12px;border:none;border-radius:12px;padding:22px;font-size:19px;font-weight:900;background:linear-gradient(135deg,#5c6b4a,#8a9a6b);color:#fff;cursor:pointer;font-family:inherit;box-shadow:0 3px 14px rgba(92,107,74,.35);">メタルアサルト<div style="font-size:11px;font-weight:700;opacity:.85;margin-top:4px;">アーケード：ようさいを こうりゃく</div></button>
 </section>
 
 <div id="runnerRoot" style="display:none;"></div>
+<div id="warRoot" style="display:none;"></div>
 
 <!-- GAME -->
 <section id="game" class="screen">
