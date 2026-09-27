@@ -330,7 +330,7 @@ var EASY = {
   "attorney": "ほうりつをたすけるひと",
   "attract": "ひきつける",
   "attractive": "すてきで、きになる",
-  "attribute": "のせいにする",
+  "attribute": "もの や ひとが もっている とくちょう",
   "audience": "はなしをきくひとたち",
   "author": "ほんをかいたひと",
   "authority": "えらいひと、ちから",
