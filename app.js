@@ -961,7 +961,7 @@ window._eigoPetInit = function() {
   document.getElementById('backSelect').onclick=function(){ show('home'); render(); };
   var RETRY_COST=10;                                        // やられてから 再開する ときの えさ
   function renderGameSelect(){ var w=document.getElementById('selWarSub'); if(w) w.textContent='ステージ '+(state.warStage||1)+'　なかまを ふやして てきの ぐんだんを たおせ！';
-    var tw=document.getElementById('selTowerSub'); if(tw) tw.textContent='ステージ '+(state.towerStage||1)+'　タワーを たてて おしろを まもれ！'; }
+    var tw=document.getElementById('selTowerSub'); if(tw) var sv=state.towerStars||{}, tot=0; for(var k in sv) tot+=sv[k]; tw.textContent='ステージ '+(state.towerStage||1)+(tot?'　★'+tot:'')+'　タワーを たてて おしろを まもれ！'; }
   var startPick=function(fn,cost,retry){ return function(){ cost=cost||1;
     if(state.food<cost){ bubble(cost>1?('えさが '+cost+'こ ひつよう だよ'):'えさが たりない'); return; }
     consumePlay(cost); lastGame=fn; lastCost=cost; lastRetry=retry||fn; fn(); }; };
@@ -981,6 +981,7 @@ window._eigoPetInit = function() {
           var happyGain=r.quit?Math.min(8,1+r.right):Math.min(30,4+r.right*2+(r.win?6:0));
           state.happy=Math.min(100,state.happy+happyGain); addXp(5);
           if(r.win) state.towerStage=(state.towerStage||1)+1;
+          if(r.stars){ state.towerStars=state.towerStars||{}; state.towerStars[r.stage]=Math.max(state.towerStars[r.stage]||0,r.stars); }
           save();
           return {reward:'ごきげん +'+happyGain+(r.right?'　／　えいご '+r.right+'もん せいかい':''),
                   retryLabel:(r.win?'ステージ '+(state.towerStage)+' へ':'もういちど')+'（えさ1）'+(state.food<1?'　えさが たりない':'')};
