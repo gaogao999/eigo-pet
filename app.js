@@ -1332,6 +1332,10 @@ window._eigoPetInit = function() {
     if(pr.dead) return; pr.dead=true;
     if(pr.t==='barrel'){ maBlast(g,pr.x,pr.y-mL(14),mL(85),true,true); return; }   // ドラム缶＝みんなに ダメージ・れんさばくはつ
     for(var i=0;i<7;i++) maPart(g,pr.x+maR(-4,4),pr.y-maR(1,8),maR(-2,2),maR(-3,-1),maR(20,40),Math.random()<0.5?'#8a6a3c':'#5e4626',maR(1,2),0.25);
+    if(Math.random()<0.5&&!g.quiz){ maQuiz(g,'きばこの なかに…',function(ok){
+      if(ok) maPick(g,pr.x,MA_GUNS[Math.floor(Math.random()*MA_GUNS.length)]);
+      else if(ok===false) maScore(g,100,pr.x,pr.y-mL(30));
+      else maScore(g,200,pr.x,pr.y-mL(30)); }); if(state.sound) tone(300,0,0.06); return; }
     var r=Math.random();
     if(r<0.22) maPick(g,pr.x,MA_GUNS[Math.floor(Math.random()*MA_GUNS.length)]);
     else if(r<0.42) maPick(g,pr.x,'grenades');
@@ -1641,7 +1645,7 @@ window._eigoPetInit = function() {
     var s=gameSetup('メタルアサルト',
       (mode==='surv'?'サバイバル：ウェーブを たえぬけ！ ':'アーケード：モーデン将軍を たおせ！ ')+
       'A＝うつ（ちかくは じどうナイフ）、B＝ジャンプ、X＝ばくだん、▲うえうち／▼ふせる（▼＋Bで 足場を おりる）','ジャンプ');
-    if(game) cancelAnimationFrame(game.raf);
+    if(game) cancelAnimationFrame(game.raf); maQuizEnd();
     var vh=200/MA_Z;
     game={ mode:'ma', sub:mode, ctx:s.ctx, cv:s.cv, W:340/MA_Z, H:vh, K:2, SW:340, Z:MA_Z, camY:MA_GROUND-vh*0.83, levelW:MA_LEVEL_W, img:s.img, map:s.map, cell:s.cell,
       t:0, score:0, over:false, raf:0, cam:0, lockL:0, lockR:MA_LEVEL_W,
@@ -1684,6 +1688,36 @@ window._eigoPetInit = function() {
     if(g.p&&g.cam<=0.5&&g.p.x<g.W*g.camR) g.p.x=g.W*g.camR;
     if(g.sub!=='surv'&&g.lockR-g.lockL<g.W) g.lockL=Math.max(0,g.lockR-g.W);
   }
+  /* ===== えいごクイズ（ほりょを たすけた とき・木箱を こわした とき） =====
+     ゲームを とめて、えいごの いみを 3つから えらぶ。こたえは 学習きろく（SRS・ログ）に のこる。 */
+  function maQuiz(g,why,done){
+    var q=runnerQuestion(); if(!q){ done(null); return; }
+    g.quiz=true; padClear(); document.body.classList.add('ma-quiz'); var P=g.p; P.left=P.right=P.up=P.down=P.jump=P.fire=false;
+    var box=document.createElement('div'); box.id='maQuiz';
+    box.style.cssText='position:absolute;inset:0;z-index:180;display:flex;align-items:center;justify-content:center;background:rgba(10,14,20,.55);font-family:inherit;';
+    var order=[0,1,2].sort(function(){ return Math.random()-0.5; });
+    box.innerHTML='<div style="background:#fffaf0;border:3px solid #1f3b36;border-radius:14px;padding:10px 12px 12px;width:min(92%,420px);text-align:center;box-shadow:0 8px 24px rgba(0,0,0,.35);">'+
+      '<div style="font-size:11px;font-weight:900;color:#b8912c;letter-spacing:.05em;">'+escJa(why)+'　えいごクイズ！</div>'+
+      '<div style="font-size:28px;font-weight:900;color:#1f3b36;line-height:1.25;font-family:Arial,Helvetica,sans-serif;margin:2px 0 8px;">'+escJa(q.en)+'</div>'+
+      '<div style="display:flex;gap:6px;">'+order.map(function(ci){ return '<button data-c="'+ci+'" style="flex:1;min-width:0;border:2px solid #cfe0d8;background:#eef5f1;border-radius:10px;padding:10px 4px;font-size:14px;font-weight:900;color:#1f3b36;font-family:inherit;cursor:pointer;word-break:break-all;">'+escJa(q.choices[ci])+'</button>'; }).join('')+'</div>'+
+      '<div id="maQuizMsg" style="min-height:18px;margin-top:6px;font-size:12px;font-weight:900;"></div></div>';
+    document.getElementById('gwrap').appendChild(box);
+    var t0=Date.now(), answered=false;
+    try{ speak(q.en); }catch(e){}
+    box.onclick=function(ev){ var b=ev.target.closest('button[data-c]'); if(!b||answered) return; answered=true;
+      var ok=b.getAttribute('data-c')==='0';
+      [].forEach.call(box.querySelectorAll('button[data-c]'),function(x){ var c=x.getAttribute('data-c');
+        if(c==='0'){ x.style.background='#29a65e'; x.style.color='#fff'; x.style.borderColor='#29a65e'; }
+        else if(x===b){ x.style.background='#d9483b'; x.style.color='#fff'; x.style.borderColor='#d9483b'; } });
+      var m=document.getElementById('maQuizMsg');
+      m.style.color=ok?'#29a65e':'#d9483b'; m.textContent=ok?'せいかい！ つよい ぶきを ゲット！':('ざんねん… '+q.en+' ＝ '+q.choices[0]);
+      sfx(ok?'correct':'wrong');
+      try{ runnerAnswer(q.en,ok,Date.now()-t0); }catch(e){}
+      if(ok) g.qRight=(g.qRight||0)+1; else g.qWrong=(g.qWrong||0)+1;
+      setTimeout(function(){ if(box.parentNode) box.parentNode.removeChild(box); g.quiz=false; document.body.classList.remove('ma-quiz'); done(ok); },ok?750:1500);
+    };
+  }
+  function maQuizEnd(){ var b=document.getElementById('maQuiz'); if(b&&b.parentNode) b.parentNode.removeChild(b); if(game) game.quiz=false; document.body.classList.remove('ma-quiz'); }
   function maLandCheck(){                                  // よこむき なら ぜんがめん レイアウトに
     var onGame=document.getElementById('game').classList.contains('on');
     var land=onGame&&window.innerWidth>window.innerHeight&&window.innerHeight<=620;
@@ -1716,7 +1750,9 @@ window._eigoPetInit = function() {
     var medal=sc>=45000?'🥇':sc>=25000?'🥈':sc>=10000?'🥉':'';
     var title=document.querySelector('#gover>div'); if(title) title.textContent=won?'ミッション かんりょう！🎖':'ゲームオーバー';
     document.getElementById('goverScore').textContent=(medal?medal+' ':'')+'スコア '+sc+'（さいこう '+(state[key]||0)+'）';
+    maQuizEnd();
     document.getElementById('goverReward').textContent='ごきげん +'+happyGain+' ／ たおした数 '+g.kills+
+      ((g.qRight||g.qWrong)?(' ／ えいご ○'+(g.qRight||0)+' ×'+(g.qWrong||0)):'')+
       (g.sub==='surv'?(' ／ ウェーブ '+g.wave):'');
     var sub=g.sub;
     setRetryButtons([{label:'もういちど',cost:1,fn:function(){ startMetal(sub); }},null]);
@@ -1727,6 +1763,7 @@ window._eigoPetInit = function() {
   function loopMetal(){
     var g=game; if(!g||g.over||g.mode!=='ma') return; window.__mg=g;
     g.raf=requestAnimationFrame(loopMetal);
+    if(g.quiz){ drawMetal(g); return; }                             // えいごクイズ中は とまる
     if(g.hitStop>0){ g.hitStop--; drawMetal(g); return; }          // ヒットストップ
     g.t++;
     var p=g.p;
@@ -1807,11 +1844,11 @@ window._eigoPetInit = function() {
     // ほりょ・ひろいもの
     for(var w2=g.pows.length-1;w2>=0;w2--){ var po=g.pows[w2]; po.t++;
       if(!po.free&&!p.dead&&Math.abs(po.x-p.x)<mL(30)&&Math.abs(po.y-p.y)<mL(60)){
-        po.free=true; maScore(g,500,po.x,po.y-mL(50));
-        var gift=Math.random();
-        if(gift<0.5) maPick(g,po.x,MA_GUNS[Math.floor(Math.random()*MA_GUNS.length)]);
-        else maPick(g,po.x,'grenades');
-        if(state.sound){ tone(660,0,0.07); tone(990,0.07,0.1); } }
+        po.free=true; if(state.sound){ tone(660,0,0.07); tone(990,0.07,0.1); }
+        (function(po){ maQuiz(g,'ほりょを たすけた！',function(ok){
+          if(ok===null){ maScore(g,500,po.x,po.y-mL(50)); maPick(g,po.x,Math.random()<0.5?MA_GUNS[Math.floor(Math.random()*MA_GUNS.length)]:'grenades'); return; }
+          if(ok){ maScore(g,500,po.x,po.y-mL(50)); maPick(g,po.x,MA_GUNS[Math.floor(Math.random()*MA_GUNS.length)]); }
+          else { maPick(g,po.x,'grenades'); maPop(g,po.x,po.y-mL(70),'ばくだんだけ…','#ffb3b3'); } }); })(po); }
       if(po.free&&po.t>mT(4)) g.pows.splice(w2,1); }
     for(var q=g.picks.length-1;q>=0;q--){ var it=g.picks[q];
       it.vy+=mPA(2200); it.y+=it.vy; if(it.y>=MA_GROUND-mL(16)){ it.y=MA_GROUND-mL(16); it.vy=0; }
@@ -1953,7 +1990,7 @@ window._eigoPetInit = function() {
     }
   }
 
-  function leaveGame(){ if(game){ game.over=true; cancelAnimationFrame(game.raf); } show('home'); render(); }
+  function leaveGame(){ maQuizEnd(); if(game){ game.over=true; cancelAnimationFrame(game.raf); } show('home'); render(); }
   (function(){
     var padOwner={};                                          // ゆび(pointerId) ごとの 持ち主ボタン
     [['padU','U'],['padD','D'],['padL','L'],['padR','R'],
