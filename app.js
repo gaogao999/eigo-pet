@@ -960,15 +960,39 @@ window._eigoPetInit = function() {
   function consumePlay(cost){ state.food=Math.max(0,state.food-(cost||1)); state.weight=Math.max(5,state.weight-1); state.hunger=Math.max(0,state.hunger-4); state.gamesPlayed=(state.gamesPlayed||0)+1; state.lastPlay=Date.now(); state.happy=Math.min(100,state.happy+6); state.discipline=Math.min(100,state.discipline+3); save(); } // あそぶと なつく＝すなおさ+3 // あそぶと 運動：体重-2・おなか-4
   document.getElementById('backSelect').onclick=function(){ show('home'); render(); };
   var RETRY_COST=10;                                        // やられてから 再開する ときの えさ
-  function renderGameSelect(){ var w=document.getElementById('selWarSub'); if(w) w.textContent='ステージ '+(state.warStage||1)+'　なかまを ふやして てきの ぐんだんを たおせ！'; }
+  function renderGameSelect(){ var w=document.getElementById('selWarSub'); if(w) w.textContent='ステージ '+(state.warStage||1)+'　なかまを ふやして てきの ぐんだんを たおせ！';
+    var tw=document.getElementById('selTowerSub'); if(tw) tw.textContent='ステージ '+(state.towerStage||1)+'　タワーを たてて おしろを まもれ！'; }
   var startPick=function(fn,cost,retry){ return function(){ cost=cost||1;
     if(state.food<cost){ bubble(cost>1?('えさが '+cost+'こ ひつよう だよ'):'えさが たりない'); return; }
     consumePlay(cost); lastGame=fn; lastCost=cost; lastRetry=retry||fn; fn(); }; };
   var lastGame=function(){}, lastCost=1, lastRetry=lastGame;
   var selRn=document.getElementById('selRun'); if(selRn) selRn.onclick=startPick(startRunner,1);
   var selWr=document.getElementById('selWar'); if(selWr) selWr.onclick=startPick(startWar,1);
+  var selTw=document.getElementById('selTower'); if(selTw) selTw.onclick=startPick(startTower,1);
 
   /* ===== えいごウォー（war.js） ===== */
+  function startTower(){
+    var root=document.getElementById('towerRoot');
+    loadThree(function(){
+      runQ=[];
+      EigoTower.start({
+        container:root, stage:state.towerStage||1, getQuestion:runnerQuestion, onAnswer:runnerAnswer, sfx:sfx, speak:speak,
+        onEnd:function(r){
+          var happyGain=r.quit?Math.min(8,1+r.right):Math.min(30,4+r.right*2+(r.win?6:0));
+          state.happy=Math.min(100,state.happy+happyGain); addXp(5);
+          if(r.win) state.towerStage=(state.towerStage||1)+1;
+          save();
+          return {reward:'ごきげん +'+happyGain+(r.right?'　／　えいご '+r.right+'もん せいかい':''),
+                  retryLabel:(r.win?'ステージ '+(state.towerStage)+' へ':'もういちど')+'（えさ1）'+(state.food<1?'　えさが たりない':'')};
+        },
+        onRetry:function(){
+          if(state.food<1){ bubble('えさが たりない'); EigoTower.stop(); renderGameSelect(); show('gameSelect'); return; }
+          consumePlay(1); startTower();
+        },
+        onExit:function(){ render(); renderGameSelect(); show('gameSelect'); }
+      });
+    });
+  }
   function startWar(){
     var root=document.getElementById('warRoot');
     loadThree(function(){
