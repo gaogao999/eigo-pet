@@ -961,7 +961,7 @@ window._eigoPetInit = function() {
   document.getElementById('backSelect').onclick=function(){ show('home'); render(); };
   var RETRY_COST=10;                                        // やられてから 再開する ときの えさ
   function renderGameSelect(){ var w=document.getElementById('selWarSub'); if(w) w.textContent='ステージ '+(state.warStage||1)+'　なかまを ふやして てきの ぐんだんを たおせ！';
-    var tw=document.getElementById('selTowerSub'); if(tw) var sv=state.towerStars||{}, tot=0; for(var k in sv) tot+=sv[k]; tw.textContent='ステージ '+(state.towerStage||1)+(tot?'　★'+tot:'')+'　タワーを たてて おしろを まもれ！'; }
+    var tw=document.getElementById('selTowerSub'); if(tw){ var sv=state.towerStars||{}, tot=0; for(var k in sv) tot+=sv[k]; tw.textContent='ステージ '+(state.towerStage||1)+(tot?'　★'+tot:'')+'　タワーを たてて おしろを まもれ！'; } }
   var startPick=function(fn,cost,retry){ return function(){ cost=cost||1;
     if(state.food<cost){ bubble(cost>1?('えさが '+cost+'こ ひつよう だよ'):'えさが たりない'); return; }
     consumePlay(cost); lastGame=fn; lastCost=cost; lastRetry=retry||fn; fn(); }; };
@@ -977,6 +977,8 @@ window._eigoPetInit = function() {
       runQ=[];
       EigoTower.start({
         container:root, stage:state.towerStage||1, getQuestion:runnerQuestion, onAnswer:runnerAnswer, sfx:sfx, speak:speak,
+        research:{ get:function(){ var sv=state.towerStars||{}, tot=0; for(var k in sv) tot+=sv[k]; return {lv:state.towerRes||{}, stars:tot-(state.towerSpent||0)}; },
+                   buy:function(k,cost){ var info=this.get(); if(info.stars<cost||(info.lv[k]||0)>=3) return false; state.towerRes=state.towerRes||{}; state.towerRes[k]=(state.towerRes[k]||0)+1; state.towerSpent=(state.towerSpent||0)+cost; save(); return true; } },
         onEnd:function(r){
           var happyGain=r.quit?Math.min(8,1+r.right):Math.min(30,4+r.right*2+(r.win?6:0));
           state.happy=Math.min(100,state.happy+happyGain); addXp(5);
