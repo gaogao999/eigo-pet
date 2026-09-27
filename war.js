@@ -66,18 +66,21 @@ function start(opt){
   // --- コース（ステージが あがると むずかしく） ---
   (function build(){
     var z=38, segs=8+Math.min(10,stage), q=0;
+    // est＝よい ほうを えらんだ ときの にんずうの みこみ。てきは その わりあいまでに おさえて、かならず クリアできる コースに する
+    var est=10, frac=Math.min(0.8,0.4+stage*0.06), ap=function(o,n){ return o.op==='+'?n+o.v:o.op==='−'?n-o.v:o.op==='×'?n*o.v:Math.ceil(n/o.v); };
     for(var i=0;i<segs;i++){
       var r=Math.random();
-      if(i%3===1){ S.gates.push({wz:z,kind:'eng',done:false}); q++; }
-      else if(r<0.5||i===0){ var a=pickGood(i), b=Math.random()<0.55?pickBad(i):pickGood(i);
+      if(i%3===1){ S.gates.push({wz:z,kind:'eng',done:false}); q++; est+=Math.max(5,Math.min(15,Math.round(est*0.2))); }
+      else if(r<0.5||i===0||est<14){ var a=pickGood(i), b=Math.random()<0.55?pickBad(i):pickGood(i);
         if(Math.random()<0.5){ var tmp=a; a=b; b=tmp; }
-        S.gates.push({wz:z,kind:'num',L:a,R:b,done:false}); }
-      else { var cnt=Math.round((10+stage*7+i*5)*rnd(0.8,1.2)), w=Math.random()<0.35?HW*2-0.6:rnd(3.4,6);
+        S.gates.push({wz:z,kind:'num',L:a,R:b,done:false}); est=Math.max(ap(a,est),ap(b,est)); }
+      else { var cnt=Math.round((10+stage*7+i*5)*rnd(0.8,1.2)); cnt=Math.max(4,Math.min(cnt,Math.round(est*frac))); est-=cnt;
+        var w=Math.random()<0.35?HW*2-0.6:rnd(3.4,6);
         var cx=w>HW*2-1?0:rnd(-HW+w/2,HW-w/2); S.groups.push(makeGroup(z,cx,w,cnt)); }
       z+=rnd(34,44);
     }
     S.len=z+20;
-    S.boss={wz:S.len,hp:Math.round(80+stage*55),max:0,alive:true,x:0};
+    S.boss={wz:S.len,hp:Math.round(Math.min(80+stage*55,40+est*3)),max:0,alive:true,x:0};
     S.boss.max=S.boss.hp;
   })();
   // かずの ゲート：ふえすぎない ように ひかえめ（×2 は たまに、×3 は ステージ3から）
