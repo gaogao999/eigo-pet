@@ -976,6 +976,7 @@ window._eigoPetInit = function() {
     loadThree(function(){
       runQ=[];
       EigoTower.start({
+        pet:(function(){ var i=petInfo(); return i&&i.img?{img:imgSrc(i.img),name:i.name,power:1+Math.min(100,state.happy||0)/100*0.3}:null; })(),
         container:root, stage:state.towerStage||1, getQuestion:runnerQuestion, onAnswer:runnerAnswer, sfx:sfx, speak:speak,
         research:{ get:function(){ var sv=state.towerStars||{}, tot=0; for(var k in sv) tot+=sv[k]; return {lv:state.towerRes||{}, stars:tot-(state.towerSpent||0), total:tot, skin:state.towerSkin||'red', endless:(state.towerStage||1)>=3, bestWave:state.towerBestWave||0}; },
                    setSkin:function(k){ state.towerSkin=k; save(); },

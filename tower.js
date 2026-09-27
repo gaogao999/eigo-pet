@@ -267,7 +267,7 @@ function start(opt){
     var body=new THREE.Mesh(sg.body,lam); g.add(body);
     var lL=new THREE.Mesh(sg.leg,lam), lR=new THREE.Mesh(sg.leg,lam); lL.position.set(-sg.hipX,sg.hipY,0); lR.position.set(sg.hipX,sg.hipY,0); g.add(lL); g.add(lR);
     var crownM=new THREE.MeshLambertMaterial({color:0xfbbf24}), capeM=new THREE.MeshLambertMaterial({color:0xdc2626,side:THREE.DoubleSide});
-    g.add(new THREE.Mesh(M([P(new THREE.CylinderGeometry(0.2,0.22,0.08,10),'#ffffff',0,1.02,0),P(new THREE.ConeGeometry(0.05,0.14,4),'#ffffff',-0.12,1.12,0),P(new THREE.ConeGeometry(0.05,0.14,4),'#ffffff',0,1.13,0),P(new THREE.ConeGeometry(0.05,0.14,4),'#ffffff',0.12,1.12,0)]),crownM));
+    var crownMesh=new THREE.Mesh(M([P(new THREE.CylinderGeometry(0.2,0.22,0.08,10),'#ffffff',0,1.02,0),P(new THREE.ConeGeometry(0.05,0.14,4),'#ffffff',-0.12,1.12,0),P(new THREE.ConeGeometry(0.05,0.14,4),'#ffffff',0,1.13,0),P(new THREE.ConeGeometry(0.05,0.14,4),'#ffffff',0.12,1.12,0)]),crownM); g.add(crownMesh);
     var cape=new THREE.Mesh(new THREE.PlaneGeometry(0.42,0.55),capeM); cape.position.set(0,0.55,0.2); cape.rotation.x=0.15; g.add(cape);
     body.material=new THREE.MeshLambertMaterial({vertexColors:true});
     var arm=new THREE.Group(); arm.position.set(0.24,0.62,0); g.add(arm);
@@ -275,21 +275,47 @@ function start(opt){
     var sh=new THREE.Mesh(new THREE.PlaneGeometry(0.9,0.9),new THREE.MeshBasicMaterial({map:GX.shadowTex(),transparent:true,depthWrite:false})); sh.rotation.x=-Math.PI/2; sh.position.y=0.02; g.add(sh);
     var halo=new THREE.Mesh(new THREE.RingGeometry(0.42,0.52,24),new THREE.MeshBasicMaterial({color:0x60a5fa,transparent:true,opacity:0.8,depthWrite:false})); halo.rotation.x=-Math.PI/2; halo.position.y=0.04; g.add(halo);
     g.scale.setScalar(1.55); scene.add(g);
-    return {body:body,crownM:crownM,capeM:capeM,cape:cape,g:g,lL:lL,lR:lR,arm:arm,x:0,z:9.2,tx:0,tz:9.2,cd:0,skill:4,swing:0,ry:Math.PI,walk:0}; })();
+    return {crown:null,body:body,crownM:crownM,capeM:capeM,cape:cape,g:g,lL:lL,lR:lR,arm:arm,x:0,z:9.2,tx:0,tz:9.2,cd:0,skill:4,swing:0,ry:Math.PI,walk:0}; })();
+  hero.crown=hero.g.children.filter(function(c){ return c.material===hero.crownM; })[0];
   hero.g.position.set(hero.x,0,hero.z);
+  // ペットが ゆうしゃ：ドット絵を ブロック（ボクセル）に して 3Dに する
+  if(opt.pet&&opt.pet.img){ (function(){ var im=new Image(); im.onload=function(){ if(R.S!==S) return;
+      var W=im.width, Hh=im.height, cv=document.createElement('canvas'); cv.width=W; cv.height=Hh; var cx=cv.getContext('2d'); cx.drawImage(im,0,0); var px=cx.getImageData(0,0,W,Hh).data;
+      var pg=new THREE.Group(), vs=1.0/Math.max(W,Hh), minY=Hh, cells=[];
+      for(var y=0;y<Hh;y++) for(var x=0;x<W;x++){ var i=(y*W+x)*4; if(px[i+3]<128) continue; cells.push([x,y,px[i],px[i+1],px[i+2]]); }
+      cells.forEach(function(c){ if(c[1]<minY) minY=c[1]; }); var maxY=0; cells.forEach(function(c){ if(c[1]>maxY) maxY=c[1]; });
+      if(opt.petStyle==='sprite'){ var tx=new THREE.CanvasTexture(cv); tx.magFilter=THREE.NearestFilter; tx.minFilter=THREE.NearestFilter; tx.encoding=THREE.sRGBEncoding;
+        var spr=new THREE.Mesh(new THREE.PlaneGeometry(1,Hh/W),new THREE.MeshBasicMaterial({map:tx,transparent:true,alphaTest:0.5,side:THREE.DoubleSide})); spr.position.y=(Hh/W)/2-(Hh-1-maxY)*vs; pg.add(spr); pg.userData.bill=spr; }
+      else { var im2=new THREE.InstancedMesh(new THREE.BoxGeometry(vs,vs,vs*5),new THREE.MeshLambertMaterial({color:0xffffff}),cells.length), o=new THREE.Object3D(), col=new THREE.Color();
+        cells.forEach(function(c,k){ var edge=0; [[1,0],[-1,0],[0,1],[0,-1]].forEach(function(d){ var nx=c[0]+d[0], ny=c[1]+d[1]; if(nx<0||ny<0||nx>=W||ny>=Hh||px[(ny*W+nx)*4+3]<128) edge++; });
+          o.position.set((c[0]-W/2+0.5)*vs,(maxY-c[1]+0.5)*vs,0); o.scale.set(1,1,edge?0.75:1); o.updateMatrix(); im2.setMatrixAt(k,o.matrix);
+          col.setRGB(c[2]/255,c[3]/255,c[4]/255).convertSRGBToLinear(); im2.setColorAt(k,col); });
+        pg.add(im2); }
+      var holder=new THREE.Group(); holder.add(pg); pg.userData.h=(maxY-minY+1)*vs; hero.pet=pg; hero.petH=holder; scene.add(holder);
+      [hero.body,hero.lL,hero.lR,hero.cape].forEach(function(m){ m.visible=false; }); hero.arm.visible=false;
+      hero.crown.visible=false; var cr=new THREE.Mesh(hero.crown.geometry,hero.crownM); cr.position.set(0,pg.userData.h-0.97,0); cr.scale.setScalar(0.8); pg.add(cr);
+      var ring=new THREE.Mesh(new THREE.RingGeometry(0.5,0.62,28),new THREE.MeshBasicMaterial({color:0x60a5fa,transparent:true,opacity:0.8,depthWrite:false})); ring.rotation.x=-Math.PI/2; ring.position.y=0.04; holder.add(ring);
+      var shd=new THREE.Mesh(new THREE.PlaneGeometry(1.2,1.2),new THREE.MeshBasicMaterial({map:GX.shadowTex(),transparent:true,depthWrite:false})); shd.rotation.x=-Math.PI/2; shd.position.y=0.03; holder.add(shd);
+      hero.g.visible=false; };
+    im.src=opt.pet.img; })(); }
   var marker=new THREE.Mesh(new THREE.RingGeometry(0.3,0.42,24),new THREE.MeshBasicMaterial({color:0x60a5fa,transparent:true,opacity:0,depthWrite:false})); marker.rotation.x=-Math.PI/2; marker.position.y=0.25; scene.add(marker);
-  function heroStep(dt){ var H=hero, dx=H.tx-H.x, dz=H.tz-H.z, d=Math.hypot(dx,dz), mul=(1+0.25*resLv('hero'))*(1+0.12*(stage-1));
+  function heroStep(dt){ var H=hero, dx=H.tx-H.x, dz=H.tz-H.z, d=Math.hypot(dx,dz), mul=(1+0.25*resLv('hero'))*(1+0.12*(stage-1))*((opt.pet&&opt.pet.power)||1);
     var tgt=null, td=1e9; S.en.forEach(function(a){ if(a.dead||ET[a.ty].air||a.under>0) return; var e=Math.hypot(a.x-H.x,a.z-H.z); if(e<td){ td=e; tgt=a; } });
     if(d>0.08){ var sp=Math.min(d,3.4*dt); H.x+=dx/d*sp; H.z+=dz/d*sp; H.ry=Math.atan2(-dx,-dz); H.walk+=dt*12; }
     else if(tgt&&td<1.7){ H.ry=Math.atan2(-(tgt.x-H.x),-(tgt.z-H.z)); }
     H.cd-=dt; H.skill-=dt;
     if(tgt&&td<1.6){ var near=S.en.filter(function(a){ return !a.dead&&!ET[a.ty].air&&Math.hypot(a.x-H.x,a.z-H.z)<2.3; });
       if(H.skill<=0&&near.length>=3){ H.skill=8; H.spin=0.5; near.forEach(function(a){ hurt(a,9*mul); }); ringFx(H.x,H.z,0x93c5fd,2.4,0.5); fx.burst(H.x,0.8,H.z,30,0xbfdbfe,5,0.5); say('ぐるぐる ぎり！','#bfdbfe',700); snd('crash'); }
-      else if(H.cd<=0){ H.cd=0.7; H.swing=0.25; hurt(tgt,3.5*mul); fx.burst(tgt.x,0.8,tgt.z,5,0xe0f2fe,2.5,0.3); } } }
+      else if(H.cd<=0){ H.cd=0.7; H.swing=0.25; H.lastTgt=tgt; hurt(tgt,3.5*mul); fx.burst(tgt.x,0.8,tgt.z,5,0xe0f2fe,2.5,0.3); } } }
   function heroDraw(dt){ var H=hero; H.g.position.set(H.x,0,H.z); H.g.rotation.y+=(((H.ry-H.g.rotation.y+Math.PI*3)%(Math.PI*2))-Math.PI)*Math.min(1,dt*12);
     var moving=Math.hypot(H.tx-H.x,H.tz-H.z)>0.08, sw=moving?Math.sin(H.walk)*0.7:0; H.lL.rotation.x=sw; H.lR.rotation.x=-sw; H.g.position.y=moving?Math.abs(Math.sin(H.walk))*0.06:0;
     if(H.swing>0){ H.swing-=dt; H.arm.rotation.x=-1.6+(1-H.swing/0.25)*2.4; } else H.arm.rotation.x=-0.3;
     if(H.spin>0){ H.spin-=dt; H.g.rotation.y+=dt*30; }
+    if(H.pet){ var hp=H.petH, PS=1.9; hp.position.set(H.x,0,H.z); hp.rotation.y=Math.atan2(cam.position.x-H.x,cam.position.z-H.z);   // いつも カメラの ほうを むく
+      var hop=moving?Math.abs(Math.sin(H.walk*0.7))*0.4:Math.abs(Math.sin(S.t*2.5))*0.05; H.pet.position.y=hop; H.pet.rotation.x=-0.55;   // すこし うしろに たおして かおを みせる
+      if(Math.abs(H.tx-H.x)>0.05) H.face=(H.tx>H.x)?-1:1; var tg2=H.lastTgt; if(!moving&&tg2&&!tg2.dead) H.face=(tg2.x>H.x)?-1:1;
+      var sq=H.swing>0?1+Math.sin(H.swing/0.25*Math.PI)*0.15:(moving?1+Math.sin(H.walk*1.4)*0.05:1); H.pet.scale.set(PS*sq*(H.face||1),PS/sq,PS);
+      H.pet.position.z=H.swing>0?0.25*Math.sin(H.swing/0.25*Math.PI):0; H.pet.rotation.z=H.spin>0?S.t*25:(moving?Math.sin(H.walk*0.7)*0.1:0); }
     if(marker.material.opacity>0) marker.material.opacity=Math.max(0,marker.material.opacity-dt*1.2); }
 
   // --- HUD ---
