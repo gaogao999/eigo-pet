@@ -261,23 +261,25 @@ G.particles=function(scene,max){
 
 /* ---------- たま（ひかる せん） ---------- */
 G.bullets=function(scene,max){
-  var m=new THREE.MeshBasicMaterial({color:0xffe27a,transparent:true,opacity:0.95,blending:THREE.AdditiveBlending,depthWrite:false});
+  var m=new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:0.95,blending:THREE.AdditiveBlending,depthWrite:false});
   var im=new THREE.InstancedMesh(new THREE.CylinderGeometry(0.035,0.035,1.1,5).rotateX(Math.PI/2),m,max);
+  for(var i=0;i<max;i++) im.setColorAt(i,new THREE.Color(0xffe27a));            // たまごとの いろ（ぶきで かわる）
   im.frustumCulled=false; im.instanceMatrix.setUsage(THREE.DynamicDrawUsage); scene.add(im); return im;
 };
 
 /* ---------- ゲート ---------- */
-G.gateTex=function(text,good,eng){
+G.gateTex=function(text,good,eng,wpn){
   return canvasTex(512,256,function(g,w,h){
-    var c1=eng?'rgba(255,200,60,.78)':good?'rgba(80,150,250,.8)':'rgba(245,90,90,.8)', c2=eng?'rgba(200,100,0,.9)':good?'rgba(25,70,210,.92)':'rgba(150,20,20,.92)';
+    var c1=wpn?'rgba(190,130,255,.8)':eng?'rgba(255,200,60,.78)':good?'rgba(80,150,250,.8)':'rgba(245,90,90,.8)', c2=wpn?'rgba(90,30,170,.92)':eng?'rgba(200,100,0,.9)':good?'rgba(25,70,210,.92)':'rgba(150,20,20,.92)';
     var gr=g.createLinearGradient(0,0,0,h); gr.addColorStop(0,c1); gr.addColorStop(1,c2); g.fillStyle=gr; g.fillRect(0,0,w,h);
     g.fillStyle='rgba(255,255,255,.08)'; for(var x=-h;x<w;x+=46){ g.beginPath(); g.moveTo(x,h); g.lineTo(x+h,0); g.lineTo(x+h+18,0); g.lineTo(x+18,h); g.fill(); }   // ななめの ひかり
     var hl=g.createLinearGradient(0,0,0,h*0.4); hl.addColorStop(0,'rgba(255,255,255,.35)'); hl.addColorStop(1,'rgba(255,255,255,0)'); g.fillStyle=hl; g.fillRect(0,0,w,h*0.4);
     g.textAlign='center'; g.textBaseline='middle';
     var FONT='"Hiragino Maru Gothic ProN","Hiragino Sans","M PLUS Rounded 1c","Noto Sans JP",sans-serif';
+    if(wpn){ g.fillStyle='rgba(40,10,90,.85)'; g.fillRect(w/2-80,14,160,40); g.fillStyle='#f3e8ff'; g.font='900 26px '+FONT; g.fillText('WEAPON',w/2,35); }
     if(eng){ g.fillStyle='rgba(120,53,15,.9)'; g.fillRect(w/2-90,14,180,40); g.fillStyle='#fff7d6'; g.font='900 26px '+FONT; g.fillText('ENGLISH',w/2,35); }
-    var fs=eng?92:128; g.font='900 '+fs+'px '+FONT; while(g.measureText(text).width>w-50&&fs>30){ fs-=4; g.font='900 '+fs+'px '+FONT; }
-    var ty=eng?h/2+24:h/2+6;
+    var fs=(eng||wpn)?84:128; g.font='900 '+fs+'px '+FONT; while(g.measureText(text).width>w-50&&fs>30){ fs-=4; g.font='900 '+fs+'px '+FONT; }
+    var ty=(eng||wpn)?h/2+24:h/2+6;
     g.lineWidth=14; g.strokeStyle='rgba(0,0,0,.35)'; g.lineJoin='round'; g.strokeText(text,w/2,ty);
     g.fillStyle='#ffffff'; g.fillText(text,w/2,ty);
   });
