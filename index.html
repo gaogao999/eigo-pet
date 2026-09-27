@@ -249,6 +249,7 @@ if(window.caches){caches.keys().then(function(ks){ks.forEach(function(k){caches.
 </style>
   <script src="./words.js"></script>
   <script src="./easy.js"></script>
+  <script src="./runner.js"></script>
   <script src="./app.js"></script>
 </helmet>
 
@@ -598,12 +599,15 @@ if(window.caches){caches.keys().then(function(ks){ks.forEach(function(k){caches.
     <div style="font-size:18px;font-weight:900;color:var(--ink);">ミニゲーム</div>
   </div>
   <p style="text-align:center;font-size:13px;color:var(--mut);font-weight:700;margin:0 0 24px;">あそぶ（えさ1）</p>
+  <button id="selRun" style="width:100%;margin-bottom:12px;border:none;border-radius:12px;padding:22px;font-size:19px;font-weight:900;background:linear-gradient(135deg,#1f6f66,#2f9e8f);color:#fff;cursor:pointer;font-family:inherit;box-shadow:0 3px 14px rgba(31,111,102,.35);">えいごダッシュ <span style="font-size:11px;background:#f5c542;color:#5a3d00;border-radius:6px;padding:2px 6px;vertical-align:3px;">3D</span><div style="font-size:11px;font-weight:700;opacity:.85;margin-top:4px;">せんろを はしって、えいごの いみの レーンへ！</div></button>
   <button id="selJump" style="width:100%;border:none;border-radius:12px;padding:22px;font-size:19px;font-weight:900;background:linear-gradient(135deg,#f472b6,#fb9ed0);color:#fff;cursor:pointer;font-family:inherit;box-shadow:0 3px 14px rgba(244,114,182,.35);">だいぼうけん<div style="font-size:11px;font-weight:700;opacity:.85;margin-top:4px;">1面から（えさ1）</div></button>
   <button id="selJumpCont" style="display:none;width:100%;margin-top:12px;border:none;border-radius:12px;padding:18px;font-size:16px;font-weight:900;background:linear-gradient(135deg,#d9578f,#f472b6);color:#fff;cursor:pointer;font-family:inherit;box-shadow:0 3px 14px rgba(217,87,143,.3);">つづきから<div id="selContSub" style="font-size:11px;font-weight:700;opacity:.9;margin-top:4px;"></div></button>
   <button id="selMetalA" style="width:100%;margin-top:12px;border:none;border-radius:12px;padding:22px;font-size:19px;font-weight:900;background:linear-gradient(135deg,#5c6b4a,#8a9a6b);color:#fff;cursor:pointer;font-family:inherit;box-shadow:0 3px 14px rgba(92,107,74,.35);">メタルアサルト<div style="font-size:11px;font-weight:700;opacity:.85;margin-top:4px;">アーケード：ようさいを こうりゃく</div></button>
   <button id="selMetalS" style="width:100%;margin-top:12px;border:none;border-radius:12px;padding:18px;font-size:16px;font-weight:900;background:linear-gradient(135deg,#7a5c3a,#b08a5c);color:#fff;cursor:pointer;font-family:inherit;box-shadow:0 3px 14px rgba(122,92,58,.3);">メタルアサルト サバイバル<div style="font-size:11px;font-weight:700;opacity:.85;margin-top:4px;">どこまで たおせるか（スコアは べつ）</div></button>
   <button id="selSnake" style="width:100%;margin-top:12px;border:none;border-radius:12px;padding:22px;font-size:19px;font-weight:900;background:linear-gradient(135deg,#2f9e6b,#5cde94);color:#fff;cursor:pointer;font-family:inherit;box-shadow:0 3px 14px rgba(47,158,107,.35);">スネーク<div style="font-size:11px;font-weight:700;opacity:.85;margin-top:4px;">りんごを たべて ながく のばそう</div></button>
 </section>
+
+<div id="runnerRoot" style="display:none;"></div>
 
 <!-- GAME -->
 <section id="game" class="screen">

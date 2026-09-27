@@ -569,6 +569,10 @@ window._eigoPetInit = function() {
     else if(kind==='wrong'){ tone(200,0,0.18,'square'); }
     else if(kind==='fanfare'){ [523,659,784,1047].forEach(function(f,i){ tone(f,i*0.12,0.18); }); }
     else if(kind==='unlock'){ tone(880,0,0.1); tone(1320,0.1,0.18); }
+    else if(kind==='coin'){ tone(1319,0,0.06); tone(1760,0.05,0.08); }
+    else if(kind==='jump'){ tone(440,0,0.08); tone(660,0.05,0.08); }
+    else if(kind==='swoosh'){ tone(320,0,0.05,'triangle'); }
+    else if(kind==='crash'){ tone(140,0,0.25,'sawtooth'); tone(90,0.1,0.3,'square'); }
     else if(kind==='flush'){ tone(520,0,0.12,'sawtooth'); tone(380,0.12,0.14,'sawtooth'); tone(260,0.26,0.22,'sawtooth'); }
   }
 
@@ -975,6 +979,61 @@ window._eigoPetInit = function() {
   var selA=document.getElementById('selMetalA'); if(selA) selA.onclick=startPick(function(){ startMetal('arcade'); });
   var selS=document.getElementById('selMetalS'); if(selS) selS.onclick=startPick(function(){ startMetal('surv'); });
   var selSn=document.getElementById('selSnake'); if(selSn) selSn.onclick=startPick(startSnake,1);
+  var selRn=document.getElementById('selRun'); if(selRn) selRn.onclick=startPick(startRunner,1);
+
+  /* ===== えいごダッシュ（3D ランゲーム・runner.js） =====
+     Three.js（600KB）は はじめて あそぶ ときだけ 読みこむ。
+     えいごゲートの 問題は ふだんの 学習と おなじ じゅんばん（復習が さき）で 出し、
+     こたえは 学習きろく（SRS・ログ）に のこす。 */
+  function loadThree(cb){
+    if(window.THREE) return cb();
+    var s=document.createElement('script'); s.src='./vendor/three.min.js';
+    s.onload=function(){ cb(); };
+    s.onerror=function(){ s.remove(); bubble('3Dの よみこみに しっぱい しました。つうしんを たしかめてね'); show('gameSelect'); };
+    document.head.appendChild(s);
+  }
+  function shortJa(w){ var s=splitSenses(w[1])[0]||w[1]||''; return s.replace(/[～~]/g,'').trim(); }
+  var runQ=[];
+  function runnerQuestion(){
+    if(!runQ.length) runQ=buildQuestions(10).slice();
+    var w=runQ.shift(); if(!w) return null;
+    var ans=shortJa(w), pool=currentWords(), seen={}, ch=[ans];
+    seen[ans]=1;
+    for(var tries=0;ch.length<3&&tries<200;tries++){
+      var d=pool[Math.floor(Math.random()*pool.length)], t=shortJa(d);
+      if(!t||seen[t]||d[0]===w[0]||t.length>12) continue;
+      seen[t]=1; ch.push(t);
+    }
+    if(ch.length<3) return null;
+    return {en:w[0],choices:ch};
+  }
+  function runnerAnswer(en,ok,ms){
+    var k=(en||'').toLowerCase(), r=state.learn[k], late=0;
+    if(r&&r.due){ late=Math.round((new Date(today())-new Date(r.due))/86400000); if(!(late>=0)) late=0; }
+    logPush([Date.now(),today(),k,state.grade,0,ok?1:0,Math.min(600000,ms||0),r?1:0,r?(r.lv||0):-1,r?(r.ivl||0):-1,late,0,0,displayStreak(),todayCount(),0]);
+    onAnswer(en,ok,false); save();
+  }
+  function startRunner(){
+    var root=document.getElementById('runnerRoot');
+    loadThree(function(){
+      runQ=[];
+      EigoRunner.start({
+        container:root, getQuestion:runnerQuestion, onAnswer:runnerAnswer, sfx:sfx, speak:speak,
+        onEnd:function(r){
+          var happyGain=r.quit?Math.min(10,1+Math.floor(r.score/200)):Math.min(30,3+Math.floor(r.score/150));
+          state.happy=Math.min(100,state.happy+happyGain); addXp(5);
+          var best=Math.max(state.runHi||0,r.score); state.runHi=best; save();
+          return {best:best,reward:'ごきげん +'+happyGain+(r.right?'　／　えいご '+r.right+'もん せいかい':''),
+                  retryLabel:'もういちど（えさ1）'+(state.food<1?'　えさが たりない':'')};
+        },
+        onRetry:function(){
+          if(state.food<1){ bubble('えさが たりない'); EigoRunner.stop(); renderGameSelect(); show('gameSelect'); return; }
+          consumePlay(1); startRunner();
+        },
+        onExit:function(){ render(); renderGameSelect(); show('gameSelect'); }
+      });
+    });
+  }
   window.__lastGame=function(){ return lastGame; };
   window.__lastCost=function(){ return lastCost; };
   window.__lastRetry=function(){ return lastRetry; };
