@@ -175,20 +175,22 @@ G.soldier=function(team){
 G.shadowTex=function(){ return canvasTex(64,64,function(g,w,h){ var r=g.createRadialGradient(32,32,2,32,32,30); r.addColorStop(0,'rgba(0,0,0,.55)'); r.addColorStop(1,'rgba(0,0,0,0)'); g.fillStyle=r; g.fillRect(0,0,w,h); },false); };
 
 /* 1チームぶんの インスタンス（からだ・ひだりあし・みぎあし・かげ） */
-G.army=function(scene,team,max){
-  var geo=G.soldier(team), mat=new THREE.MeshLambertMaterial({vertexColors:true});
+G.army=function(scene,team,max,custom){
+  var geo=custom||G.soldier(team), mat=new THREE.MeshLambertMaterial({vertexColors:true});
   var a={body:new THREE.InstancedMesh(geo.body,mat,max),lL:new THREE.InstancedMesh(geo.leg,mat,max),lR:new THREE.InstancedMesh(geo.leg,mat,max),
          sh:new THREE.InstancedMesh(new THREE.PlaneGeometry(0.62,0.62),new THREE.MeshBasicMaterial({map:G.shadowTex(),transparent:true,depthWrite:false}),max),n:0,geo:geo};
   ['body','lL','lR','sh'].forEach(function(k){ a[k].instanceMatrix.setUsage(THREE.DynamicDrawUsage); a[k].frustumCulled=false; scene.add(a[k]); });
   var o=new THREE.Object3D(), h=new THREE.Object3D();
   a.begin=function(){ a.n=0; };
-  a.put=function(x,y,z,ry,phase,scale){ if(a.n>=max) return; var i=a.n++, s=scale||1, sw=Math.sin(phase)*0.7;
+  var WH=new THREE.Color(1,1,1); for(var ci=0;ci<max;ci++) a.body.setColorAt(ci,WH);
+  a.put=function(x,y,z,ry,phase,scale,tint){ if(a.n>=max) return; var i=a.n++, s=scale||1, sw=Math.sin(phase)*0.7;
     o.position.set(x,y,z); o.rotation.set(0,ry,0); o.scale.set(s,s,s); o.updateMatrix(); a.body.setMatrixAt(i,o.matrix);
+    a.body.setColorAt(i,tint||WH);   // こおり・ダメージの いろ
     var c=Math.cos(ry), sn=Math.sin(ry);
     [[-1,a.lL,sw],[1,a.lR,-sw]].forEach(function(L){ var hx=L[0]*geo.hipX*s;
       h.position.set(x+hx*c,y+geo.hipY*s,z-hx*sn); h.rotation.set(L[2],ry,0,'YXZ'); h.scale.set(s,s,s); h.updateMatrix(); L[1].setMatrixAt(i,h.matrix); });
     o.position.set(x,0.02,z); o.rotation.set(-Math.PI/2,0,0); o.scale.set(s,s,s); o.updateMatrix(); a.sh.setMatrixAt(i,o.matrix); };
-  a.end=function(){ ['body','lL','lR','sh'].forEach(function(k){ a[k].count=a.n; a[k].instanceMatrix.needsUpdate=true; }); };
+  a.end=function(){ ['body','lL','lR','sh'].forEach(function(k){ a[k].count=a.n; a[k].instanceMatrix.needsUpdate=true; }); if(a.body.instanceColor) a.body.instanceColor.needsUpdate=true; };
   return a;
 };
 
