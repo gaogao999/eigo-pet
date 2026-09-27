@@ -977,11 +977,14 @@ window._eigoPetInit = function() {
       runQ=[];
       EigoTower.start({
         container:root, stage:state.towerStage||1, getQuestion:runnerQuestion, onAnswer:runnerAnswer, sfx:sfx, speak:speak,
-        research:{ get:function(){ var sv=state.towerStars||{}, tot=0; for(var k in sv) tot+=sv[k]; return {lv:state.towerRes||{}, stars:tot-(state.towerSpent||0)}; },
+        research:{ get:function(){ var sv=state.towerStars||{}, tot=0; for(var k in sv) tot+=sv[k]; return {lv:state.towerRes||{}, stars:tot-(state.towerSpent||0), total:tot, skin:state.towerSkin||'red', endless:(state.towerStage||1)>=3, bestWave:state.towerBestWave||0}; },
+                   setSkin:function(k){ state.towerSkin=k; save(); },
                    buy:function(k,cost){ var info=this.get(); if(info.stars<cost||(info.lv[k]||0)>=3) return false; state.towerRes=state.towerRes||{}; state.towerRes[k]=(state.towerRes[k]||0)+1; state.towerSpent=(state.towerSpent||0)+cost; save(); return true; } },
         onEnd:function(r){
           var happyGain=r.quit?Math.min(8,1+r.right):Math.min(30,4+r.right*2+(r.win?6:0));
           state.happy=Math.min(100,state.happy+happyGain); addXp(5);
+          if(r.endless){ var best=r.wave>(state.towerBestWave||0); if(best) state.towerBestWave=r.wave; save();
+            return {best:best,bestWave:state.towerBestWave,reward:'ごきげん +'+happyGain+(r.right?'　／　えいご '+r.right+'もん せいかい':'')}; }
           if(r.win) state.towerStage=(state.towerStage||1)+1;
           if(r.stars){ state.towerStars=state.towerStars||{}; state.towerStars[r.stage]=Math.max(state.towerStars[r.stage]||0,r.stars); }
           save();
