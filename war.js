@@ -10,6 +10,8 @@ var R={}, HW=5.2, FONT='"Hiragino Maru Gothic ProN","Hiragino Sans","M PLUS Roun
 var MAX_SQUAD=400, MAX_EN=1400, MAX_B=260;
 function rnd(a,b){ return a+Math.random()*(b-a); }
 function el(tag,css,html){ var e=document.createElement(tag); if(css) e.style.cssText=css; if(html!=null) e.innerHTML=html; return e; }
+function furi(t,y){ var a=0,b=0; while(a<t.length&&a<y.length&&t[a]===y[a]&&!/[\u4e00-\u9fff\u3005]/.test(t[a])) a++; while(b<t.length-a&&b<y.length-a&&t[t.length-1-b]===y[y.length-1-b]&&!/[\u4e00-\u9fff\u3005]/.test(t[t.length-1-b])) b++; return [t.slice(0,a),t.slice(a,t.length-b),y.slice(a,y.length-b),t.slice(t.length-b)]; }
+function rb(t,y){ if(!(y&&/[\u4e00-\u9fff\u3005]/.test(t))) return escH(t); var f=furi(t,y); return escH(f[0])+'<ruby style="white-space:nowrap;word-break:keep-all;">'+escH(f[1])+'<rt style="font-size:.55em;">'+escH(f[2])+'</rt></ruby>'+escH(f[3]); }   // 漢字（かんじ）に ふりがな
 function escH(s){ return String(s).replace(/[&<>"']/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
 
 /* ---------- ゲーム ---------- */
@@ -20,7 +22,7 @@ function start(opt){
   var renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});
   renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.75));
   root.appendChild(renderer.domElement); renderer.domElement.style.cssText='display:block;width:100%;height:100%;';
-  var GX=window.WAR_GFX; GX.setup(renderer);
+  var GX=window.WAR_GFX; GX.setup(renderer); GX.furi=furi;
   var scene=new THREE.Scene(); scene.fog=new THREE.Fog(GX.HORIZON,55,170);
   var cam=new THREE.PerspectiveCamera(55,1,0.1,700);
   scene.add(new THREE.HemisphereLight(0xeaf4ff,0x5b7a96,0.85));
@@ -119,10 +121,10 @@ function start(opt){
   function buildGateMesh(g){
     while(g.mesh.children.length){ var c=g.mesh.children.pop(); c.traverse(function(n){ if(n.material){ if(n.material.map&&n.material.map!==glowTex) n.material.map.dispose(); n.material.dispose(); } if(n.geometry) n.geometry.dispose(); }); }
     var eng=g.kind==='eng', wpn=g.kind==='wpn';
-    var sides=wpn?[[-1,WP[g.L].ico+WP[g.L].name,true],[1,WP[g.R].ico+WP[g.R].name,true]]:eng?[[-1,g.q?g.q.choices[g.q.order[0]]:'?',true],[1,g.q?g.q.choices[g.q.order[1]]:'?',true]]
+    var sides=wpn?[[-1,WP[g.L].ico+WP[g.L].name,true],[1,WP[g.R].ico+WP[g.R].name,true]]:eng?[[-1,g.q?g.q.choices[g.q.order[0]]:'?',true,g.q&&g.q.yomi&&g.q.yomi[g.q.order[0]]],[1,g.q?g.q.choices[g.q.order[1]]:'?',true,g.q&&g.q.yomi&&g.q.yomi[g.q.order[1]]]]
              :[[-1,gateText(g.L),isGood(g.L)],[1,gateText(g.R),isGood(g.R)]];
     sides.forEach(function(sd){ var s2=sd[0], good=sd[2], col=wpn?0xc084fc:eng?0xffc53d:good?0x60a5fa:0xf87171, W=HW-0.35;
-      var pane=new THREE.Mesh(new THREE.PlaneGeometry(W,2.3),new THREE.MeshBasicMaterial({map:GX.gateTex(sd[1],good,eng,wpn),transparent:true,side:THREE.DoubleSide,depthWrite:false}));
+      var pane=new THREE.Mesh(new THREE.PlaneGeometry(W,2.3),new THREE.MeshBasicMaterial({map:GX.gateTex(sd[1],good,eng,wpn,sd[3]),transparent:true,side:THREE.DoubleSide,depthWrite:false}));
       pane.position.set(s2*HW/2,1.4,0); g.mesh.add(pane);
       var fm=new THREE.MeshBasicMaterial({color:col});
       [[-1],[1]].forEach(function(e){ var pst=new THREE.Mesh(new THREE.BoxGeometry(0.16,2.7,0.16),fm); pst.position.set(s2*HW/2+e[0]*W/2,1.35,0); g.mesh.add(pst); });
@@ -195,9 +197,9 @@ function start(opt){
   function prepEng(g){ if(g.q!==undefined) return; var q=opt.getQuestion&&opt.getQuestion();
     if(!q){ g.q=null; g.kind='num'; g.L={op:'+',v:5}; g.R={op:'−',v:5}; buildGateMesh(g); return; }
     q.order=Math.random()<0.5?[0,1]:[1,0]; g.q=q; g.shownAt=Date.now(); buildGateMesh(g);
-    var lab=function(side,t){ return '<div style="flex:1;min-width:0;background:#dbeafe;border:2px solid #93c5fd;border-radius:9px;padding:4px 6px;font-size:14px;line-height:1.25;word-break:break-all;"><div style="font-size:9px;opacity:.6;">'+side+'</div>'+escH(t)+'</div>'; };
+    var lab=function(side,t){ return '<div style="flex:1;min-width:0;background:#dbeafe;border:2px solid #93c5fd;border-radius:9px;padding:4px 6px;font-size:14px;line-height:1.25;word-break:break-all;"><div style="font-size:9px;opacity:.6;">'+side+'</div>'+rb(q.choices[t],(q.yomi||[])[t])+'</div>'; };
     qBanner.innerHTML='<div style="font-size:11px;opacity:.7;white-space:nowrap;">えいごゲート　せいかいで <span style="color:#2563eb">なかま ＋'+engBonus()+'</span></div><div style="font-size:28px;line-height:1.2;font-family:Arial,Helvetica,sans-serif;">'+escH(q.en)+'</div>'+
-      '<div style="display:flex;gap:6px;margin-top:6px;">'+lab('ひだり',q.choices[q.order[0]])+lab('みぎ',q.choices[q.order[1]])+'</div>';
+      '<div style="display:flex;gap:6px;margin-top:6px;">'+lab('ひだり',q.order[0])+lab('みぎ',q.order[1])+'</div>';
     qBanner.style.display='block'; try{ opt.speak&&opt.speak(q.en); }catch(e){} }
 
   // --- ループ ---
@@ -266,7 +268,7 @@ function start(opt){
         if(g.kind==='eng'&&g.q){ var ci=g.q.order[left?0:1], ok=ci===0;
           try{ opt.onAnswer&&opt.onAnswer(g.q.en,ok,Date.now()-(g.shownAt||Date.now())); }catch(e){}
           if(ok){ S.right++; changeN(Math.min(MAX_SQUAD,S.n+engBonus()),'せいかい！',true); snd('correct'); }
-          else { S.wrong++; changeN(Math.max(1,Math.floor(S.n*0.7)),'<span style="font-size:20px;">'+escH(g.q.en)+' ＝ '+escH(g.q.choices[0])+'</span>',false); }
+          else { S.wrong++; changeN(Math.max(1,Math.floor(S.n*0.7)),'<span style="font-size:20px;">'+escH(g.q.en)+' ＝ '+rb(g.q.choices[0],(g.q.yomi||[])[0])+'</span>',false); }
           setTimeout(function(){ qBanner.style.display='none'; },700); }
         else if(g.kind==='num'){ var o=left?g.L:g.R; changeN(apply(o),gateText(o),isGood(o)); }
         else if(g.kind==='wpn'){ S.wp=left?g.L:g.R; var nw=WP[S.wp]; say(nw.ico+' '+nw.name+' ゲット！','#e9d5ff',1100); snd('coin'); wpLab.innerHTML=nw.ico+' '+nw.name; }

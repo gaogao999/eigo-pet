@@ -1008,15 +1008,16 @@ window._eigoPetInit = function() {
   function runnerQuestion(){
     if(!runQ.length) runQ=buildQuestions(10).slice();
     var w=runQ.shift(); if(!w) return null;
-    var ans=shortJa(w), pool=currentWords(), seen={}, ch=[ans];
+    var yo=function(x){ return (splitSenses(x[2]||'')[0]||'').replace(/[～~]/g,'').trim(); };   // ふりがな（いみの 1つめ）
+    var ans=shortJa(w), pool=currentWords(), seen={}, ch=[ans], ys=[yo(w)];
     seen[ans]=1;
     for(var tries=0;ch.length<3&&tries<200;tries++){
       var d=pool[Math.floor(Math.random()*pool.length)], t=shortJa(d);
       if(!t||seen[t]||d[0]===w[0]||t.length>12) continue;
-      seen[t]=1; ch.push(t);
+      seen[t]=1; ch.push(t); ys.push(yo(d));
     }
     if(ch.length<3) return null;
-    return {en:w[0],choices:ch};
+    return {en:w[0],choices:ch,yomi:ys};
   }
   function runnerAnswer(en,ok,ms){
     var k=(en||'').toLowerCase(), r=state.learn[k], late=0;

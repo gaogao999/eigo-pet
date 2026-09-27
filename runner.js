@@ -49,13 +49,16 @@ function trainFrontTex(){
     g.fillStyle='#ffe38a'; g.beginPath(); g.arc(24,106,8,0,7); g.fill(); g.beginPath(); g.arc(104,106,8,0,7); g.fill();
   });
 }
-function signTex(text,bg,fg){                // ゲートの かんばん
+function furi(t,y){ var a=0,b=0; while(a<t.length&&a<y.length&&t[a]===y[a]&&!/[\u4e00-\u9fff\u3005]/.test(t[a])) a++; while(b<t.length-a&&b<y.length-a&&t[t.length-1-b]===y[y.length-1-b]&&!/[\u4e00-\u9fff\u3005]/.test(t[t.length-1-b])) b++; return [t.slice(0,a),t.slice(a,t.length-b),y.slice(a,y.length-b),t.slice(t.length-b)]; }
+function signTex(text,bg,fg,yomi){                // ゲートの かんばん
   return canvasTex(512,220,function(g,w,h){
     g.fillStyle=bg; g.fillRect(0,0,w,h);
     g.strokeStyle='rgba(0,0,0,.25)'; g.lineWidth=10; g.strokeRect(5,5,w-10,h-10);
     g.fillStyle=fg; g.textAlign='center'; g.textBaseline='middle';
     var fs=110; g.font='900 '+fs+'px '+FONT;
     while(g.measureText(text).width>w-40&&fs>26){ fs-=4; g.font='900 '+fs+'px '+FONT; }
+    if(yomi&&/[\u4e00-\u9fff\u3005]/.test(text)){ var yf=40; g.font='800 '+yf+'px '+FONT; while(g.measureText(yomi).width>w-30&&yf>16){ yf-=2; g.font='800 '+yf+'px '+FONT; } var f=furi(text,yomi); yomi=f[2]; g.fillText(yomi,w/2,40);
+      fs=Math.min(fs,96); g.font='900 '+fs+'px '+FONT; while(g.measureText(text).width>w-40&&fs>26){ fs-=4; g.font='900 '+fs+'px '+FONT; } g.fillText(text,w/2,h/2+30); return; }
     g.fillText(text,w/2,h/2+4);
   });
 }
@@ -126,9 +129,9 @@ function makeBar(){                          // スライディングで くぐ�
 function makeCoin(){
   var c=new THREE.Mesh(M.coinGeo,M.coin); c.rotation.x=Math.PI/2; return c;
 }
-function makeGate(text){                     // えいごゲート（1レーンぶん）
+function makeGate(text,yomi){                     // えいごゲート（1レーンぶん）
   var g=new THREE.Group();
-  var tex=signTex(text,'#fffaf0','#1f3b36');
+  var tex=signTex(text,'#fffaf0','#1f3b36',yomi);
   var board=new THREE.Mesh(new THREE.PlaneGeometry(2.1,0.9),own(new THREE.MeshBasicMaterial({map:tex}),true));
   board.position.y=3.2; g.add(board);
   var frame=box(2.26,1.06,0.08,own(mat(0x1f3b36))); frame.position.set(0,3.2,-0.05); g.add(frame);
@@ -381,29 +384,30 @@ function start(opt){
     var order=[0,1,2].sort(function(){ return Math.random()-0.5; });
     var g={wz:wz,q:q,correctLane:0,parts:[],done:false};
     order.forEach(function(ci,li){ var L=li-1, text=q.choices[ci];
-      var m=makeGate(text); var o=add({kind:'gate',lane:L,wz:wz,len:0.3,m:m}); g.parts.push({o:o,ci:ci});
+      var m=makeGate(text,(q.yomi||[])[ci]); var o=add({kind:'gate',lane:L,wz:wz,len:0.3,m:m}); g.parts.push({o:o,ci:ci});
       if(ci===0) g.correctLane=L; });
     S.gate=g;
     var byLane=['','',''];
-    g.parts.forEach(function(p){ byLane[p.o.lane+1]=q.choices[p.ci]; });
+    g.parts.forEach(function(p){ byLane[p.o.lane+1]=rb(q.choices[p.ci],(q.yomi||[])[p.ci]); });
     qBanner.innerHTML='<div style="font-size:11px;opacity:.7;letter-spacing:.06em;white-space:nowrap;">えいごゲート　いみは どれ？</div>'+
       '<div style="font-size:30px;line-height:1.2;font-family:Arial,Helvetica,sans-serif;">'+escH(q.en)+'</div>'+
       '<div id="rnChoices" style="display:flex;gap:6px;margin-top:8px;">'+byLane.map(function(t,i){
         return '<div data-l="'+(i-1)+'" style="flex:1;min-width:0;background:#eef5f1;border:2px solid #cfe0d8;border-radius:10px;padding:6px 4px;font-size:14px;line-height:1.25;word-break:break-all;transition:.12s;">'+
-          '<div style="font-size:9px;opacity:.6;">'+['ひだり','まんなか','みぎ'][i]+'</div>'+escH(t)+'</div>'; }).join('')+'</div>';
+          '<div style="font-size:9px;opacity:.6;">'+['ひだり','まんなか','みぎ'][i]+'</div>'+t+'</div>'; }).join('')+'</div>';
     qBanner.style.display='block';
     try{ opt.speak&&opt.speak(q.en); }catch(e){}
     q.shownAt=Date.now();
     return true;
   }
-  function escH(s){ return String(s).replace(/[&<>"']/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+  function rb(t,y){ if(!(y&&/[\u4e00-\u9fff\u3005]/.test(t))) return escH(t); var f=furi(t,y); return escH(f[0])+'<ruby style="white-space:nowrap;word-break:keep-all;">'+escH(f[1])+'<rt style="font-size:.55em;">'+escH(f[2])+'</rt></ruby>'+escH(f[3]); }   // 漢字（かんじ）に ふりがな
+function escH(s){ return String(s).replace(/[&<>"']/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
 
   function resolveGate(g){
     g.done=true; var ok=(S.lane===g.correctLane);
     g.parts.forEach(function(p){ var fr=p.o.m.userData.frame; if(fr) fr.material.color.setHex(p.ci===0?0x29a65e:(p.o.lane===S.lane?0xd9483b:0x8a9392)); });
     if(ok){ S.right++; S.combo++; var bonus=100+Math.min(5,S.combo-1)*20; S.score+=bonus; S.coins+=5;
       say('せいかい！ +'+bonus,'#fff'); snd('correct'); }
-    else { S.wrong++; S.combo=0; say('<span style="font-size:22px;">'+escH(g.q.en)+' ＝ '+escH(g.q.choices[0])+'</span>','#ffe38a',1800); snd('wrong'); }
+    else { S.wrong++; S.combo=0; say('<span style="font-size:22px;">'+escH(g.q.en)+' ＝ '+rb(g.q.choices[0],(g.q.yomi||[])[0])+'</span>','#ffe38a',1800); snd('wrong'); }
     try{ opt.onAnswer&&opt.onAnswer(g.q.en,ok,Date.now()-(g.q.shownAt||Date.now())); }catch(e){}
     setTimeout(function(){ if(S.gate===g){ S.gate=null; qBanner.style.display='none'; } },700);
   }

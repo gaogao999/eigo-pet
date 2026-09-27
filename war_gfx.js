@@ -268,7 +268,8 @@ G.bullets=function(scene,max){
 };
 
 /* ---------- ゲート ---------- */
-G.gateTex=function(text,good,eng,wpn){
+G.gateTex=function(text,good,eng,wpn,yomi){
+  if(yomi&&G.furi) yomi=G.furi(text,yomi)[2];
   return canvasTex(512,256,function(g,w,h){
     var c1=wpn?'rgba(190,130,255,.8)':eng?'rgba(255,200,60,.78)':good?'rgba(80,150,250,.8)':'rgba(245,90,90,.8)', c2=wpn?'rgba(90,30,170,.92)':eng?'rgba(200,100,0,.9)':good?'rgba(25,70,210,.92)':'rgba(150,20,20,.92)';
     var gr=g.createLinearGradient(0,0,0,h); gr.addColorStop(0,c1); gr.addColorStop(1,c2); g.fillStyle=gr; g.fillRect(0,0,w,h);
@@ -280,6 +281,8 @@ G.gateTex=function(text,good,eng,wpn){
     if(eng){ g.fillStyle='rgba(120,53,15,.9)'; g.fillRect(w/2-90,14,180,40); g.fillStyle='#fff7d6'; g.font='900 26px '+FONT; g.fillText('ENGLISH',w/2,35); }
     var fs=(eng||wpn)?84:128; g.font='900 '+fs+'px '+FONT; while(g.measureText(text).width>w-50&&fs>30){ fs-=4; g.font='900 '+fs+'px '+FONT; }
     var ty=(eng||wpn)?h/2+24:h/2+6;
+    if(yomi&&/[\u4e00-\u9fff\u3005]/.test(text)){ ty+=18; var yf=34; g.font='800 '+yf+'px '+FONT; while(g.measureText(yomi).width>w-40&&yf>16){ yf-=2; g.font='800 '+yf+'px '+FONT; }
+      g.fillStyle='#fff'; g.lineWidth=6; g.strokeStyle='rgba(0,0,0,.35)'; g.strokeText(yomi,w/2,ty-fs*0.5-yf*0.5-2); g.fillText(yomi,w/2,ty-fs*0.5-yf*0.5-2); fs=Math.min(fs,76); g.font='900 '+fs+'px '+FONT; while(g.measureText(text).width>w-50&&fs>30){ fs-=4; g.font='900 '+fs+'px '+FONT; } }
     g.lineWidth=14; g.strokeStyle='rgba(0,0,0,.35)'; g.lineJoin='round'; g.strokeText(text,w/2,ty);
     g.fillStyle='#ffffff'; g.fillText(text,w/2,ty);
   });
