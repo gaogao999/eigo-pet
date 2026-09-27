@@ -324,7 +324,7 @@ function start(opt){
       hero.g.visible=false; };
     im.src=opt.pet.img; })(); }
   var marker=new THREE.Mesh(new THREE.RingGeometry(0.3,0.42,24),new THREE.MeshBasicMaterial({color:0x60a5fa,transparent:true,opacity:0,depthWrite:false})); marker.rotation.x=-Math.PI/2; marker.position.y=0.25; scene.add(marker);
-  var HC=(function(){ var n=(opt.pet&&opt.pet.name)||''; if(!n) return CLS[0]; var h=0; for(var k=0;k<n.length;k++) h=(h*31+n.charCodeAt(k))>>>0; return CLS[h%4]; })();
+  var HC=(function(){ var k=''; try{ k=opt.research.get().cls; }catch(e){} return CLS.filter(function(c){ return c.k===k; })[0]||CLS[0]; })();
   hero.lv=1; hero.xp=0;
   function heroNeed(){ return 6+hero.lv*5; }
   function heroXp(v){ if(hero.lv>=10) return; hero.xp+=v; while(hero.lv<10&&hero.xp>=heroNeed()){ hero.xp-=heroNeed(); hero.lv++; ringFx(hero.x,hero.z,0xfde047,2,0.6); fx.burst(hero.x,1.2,hero.z,24,0xfde047,4,0.6); say(HC.ico+' ゆうしゃ Lv'+hero.lv+'！','#fde68a',900); snd('correct'); } }
@@ -700,14 +700,17 @@ function start(opt){
       .concat(info?[{t:'🔬 けんきゅう（★ '+info.stars+'）',c:'#7c3aed',f:showRes},{t:'👕 きせかえ',c:'#0891b2',f:showSkin}]:[])
       .concat([{t:'🐾 ゆうしゃ ／ 📖 ずかん',c:'#b45309',f:showBook}])); }
   function bar(v,max){ var n=Math.max(1,Math.min(5,Math.round(v/max*5))); return '<span style="color:#f59e0b;letter-spacing:1px;">'+'■'.repeat(n)+'</span><span style="color:#e5e7eb;">'+'■'.repeat(5-n)+'</span>'; }
-  function showBook(){ var nm=(opt.pet&&opt.pet.name)||'ゆうしゃ';
+  function showBook(){ var nm='ゆうしゃ';
     var html='<div style="font-size:20px;font-weight:900;">🐾 '+escH(nm)+'</div><div style="font-size:14px;font-weight:900;color:#1d4ed8;">'+HC.ico+' '+HC.name+'</div>'+
       '<div style="text-align:left;font-size:13px;line-height:1.8;background:#eff6ff;border-radius:10px;padding:6px 10px;margin:6px 0;">こうげき '+bar(HC.atk*HC.rate,8)+'<br>しゃてい '+bar(HC.range,4.5)+'<br>はやさ '+bar(HC.spd,3.6)+'<br>とくぎ：'+HC.skill+(opt.pet&&opt.pet.power>1?'<br>ごきげん ボーナス：+'+Math.round((opt.pet.power-1)*100)+'%':'')+'<br><span style="font-size:11px;opacity:.7;">てきを たおすと レベルアップ（さいだい Lv10）</span></div>'+
       '<div style="font-size:16px;font-weight:900;margin-top:8px;">📖 てき ずかん</div><div style="max-height:34vh;overflow:auto;text-align:left;font-size:12px;line-height:1.5;">'+
       ['n','f','b','sh','fly','heal','sl','mo','ra','go','boss'].map(function(k){ var e=ET[k]; return '<div style="border-bottom:1px solid #e5e7eb;padding:4px 2px;"><b>'+EICO[k]+' '+e.name+'</b>　たいりょく '+bar(e.hp,7)+' はやさ '+bar(e.spd,3)+'<br><span style="opacity:.8;">'+
         (e.air?'そらを とぶ（💣が とどかない）。':e.armor?'よろいで ダメージを へらす。':e.heal?'まわりの なかまを なおす。':e.split?'たおすと 2ひきに わかれる。':e.dig?'とちゅうで もぐる。':k==='ra'?'むれで くる。':k==='go'?'とても かたい。まほうが ききにくい。':k==='boss'?'HPが はんぶんで バリア（🔮で こわす）。':'')+weakTxt(k)+'</span></div>'; }).join('')+
       '<div style="padding:4px 2px;opacity:.8;">✨ きんいろに ひかる てきは つよいけど コイン 3ばい！</div></div>';
-    showPanel(html,[{t:'もどる',c:'#6b7280',f:showStart}]); }
+    var pick='<div style="display:flex;gap:4px;margin:4px 0 8px;">'+CLS.map(function(c){ return '<button data-c="'+c.k+'" style="flex:1;border:none;border-radius:10px;padding:6px 2px;font-weight:900;font-size:11px;font-family:inherit;color:#fff;background:'+(c===HC?'#1d4ed8':'#93c5fd')+';">'+c.ico+'<br>'+c.name+'</button>'; }).join('')+'</div>';
+    html=html.replace('</div><div style="text-align:left','</div>'+pick+'<div style="text-align:left');
+    showPanel(html,[{t:'もどる',c:'#6b7280',f:showStart}]);
+    [].forEach.call(panel.querySelectorAll('button[data-c]'),function(b){ b.onclick=function(e){ e.stopPropagation(); HC=CLS.filter(function(c){ return c.k===b.dataset.c; })[0]; try{ opt.research.setCls(HC.k); }catch(_){} snd('tap'); showBook(); }; }); }
   function showRes(){ var info=opt.research.get();
     var html='<div style="font-size:22px;font-weight:900;">🔬 けんきゅう</div><div style="font-size:12px;opacity:.75;margin-bottom:8px;">ステージの ★で ずっと つよくなる（のこり ★ '+info.stars+'）</div>';
     showPanel(html,RES.map(function(r){ var lv=info.lv[r.k]||0, cost=lv+1, max=lv>=3;

@@ -976,10 +976,10 @@ window._eigoPetInit = function() {
     loadThree(function(){
       runQ=[];
       EigoTower.start({
-        pet:(function(){ var i=petInfo(); return i&&i.img?{img:imgSrc(i.img),name:i.name,power:1+Math.min(100,state.happy||0)/100*0.3}:null; })(),
         container:root, stage:state.towerStage||1, getQuestion:runnerQuestion, onAnswer:runnerAnswer, sfx:sfx, speak:speak,
-        research:{ get:function(){ var sv=state.towerStars||{}, tot=0; for(var k in sv) tot+=sv[k]; return {lv:state.towerRes||{}, stars:tot-(state.towerSpent||0), total:tot, skin:state.towerSkin||'red', endless:(state.towerStage||1)>=3, bestWave:state.towerBestWave||0}; },
+        research:{ get:function(){ var sv=state.towerStars||{}, tot=0; for(var k in sv) tot+=sv[k]; return {lv:state.towerRes||{}, stars:tot-(state.towerSpent||0), total:tot, skin:state.towerSkin||'red', cls:state.towerCls||'knight', endless:(state.towerStage||1)>=3, bestWave:state.towerBestWave||0}; },
                    setSkin:function(k){ state.towerSkin=k; save(); },
+                   setCls:function(k){ state.towerCls=k; save(); },
                    buy:function(k,cost){ var info=this.get(); if(info.stars<cost||(info.lv[k]||0)>=3) return false; state.towerRes=state.towerRes||{}; state.towerRes[k]=(state.towerRes[k]||0)+1; state.towerSpent=(state.towerSpent||0)+cost; save(); return true; } },
         onEnd:function(r){
           var happyGain=r.quit?Math.min(8,1+r.right):Math.min(30,4+r.right*2+(r.win?6:0));
