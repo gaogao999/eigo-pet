@@ -812,7 +812,6 @@ function start(opt){
     showPanel('<div style="font-size:13px;opacity:.7;font-weight:800;">STAGE '+stage+'</div><div style="font-size:28px;font-weight:900;margin:2px 0 6px;">'+MP.name+'</div>'+
       '<div style="font-size:12px;opacity:.75;">ウェーブ '+NW+'　さいごに ボス</div>'+(bonus?'<div style="font-size:12px;margin-top:6px;color:#1d4ed8;">'+bonus+'</div>':''),
       [{t:'▶ スタート',c:'#15803d',f:startGame}]
-      .concat(info&&info.endless?[{t:'♾ むげんモード<div style="font-size:11px;opacity:.9;">さいこう ウェーブ '+(info.bestWave||0)+'</div>',c:'#db2777',f:function(){ ENDLESS=true; NW=9999; startGame(); }}]:[])
       .concat(info?[{t:'🔬 けんきゅう（★ '+info.stars+'）',c:'#7c3aed',f:showRes},{t:'👕 きせかえ',c:'#0891b2',f:showSkin}]:[])
       .concat([{t:'🐾 ゆうしゃ ／ 📖 ずかん',c:'#b45309',f:showBook}])); }
   function bar(v,max){ var n=Math.max(1,Math.min(5,Math.round(v/max*5))); return '<span style="color:#f59e0b;letter-spacing:1px;">'+'■'.repeat(n)+'</span><span style="color:#e5e7eb;">'+'■'.repeat(5-n)+'</span>'; }
