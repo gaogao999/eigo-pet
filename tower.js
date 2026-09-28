@@ -43,22 +43,22 @@ var BR={
 };
 // Lv5「きわみ」：Lv4の みちから さらに 2つに わかれる（ぜんぶで 16しゅ）
 var B5={
-  snipe:  [{key:'hawk',ico:'🦅',name:'ホークアイ',desc:'いちばん つよい てきを ねらう・よろい むし',cost:140,dmg:34,rate:0.75,range:8,pierce:true,force:1},
-           {key:'dead',ico:'💀',name:'デッドショット',desc:'HPが 3わりの てきを いちげきで',cost:140,dmg:22,rate:0.9,range:7,exec:0.3}],
-  gat:    [{key:'storm',ico:'🌪',name:'ストーム',desc:'2たいを どうじに うつ',cost:140,dmg:2.6,rate:7,range:5,multi:2},
-           {key:'fire',ico:'🔥',name:'ほのおの や',desc:'もやして じわじわ ダメージ',cost:140,dmg:3,rate:5,range:4.8,burn:4}],
-  thunder:[{key:'lord',ico:'👑',name:'ライトニングロード',desc:'8たいに れんさ',cost:140,dmg:12,rate:1.1,range:5,chain:8},
-           {key:'tstorm',ico:'⛈',name:'かみなりぐも',desc:'4びょうごとに 3たいへ らくらい',cost:140,dmg:10,rate:1.0,range:5.2,chain:3,storm:3}],
-  curse:  [{key:'death',ico:'☠',name:'デスカース',desc:'ダメージ +80%・たおすと まわりに うつる',cost:140,dmg:11,rate:1.1,range:4.8,curse:3,cmul:1.8,spread:1},
-           {key:'soul',ico:'👻',name:'ソウルイーター',desc:'のろった てきは コイン +2',cost:140,dmg:12,rate:1.2,range:4.8,curse:3,soul:2}],
-  blizz:  [{key:'zero',ico:'🧊',name:'ぜったいれいど',desc:'とても ひろく とても おそく',cost:140,dmg:5,rate:1.3,range:5,slow:0.8,splash:2.8},
-           {key:'breath',ico:'🌬',name:'こおりの いき',desc:'5びょうごとに ぜんぶ こおらせる',cost:140,dmg:4,rate:1.3,range:4.8,slow:0.6,splash:1.6,nova:1.6}],
-  frost:  [{key:'prison',ico:'⛓',name:'アイスプリズン',desc:'よく とめる・とまった てきは 2ばい ダメージ',cost:140,dmg:5,rate:1.4,range:4.6,slow:0.6,stop:0.55,prison:1},
-           {key:'icicle',ico:'🔱',name:'つららの あめ',desc:'つららで はんい こうげき',cost:140,dmg:9,rate:1.1,range:4.8,slow:0.6,splash:1.6}],
-  meteor: [{key:'bigm',ico:'🌋',name:'だいメテオ',desc:'ものすごく ひろい ばくはつ',cost:140,dmg:32,rate:0.3,range:5.6,splash:3.2},
-           {key:'cluster',ico:'🎆',name:'クラスター',desc:'ばくだんが 5つに はじける',cost:140,dmg:16,rate:0.45,range:5.2,splash:1.6,cluster:5}],
-  missile:[{key:'homing',ico:'🎯',name:'ホーミング',desc:'3はつ どうじ・そらにも',cost:140,dmg:9,rate:0.8,range:5.6,splash:1.2,air:true,multi:3},
-           {key:'napalm',ico:'🔥',name:'ナパーム',desc:'もえる じめんを のこす・そらにも',cost:140,dmg:9,rate:0.8,range:5.4,splash:1.4,air:true,zone:3}]
+  snipe:  [{key:'hawk',ico:'🦅',name:'ホークアイ',desc:'いちばん つよい てきを ねらう・よろい むし',cost:170,dmg:34,rate:0.75,range:8,pierce:true,force:1},
+           {key:'dead',ico:'💀',name:'デッドショット',desc:'HPが 3わりの てきを いちげきで',cost:170,dmg:22,rate:0.9,range:7,exec:0.3}],
+  gat:    [{key:'storm',ico:'🌪',name:'ストーム',desc:'2たいを どうじに うつ',cost:170,dmg:2.6,rate:7,range:5,multi:2},
+           {key:'fire',ico:'🔥',name:'ほのおの や',desc:'もやして じわじわ ダメージ',cost:170,dmg:3,rate:5,range:4.8,burn:4}],
+  thunder:[{key:'lord',ico:'👑',name:'ライトニングロード',desc:'8たいに れんさ',cost:170,dmg:12,rate:1.1,range:5,chain:8},
+           {key:'tstorm',ico:'⛈',name:'かみなりぐも',desc:'4びょうごとに 3たいへ らくらい',cost:170,dmg:10,rate:1.0,range:5.2,chain:3,storm:3}],
+  curse:  [{key:'death',ico:'☠',name:'デスカース',desc:'ダメージ +80%・たおすと まわりに うつる',cost:170,dmg:11,rate:1.1,range:4.8,curse:3,cmul:1.8,spread:1},
+           {key:'soul',ico:'👻',name:'ソウルイーター',desc:'のろった てきは コイン +2',cost:170,dmg:12,rate:1.2,range:4.8,curse:3,soul:2}],
+  blizz:  [{key:'zero',ico:'🧊',name:'ぜったいれいど',desc:'とても ひろく とても おそく',cost:170,dmg:5,rate:1.3,range:5,slow:0.8,splash:2.8},
+           {key:'breath',ico:'🌬',name:'こおりの いき',desc:'5びょうごとに ぜんぶ こおらせる',cost:170,dmg:4,rate:1.3,range:4.8,slow:0.6,splash:1.6,nova:1.6}],
+  frost:  [{key:'prison',ico:'⛓',name:'アイスプリズン',desc:'よく とめる・とまった てきは 2ばい ダメージ',cost:170,dmg:5,rate:1.4,range:4.6,slow:0.6,stop:0.55,prison:1},
+           {key:'icicle',ico:'🔱',name:'つららの あめ',desc:'つららで はんい こうげき',cost:170,dmg:9,rate:1.1,range:4.8,slow:0.6,splash:1.6}],
+  meteor: [{key:'bigm',ico:'🌋',name:'だいメテオ',desc:'ものすごく ひろい ばくはつ',cost:170,dmg:32,rate:0.3,range:5.6,splash:3.2},
+           {key:'cluster',ico:'🎆',name:'クラスター',desc:'ばくだんが 5つに はじける',cost:170,dmg:16,rate:0.45,range:5.2,splash:1.6,cluster:5}],
+  missile:[{key:'homing',ico:'🎯',name:'ホーミング',desc:'3はつ どうじ・そらにも',cost:170,dmg:9,rate:0.8,range:5.6,splash:1.2,air:true,multi:3},
+           {key:'napalm',ico:'🔥',name:'ナパーム',desc:'もえる じめんを のこす・そらにも',cost:170,dmg:9,rate:0.8,range:5.4,splash:1.4,air:true,zone:3}]
 };
 function Lof(type,lv,br,br2){ if(lv>=5) return B5[BR[type][br||0].key][br2||0]; return lv>=4?BR[type][br||0]:TT[type].lv[lv-1]; }
 // ペットの クラス（ペットの なまえで きまる）
@@ -72,7 +72,7 @@ var CLS=[
   {k:'fairy',   ico:'🧚',name:'ようせい',    forms:['ようせい','ピクシー','ようせいの おう'],       atk:2.2,rate:1.6,range:3.3,spd:3.8,skill:'いやし（おしろを なおし、てきを おそく）',sk:12}];
 var FORM_MUL=[1,1.5,2.2], FORM_CD=[1,0.85,0.7];
 // てきの しゅるい：hp＝きほんの なんばい、spd、sc＝おおきさ、coin、dmg＝おしろへの ダメージ、armor＝へらす ダメージ
-var EICO={gh:'👻',sp:'🕷',spl:'🕷',flag:'🚩',cham:'🦎',fb:'🔥',n:'🪖',f:'👺',b:'👹',sh:'🛡',fly:'🦇',heal:'🧙',sl:'🟢',sl2:'🟢',mo:'🦔',go:'🗿',ra:'🐀',boss:'👑'}, TICO={arrow:'🏹',magic:'🔮',ice:'❄️',cannon:'💣',hero:'🐾'};
+var EICO={kn:'👑',tr:'🧌',gh:'👻',sp:'🕷',spl:'🕷',flag:'🚩',cham:'🦎',fb:'🔥',n:'🪖',f:'👺',b:'👹',sh:'🛡',fly:'🦇',heal:'🧙',sl:'🟢',sl2:'🟢',mo:'🦔',go:'🗿',ra:'🐀',boss:'👑'}, TICO={arrow:'🏹',magic:'🔮',ice:'❄️',cannon:'💣',hero:'🐾'};
 var ET={
   n:   {name:'へいし',     hp:1,  spd:1.5, sc:1.2, coin:1, dmg:1, weak:{}, role:'ふつう'},
   f:   {name:'はしりや',   hp:0.6,spd:2.6, sc:1.05,coin:1, dmg:1, weak:{ice:1.5}, role:'はやい'},
@@ -91,6 +91,8 @@ var ET={
   flag:{name:'はたもち',   hp:1.8,spd:1.25,sc:1.2, coin:3, dmg:1, weak:{arrow:1.5}, flag:true, role:'しえん'},
   cham:{name:'カメレオン', hp:1.5,spd:1.6, sc:1.1, coin:3, dmg:1, weak:{ice:1.5}, hide:true, role:'とくしゅ'},
   fb:  {name:'ひのとり',   hp:0.9,spd:2.3, sc:1,   coin:2, dmg:1, air:true, weak:{arrow:1.5,ice:1.5}, role:'そら'},
+  kn:  {name:'おうごんきし', hp:9,  spd:0.9, sc:1.55,coin:6, dmg:3, armor:4, army:'kn', weak:{magic:1.6,cannon:0.7}, role:'かたい'},
+  tr:  {name:'トロール',   hp:7,  spd:1.0, sc:1.45,coin:5, dmg:3, regen:0.06, army:'tr', weak:{cannon:1.3,arrow:1.2}, role:'かたい'},
   boss:{name:'ボス',       hp:45, spd:0.65,sc:1,   coin:30,dmg:10,armor:1}
 };
 
@@ -119,7 +121,7 @@ function start(opt){
      paths:[[[0,-17],[0,-13],[-4.2,-11],[-4.2,-7],[-0.8,-5.5],[-4.2,-2],[-4.2,3],[-1.2,5.2],[-3.6,8.2],[-1,11],[0,14.2]],
             [[0,-17],[0,-13],[4.2,-11],[4.2,-5],[1.2,-2.2],[4.2,0.8],[4.2,6],[1.3,8.2],[1,11],[0,14.2]]]}];
   // ワールド（5ステージで 1ワールド。5ステージめは ワールドの ボス）
-  var STG=Math.max(1,opt.stage||1), WORLD=((Math.ceil(STG/5)-1)%5)+1, SUB=(STG-1)%5+1, LOOP=Math.floor((STG-1)/25);
+  var STG=Math.max(1,opt.stage||1), WPS=8, WORLD=((Math.ceil(STG/WPS)-1)%5)+1, SUB=(STG-1)%WPS+1, LOOP=Math.floor((STG-1)/(WPS*5));
   var MP=MAPS[WORLD-1];
   var scene=new THREE.Scene(); scene.fog=new THREE.Fog(MP.bg,45,80);
   scene.background=GX.canvasTex(4,256,function(c2,w,h){ var gr=c2.createLinearGradient(0,0,0,h), b=new THREE.Color(MP.bg); gr.addColorStop(0,'#'+b.clone().multiplyScalar(0.75).getHexString()); gr.addColorStop(0.6,'#'+b.getHexString()); gr.addColorStop(1,'#'+b.clone().lerp(new THREE.Color(0xffffff),0.4).getHexString()); c2.fillStyle=gr; c2.fillRect(0,0,w,h); });
@@ -355,7 +357,8 @@ function start(opt){
     P(new C(0.02,0.02,1.6,4),'#78350f',0.25,1.0,0.05),P(new B(0.02,0.4,0.55),'#dc2626',0.26,1.55,0.32),P(new B(0.025,0.14,0.14),'#fde047',0.27,1.58,0.3)].concat(eyes(0.87,-0.158)))};
   EG.cham={hipY:0.14,hipX:0.12,leg:M([P(new C(0.04,0.04,0.16,4),'#15803d',0,-0.07,0)]),body:M([P(new SP(0.22,10,8),'#22c55e',0,0.28,0,1,0.7,1.6),P(new SP(0.14,10,8),'#16a34a',0,0.32,-0.36),P(new SP(0.06,6,5),'#fde047',-0.09,0.38,-0.42),P(new SP(0.06,6,5),'#fde047',0.09,0.38,-0.42),
     P(new To(0.14,0.04,6,12),'#15803d',0,0.25,0.42,1,1,1,0,Math.PI/2,0),P(new C(0.05,0.08,0.06,6),'#86efac',0,0.45,0.1)])};
-  var armies={}; ['n','f','b','sh','heal','sl','mo','go','ra','gh','sp','flag','cham'].forEach(function(k){ armies[k]=GX.army(scene,'red',k==='n'?MAX_EN:160,EG[k]); armies[k].body.castShadow=true; armies[k].sh.material.opacity=0.5; });
+  EG.kn=EG.sh; EG.tr=EG.b;
+  var armies={}; ['n','f','b','sh','heal','sl','mo','go','ra','gh','sp','flag','cham','kn','tr'].forEach(function(k){ armies[k]=GX.army(scene,'red',k==='n'?MAX_EN:160,EG[k]); armies[k].body.castShadow=true; armies[k].sh.material.opacity=0.5; });
   // コウモリ（はねが パタパタ）
   var batBody=new THREE.InstancedMesh(M([P(new SP(0.2,8,6),'#3b0764',0,0,0,1,0.9,1.1),P(new K(0.06,0.14,4),'#3b0764',-0.09,0.2,0),P(new K(0.06,0.14,4),'#3b0764',0.09,0.2,0),P(new SP(0.04,5,4),'#ef4444',-0.07,0.04,-0.17),P(new SP(0.04,5,4),'#ef4444',0.07,0.04,-0.17)]),lam,120);
   var wingG=M([P(new B(0.55,0.03,0.3),'#581c87',0.3,0,0),P(new B(0.25,0.03,0.2),'#6b21a8',0.62,0,0.05)]);
@@ -363,7 +366,7 @@ function start(opt){
   var BATC=new THREE.Color(1,1,1), FBC=new THREE.Color(3.2,1.3,0.4); [batBody,batWL,batWR].forEach(function(m){ for(var ci=0;ci<120;ci++) m.setColorAt(ci,BATC); });
   [batBody,batWL,batWR,batSh].forEach(function(m){ m.instanceMatrix.setUsage(THREE.DynamicDrawUsage); m.frustumCulled=false; scene.add(m); });
   // ワールドの ボス（5ステージめ）。1〜4ステージめは ちゅうボスの おに
-  var BK=SUB===5?['boar','yeti','scorp','dragon','maou'][WORLD-1]:'ogre';
+  var BK=SUB===WPS?['boar','yeti','scorp','dragon','maou'][WORLD-1]:'ogre';
   var BINFO={ogre:{name:'おに',h:2.9},boar:{name:'イノシシ王',h:3.2,hp:1.2,spd:0.8},yeti:{name:'イエティ',h:4.4,hp:1.3,spd:0.65},scorp:{name:'きょだいサソリ',h:3.0,hp:1.3,spd:0.75},dragon:{name:'ほのおの ドラゴン',h:3.4,hp:1.4,spd:0.7,fly:true},maou:{name:'まおう',h:4.6,hp:1.8,spd:0.6}}[BK];
   function makeBoss(k){ var g=new THREE.Group(), L=[], an={legs:[],wings:[]}, Bx=THREE.BoxGeometry, Cy=THREE.CylinderGeometry, Sp=THREE.SphereGeometry, Co=THREE.ConeGeometry;
     function leg(x,z,len,col,r){ var lg=new THREE.Group(); lg.position.set(x,len,z); lg.add(new THREE.Mesh(M([P(new Cy(r||0.12,(r||0.12)*0.8,len,6),col,0,-len/2,0),P(new Bx((r||0.12)*2.2,0.1,(r||0.12)*2.6),'#1c1917',0,-len+0.05,-0.04)]),lam)); g.add(lg); an.legs.push(lg); return lg; }
@@ -433,7 +436,7 @@ function start(opt){
   bolt.visible=false; scene.add(bolt);
   var rings=[]; function ringFx(x,z,color,size,life){ var m=new THREE.Mesh(new THREE.RingGeometry(0.7,1,32),new THREE.MeshBasicMaterial({color:color,transparent:true,opacity:0.9,blending:THREE.AdditiveBlending,depthWrite:false,side:THREE.DoubleSide}));
     m.rotation.x=-Math.PI/2; m.position.set(x,0.25,z); scene.add(m); rings.push({m:m,t:0,life:life||0.4,size:size}); }
-  var PHASE=new THREE.Color(0.5,0.6,1.1), NTINT=[null,new THREE.Color(0.85,0.95,1.4),new THREE.Color(1.3,1.15,0.8),new THREE.Color(1.5,0.8,0.45),new THREE.Color(0.7,0.65,1.05)][WORLD-1], SLOW=new THREE.Color(0.55,0.8,1.5), HIT=new THREE.Color(2,1.6,1.6), STUN=new THREE.Color(2,2,2.2), CURSE=new THREE.Color(1.1,0.6,1.4), ELITE=new THREE.Color(1.7,1.35,0.4);
+  var KNT=new THREE.Color(1.6,1.3,0.45), TRT=new THREE.Color(0.55,1.15,0.55), PHASE=new THREE.Color(0.5,0.6,1.1), NTINT=[null,new THREE.Color(0.85,0.95,1.4),new THREE.Color(1.3,1.15,0.8),new THREE.Color(1.5,0.8,0.45),new THREE.Color(0.7,0.65,1.05)][WORLD-1], SLOW=new THREE.Color(0.55,0.8,1.5), HIT=new THREE.Color(2,1.6,1.6), STUN=new THREE.Color(2,2,2.2), CURSE=new THREE.Color(1.1,0.6,1.4), ELITE=new THREE.Color(1.7,1.35,0.4);
 
   // --- ゆうしゃ（タップした ところへ あるく・ちかくの てきを きる） ---
   // --- ゆうしゃ（クラスごとの すがた・しんかで かわる） ---
@@ -591,18 +594,20 @@ function start(opt){
     panel.appendChild(card); }
 
   // --- じょうたい ---
-  var stage=STG, NW=5+Math.min(3,Math.floor((WORLD+SUB-2)/2));
+  var stage=STG, NW=5+Math.min(4,Math.floor((WORLD+SUB-2)/2));
   // けんきゅう（★で つよくなる・ずっと のこる）
   var S={speed:1,streak:0,freeze:0,slow:0,coins:40+stage*10,hp:20,maxHp:20,wave:0,phase:'prep',prepT:0,spawnQ:[],spawnT:0,en:[],proj:[],bolts:0,right:0,wrong:0,kills:0,over:false,paused:false,last:0,t:0,shake:0,seen:{}};
   R.S=S;
   document.getElementById('twStage').textContent=stage;
-  function baseHp(w){ return 4*(1+0.22*(w-1))*(1+0.15*(stage-1))*(1+0.5*LOOP); }
+  var ECO=Math.max(0.65,1-0.01*(STG-1));   // あとの ステージは コインが すこし へる
+  function baseHp(w){ return 4*(1+0.22*(w-1))*(1+0.12*(stage-1))*Math.pow(1.03,stage-1)*(1+0.6*LOOP); }   // あとの ステージほど ぐんと つよく
   var WPOOL=[[['f',2],['sl',2],['ra',1],['b',1]],[['f',2],['fly',2],['sh',2],['mo',2],['sp',1]],[['ra',1],['mo',2],['heal',1],['cham',2],['go',1]],[['f',2],['fb',2],['b',1],['flag',1],['sl',2]],[['gh',2],['sh',2],['flag',1],['heal',1],['go',1],['sp',1],['cham',1]]];
-  function makeWave(w){ var q=[], n=Math.round((8+w*4+stage)*(S.mod&&S.mod.k==='swarm'?1.4:1)), u=w+SUB-1, pool=[['n',5]].concat(WPOOL[WORLD-1].slice(0,Math.min(7,1+Math.floor(u/2))));
+  function heavy(){ var h=[]; if(SUB>=4||WORLD>=2) h.push(['tr',Math.min(2,0.5+stage*0.06)]); if(SUB>=6||WORLD>=3) h.push(['kn',Math.min(2,0.3+stage*0.05)]); return h; }
+  function makeWave(w){ var q=[], n=Math.round((8+w*4+stage)*(S.mod&&S.mod.k==='swarm'?1.4:1)), u=w+SUB-1, pool=[['n',5]].concat(WPOOL[WORLD-1].slice(0,Math.min(7,1+Math.floor(u/2)))).concat(w>=3?heavy():[]);
     var tot=pool.reduce(function(a,b){ return a+b[1]; },0);
     for(var i=0;i<n;i++){ var r=Math.random()*tot, ty='n'; for(var j=0;j<pool.length;j++){ r-=pool[j][1]; if(r<=0){ ty=pool[j][0]; break; } }
       if(ty==='ra'){ for(var rr=0;rr<4;rr++) q.push({ty:'ra',gap:0.15}); }
-      q.push({ty:ty,gap:ty==='b'||ty==='sh'||ty==='go'?0.9:ty==='f'?0.35:0.5}); }
+      q.push({ty:ty,gap:ty==='b'||ty==='sh'||ty==='go'||ty==='kn'||ty==='tr'?1.0:ty==='f'?0.35:0.5}); }
     if(w===NW){ q.splice(Math.floor(n*0.6),0,{ty:'boss',gap:1.2}); }
     q.forEach(function(it){ if(it.ty==='fb') it.gap=0.4; });
     return q; }
@@ -752,7 +757,7 @@ function start(opt){
     if(a.ty==='boss'&&a.bk==='ogre'&&!a.barUsed&&a.hp<a.max*0.5&&a.hp>0){ a.barUsed=true; a.barrier=5; say('🛡 バリア！ まほうで こわせ！','#bfdbfe',1600); snd('wrong'); ringFx(a.x,a.z,0x93c5fd,3,0.6); }
     if(a.hp<=0&&a.curse>0){ if(a.csoul){ S.coins+=a.csoul; } if(a.cspread){ S.en.forEach(function(b){ if(!b.dead&&b!==a&&Math.hypot(b.x-a.x,b.z-a.z)<2.2){ b.curse=3; b.cmul=a.cmul; b.cspread=1; fx.emit(b.x,1,b.z,0,1,0,0xa855f7,0.5); } }); } }
     if(a.hp<=0){ a.dead=true; S.kills++; var et=ET[a.ty]; heroXp(a.ty==='boss'?10:a.elite?4:1); if(a.elite){ S.coins+=et.coin*2; coinPop(a.x,1.2,a.z,et.coin*3); }
-      if(et.split){ for(var sp2=0;sp2<2;sp2++){ spawn('sl2'); var ch=S.en[S.en.length-1]; ch.pi=a.pi; ch.s=Math.max(0,a.s-0.4*sp2); ch.off=a.off+(sp2?0.35:-0.35); ch.x=a.x; ch.z=a.z; } fx.burst(a.x,0.4,a.z,12,0x4ade80,3,0.5); } var cg=(et.coin+cv('gold'))*(S.mod&&S.mod.k==='gold'?2:S.mod&&S.mod.k==='tough'?1.5:1); S.coins+=Math.round(cg); hud2(); var y=a.y||0.6;
+      if(et.split){ for(var sp2=0;sp2<2;sp2++){ spawn('sl2'); var ch=S.en[S.en.length-1]; ch.pi=a.pi; ch.s=Math.max(0,a.s-0.4*sp2); ch.off=a.off+(sp2?0.35:-0.35); ch.x=a.x; ch.z=a.z; } fx.burst(a.x,0.4,a.z,12,0x4ade80,3,0.5); } var cg=(et.coin+cv('gold'))*(S.mod&&S.mod.k==='gold'?2:S.mod&&S.mod.k==='tough'?1.5:1); S.coins+=Math.max(1,Math.round(cg*ECO)); hud2(); var y=a.y||0.6;
       fx.burst(a.x,y,a.z,a.ty==='boss'?60:5,0xffd34d,a.ty==='boss'?6:2.2,0.5); fx.burst(a.x,y,a.z,a.ty==='fly'?8:4,a.ty==='fly'?0x7e22ce:0xffffff,2,0.35);
       if(et.coin>=3) coinPop(a.x,y+0.6,a.z,et.coin);
       if(a.ty==='boss'){ snd('fanfare'); say(BINFO.name+' げきは！','#fde047',1300); S.shake=1; ringFx(a.x,a.z,0xffd34d,4,0.7); }
@@ -762,7 +767,7 @@ function start(opt){
     labels.appendChild(dd); requestAnimationFrame(function(){ dd.style.transform='translate(-50%,-150%) scale(1)'; dd.style.opacity='0'; }); setTimeout(function(){ dd.remove(); pops--; },650); }
   function coinPop(x,y,z,v){ var sp=toScreen(x,y,z), d=el('div','position:absolute;left:'+sp.x+'px;top:'+sp.y+'px;transform:translate(-50%,-50%);font-weight:900;font-size:15px;color:#fde047;-webkit-text-stroke:3px rgba(60,40,0,.8);paint-order:stroke fill;transition:transform .8s ease-out,opacity .8s;pointer-events:none;','🪙+'+v);
     labels.appendChild(d); requestAnimationFrame(function(){ d.style.transform='translate(-50%,-160%)'; d.style.opacity='0'; }); setTimeout(function(){ d.remove(); },850); }
-  function spawn(ty){ var et=ET[ty], hp=baseHp(S.wave)*et.hp*(ty==='boss'&&BINFO.hp?BINFO.hp:1), elite=ty!=='boss'&&ty!=='sl2'&&ty!=='ra'&&ty!=='spl'&&Math.random()<0.06; if(elite) hp*=2.5; if(S.mod){ if(S.mod.k==='tough') hp*=1.3; if(S.mod.k==='swarm') hp*=0.8; } S.pc=(S.pc||0)+1; S.en.push({pi:ty==='boss'?0:S.pc%PATHS.length,elite:elite,ty:ty,s:0,off:ty==='boss'?0:rnd(-0.55,0.55),hp:hp,max:hp,spd:et.spd*rnd(0.92,1.08)*(S.mod&&S.mod.k==='fast'?1.25:1),ph:Math.random()*6,x:PTS[0][0],z:PTS[0][1],y:et.air?1.7:0,dead:false,flash:0,slowT:0,slowK:0,healT:rnd(0,1)});
+  function spawn(ty){ var et=ET[ty], hp=baseHp(S.wave)*et.hp*(ty==='boss'&&BINFO.hp?BINFO.hp:1), elite=ty!=='boss'&&ty!=='sl2'&&ty!=='ra'&&ty!=='spl'&&Math.random()<Math.min(0.2,0.004*stage)+0.06; if(elite) hp*=2.5; if(S.mod){ if(S.mod.k==='tough') hp*=1.3; if(S.mod.k==='swarm') hp*=0.8; } S.pc=(S.pc||0)+1; S.en.push({pi:ty==='boss'?0:S.pc%PATHS.length,elite:elite,ty:ty,s:0,off:ty==='boss'?0:rnd(-0.55,0.55),hp:hp,max:hp,spd:et.spd*rnd(0.92,1.08)*(S.mod&&S.mod.k==='fast'?1.25:1),ph:Math.random()*6,x:PTS[0][0],z:PTS[0][1],y:et.air?1.7:0,dead:false,flash:0,slowT:0,slowK:0,healT:rnd(0,1)});
     if(ty!=='sl2') fx.burst(PTS[0][0],0.8,PTS[0][1]+1.2,4,0xd946ef,2,0.4);
     if(ty==='boss'){ var bo=S.en[S.en.length-1]; bo.bk=BK; bo.phase=1; bo.bcd=4; if(BINFO.spd) bo.spd=BINFO.spd; if(BINFO.fly){ bo.fly=true; bo.y=2.2; } bossBan.innerHTML='⚠ '+BINFO.name+' しゅつげん！';
       S.slow=1.4; S.shake=1.2; snd('crash'); ringFx(PTS[0][0],PTS[0][1]+1,0xff4d4d,5,1);
@@ -781,7 +786,7 @@ function start(opt){
       S.spawnT-=dt; if(S.spawnQ.length&&S.spawnT<=0){ var it=S.spawnQ.shift(); spawn(it.ty); S.spawnT=it.gap; }
       if(!S.spawnQ.length&&!S.called&&!S.en.some(function(a){ return !a.dead; })){ S.en=[];
         if(S.wave>=NW){ finish(true); return; }
-        S.phase='wait'; var inc=5+S.wave*2, mine=0; pads.forEach(function(q){ if(q.lv&&TT[q.type].eco){ mine+=TT.mine.lv[q.lv-1].gold; fx.burst(q.x,1.2,q.z,12,0xfbbf24,3,0.6); coinPop(q.x,1.5,q.z,TT.mine.lv[q.lv-1].gold); } });
+        S.phase='wait'; var inc=Math.round((5+S.wave*2)*ECO), mine=0; pads.forEach(function(q){ if(q.lv&&TT[q.type].eco){ mine+=TT.mine.lv[q.lv-1].gold; fx.burst(q.x,1.2,q.z,12,0xfbbf24,3,0.6); coinPop(q.x,1.5,q.z,TT.mine.lv[q.lv-1].gold); } });
         var intr=cv('interest')?Math.min(30*cv('interest'),Math.floor(S.coins*0.1*cv('interest'))):0; S.coins+=inc+mine+intr; hud2();
         say('ウェーブ クリア！ 🪙+'+(inc+mine+intr)+(intr?'<div style="font-size:14px;">（りし +'+intr+'）</div>':''),'#bbf7d0',1100); setTimeout(function(){ if(!S.over) drawCards(nextWave); },1300); }
       // はやく よぶ：でる てきが のこって いない とき
@@ -813,6 +818,7 @@ function start(opt){
       if(ET[a.ty].dig&&!a.dug&&a.s>PL*0.3){ a.dug=true; a.under=2.2; fx.burst(a.x,0.3,a.z,16,0x92400e,3,0.6); }
       if(a.under>0){ a.under-=dt; sp*=2.2; if(Math.random()<0.5) fx.emit(a.x,0.15,a.z,rnd(-0.5,0.5),1,rnd(-0.5,0.5),0x92400e,0.4); if(a.under<=0) fx.burst(a.x,0.3,a.z,16,0x92400e,3,0.6); }
       if(a.barrier>0) a.barrier-=dt; if(a.curse>0) a.curse-=dt; if(a.prison>0) a.prison-=dt;
+      if(et2.regen&&!(a.burnT>0)&&a.hp<a.max){ a.hp=Math.min(a.max,a.hp+a.max*et2.regen*dt); if(Math.random()<0.05) fx.emit(a.x,1.2,a.z,0,1,0,0x4ade80,0.4); }
       if(a.burnT>0){ a.burnT-=dt; SRC='arrow'; hurt(a,a.burnD*dt); SRC=null; if(Math.random()<0.4) fx.emit(a.x,0.8,a.z,rnd(-0.3,0.3),1,rnd(-0.3,0.3),0xff7a1a,0.35); if(a.dead) continue; } if(a.stun>0){ a.stun-=dt; sp=0; }
       a.s+=sp*dt;
       var p=atS(a.s,a.pi), l=Math.hypot(p.dx,p.dz)||1, off=(a.fly||ET[a.ty].air)?a.off*1.8:a.off; a.x=p.x-p.dz/l*off; a.z=p.z+p.dx/l*off; a.hx=p.dx/l; a.hz=p.dz/l;
@@ -865,7 +871,7 @@ function start(opt){
     else if(pr.type==='magic'){ var fz2=tg.slowT>0; hurt(tg,L.dmg*(fz2?(cv('combo')?2:1.5):1),true); if(L.curse){ tg.curse=L.curse; tg.cmul=L.cmul||1.4; tg.cspread=L.spread; tg.csoul=L.soul; } if(fz2) combo('❄️×🔮 コンボ！',tg); fx.burst(tg.x,(tg.y||0.6)+0.3,tg.z,10,0xe879f9,2.5,0.4);
       if(L.chain){ var from=tg, hit=[tg]; for(var c=0;c<L.chain;c++){ var nx=null, nd=2.6; S.en.forEach(function(a){ if(a.dead||hit.indexOf(a)>=0) return; var d=Math.hypot(a.x-from.x,a.z-from.z); if(d<nd){ nd=d; nx=a; } });
           if(!nx) break; hit.push(nx); for(var s3=0;s3<6;s3++){ var u=s3/6; fx.emit(from.x+(nx.x-from.x)*u,1+(from.y||0)*0.5,from.z+(nx.z-from.z)*u,0,0,0,0xf0abfc,0.25); } hurt(nx,L.dmg*0.6,true); from=nx; } } }
-    else { var cr=Math.random()<0.15; hurt(tg,L.dmg*(cr?2.5:1)*(pr.buff?(cv('combo')?1.5:1.3):1),!!L.pierce,cr); if(L.burn&&!tg.dead){ tg.burnT=L.burn; tg.burnD=L.dmg*0.6; } if(L.exec&&!tg.dead&&tg.ty!=='boss'&&tg.hp<tg.max*L.exec){ tg.hp=0; hurt(tg,1,true); fx.burst(tg.x,1,tg.z,20,0x111827,3,0.5); dmgPop(tg,'きめた！',true); } if(cr) fx.burst(tg.x,(tg.y||0.6)+0.4,tg.z,10,0xfde047,3,0.35); if(Math.random()<0.4) fx.emit(tg.x,(tg.y||0.6)+0.2,tg.z,rnd(-1,1),1.5,rnd(-1,1),0xfff1b8,0.25); } }
+    else { var cr=Math.random()<0.15; hurt(tg,L.dmg*(cr?2.5:1)*(pr.buff?(cv('combo')?1.5:1.3):1),!!L.pierce,cr); if(L.burn&&!tg.dead){ tg.burnT=L.burn; tg.burnD=L.dmg*0.6; } if(L.exec&&!tg.dead&&tg.ty!=='boss'&&!tg.elite&&tg.ty!=='kn'&&tg.hp<tg.max*L.exec){ tg.hp=0; hurt(tg,1,true); fx.burst(tg.x,1,tg.z,20,0x111827,3,0.5); dmgPop(tg,'きめた！',true); } if(cr) fx.burst(tg.x,(tg.y||0.6)+0.4,tg.z,10,0xfde047,3,0.35); if(Math.random()<0.4) fx.emit(tg.x,(tg.y||0.6)+0.2,tg.z,rnd(-1,1),1.5,rnd(-1,1),0xfff1b8,0.25); } }
   var lbl=[];
   pads.forEach(function(){ var d=el('div','position:absolute;transform:translate(-50%,-100%);font-weight:900;font-size:12px;border-radius:10px;padding:1px 8px;white-space:nowrap;border:2px solid #fff;box-shadow:0 2px 0 rgba(0,0,0,.25),0 3px 8px rgba(0,0,0,.2);text-shadow:0 1px 0 rgba(0,0,0,.3);'); labels.appendChild(d); lbl.push(d); });
   var projV=new THREE.Vector3();
@@ -876,7 +882,7 @@ function start(opt){
     // てき
     Object.keys(armies).forEach(function(k){ armies[k].begin(); }); var boss=null, nb=0;
     for(var i=0;i<S.en.length;i++){ var a=S.en[i]; if(a.dead) continue; if(a.ty==='boss'){ boss=a; continue; }
-      if(ET[a.ty].hide&&!a.shown) continue; var tint=a.flash>0?HIT:a.phased?PHASE:a.stun>0?STUN:a.slowT>0?SLOW:a.curse>0?CURSE:a.elite?ELITE:a.ty==='n'?NTINT:null, ry=Math.atan2(-(a.hx||0),-(a.hz||1)), spd=a.slowT>0?1-a.slowK:1;
+      if(ET[a.ty].hide&&!a.shown) continue; var tint=a.flash>0?HIT:a.phased?PHASE:a.stun>0?STUN:a.slowT>0?SLOW:a.curse>0?CURSE:a.elite?ELITE:a.ty==='n'?NTINT:a.ty==='kn'?KNT:a.ty==='tr'?TRT:null, ry=Math.atan2(-(a.hx||0),-(a.hz||1)), spd=a.slowT>0?1-a.slowK:1;
       if(a.ty==='fly'||a.ty==='fb'){ if(nb>=120) continue; batBody.setColorAt(nb,a.ty==='fb'?FBC:BATC); batWL.setColorAt(nb,a.ty==='fb'?FBC:BATC); batWR.setColorAt(nb,a.ty==='fb'?FBC:BATC); var yy=a.y+Math.sin(S.t*4+a.ph)*0.15, fl=Math.sin(S.t*18*spd+a.ph)*0.7;
         tmp.position.set(a.x,yy,a.z); tmp.rotation.set(0,ry,0); tmp.scale.setScalar(1); tmp.updateMatrix(); batBody.setMatrixAt(nb,tmp.matrix);
         tmp2.position.set(a.x,yy,a.z); tmp2.rotation.set(0,ry,fl,'YXZ'); tmp2.updateMatrix(); batWR.setMatrixAt(nb,tmp2.matrix);
@@ -941,7 +947,7 @@ function start(opt){
     setTimeout(function(){ if(!R.S||R.S!==S) return;
       showPanel('<div style="font-size:14px;font-weight:800;opacity:.7;">STAGE '+stage+'</div>'+
       '<div style="font-size:30px;font-weight:900;line-height:1.2;margin:4px 0 6px;color:'+(win?'#15803d':'#b91c1c')+';">'+(win?'おしろを まもった！':(quit?'おつかれさま':'おしろが おちた…'))+'</div>'+
-      (win?'<div style="font-size:40px;letter-spacing:4px;margin-bottom:6px;">'+[1,2,3].map(function(i){ return '<span style="color:'+(i<=stars?'#f59e0b':'#d1d5db')+';">★</span>'; }).join('')+'</div><div style="font-size:11px;opacity:.7;margin-bottom:8px;">'+('<span style="color:'+(S.hp>=S.maxHp*0.6?'#16a34a':'#9ca3af')+';">'+(S.hp>=S.maxHp*0.6?'✔':'✘')+' ❤️を 6わり のこす</span>　<span style="color:'+(gok?'#16a34a':'#9ca3af')+';">'+(gok?'✔':'✘')+' '+GOAL.t+'</span>')+(SUB===5?'<div style="font-size:14px;color:#b45309;margin-top:4px;">🎉 ワールド '+WORLD+' クリア！</div>':'')+'</div>':'')+
+      (win?'<div style="font-size:40px;letter-spacing:4px;margin-bottom:6px;">'+[1,2,3].map(function(i){ return '<span style="color:'+(i<=stars?'#f59e0b':'#d1d5db')+';">★</span>'; }).join('')+'</div><div style="font-size:11px;opacity:.7;margin-bottom:8px;">'+('<span style="color:'+(S.hp>=S.maxHp*0.6?'#16a34a':'#9ca3af')+';">'+(S.hp>=S.maxHp*0.6?'✔':'✘')+' ❤️を 6わり のこす</span>　<span style="color:'+(gok?'#16a34a':'#9ca3af')+';">'+(gok?'✔':'✘')+' '+GOAL.t+'</span>')+(SUB===WPS?'<div style="font-size:14px;color:#b45309;margin-top:4px;">🎉 ワールド '+WORLD+' クリア！</div>':'')+'</div>':'')+
       '<div style="display:flex;justify-content:space-around;background:#ecfdf5;border-radius:12px;padding:10px 4px;font-weight:900;font-size:15px;">'+
       '<div>🌊 '+Math.min(S.wave,NW)+'/'+NW+'</div><div>💥 '+S.kills+'</div><div style="color:#16a34a;">○ '+S.right+'</div><div style="color:#dc2626;">× '+S.wrong+'</div></div>'+
       (extra.reward?'<div style="font-size:12px;font-weight:800;margin-top:10px;opacity:.8;">'+extra.reward+'</div>':''),
@@ -951,13 +957,13 @@ function start(opt){
   R.raf=requestAnimationFrame(frame);
   var skinK='red';
   var GOALS=[{k:'nodmg',t:'❤️を へらさずに クリア'},{k:'tower5',t:'タワー 5ほん いないで クリア'},{k:'eng',t:'えいごを ぜんもん せいかい'},{k:'hero5',t:'ゆうしゃを Lv5 いじょうに'},{k:'nomine',t:'⛏きんこうを つかわずに クリア'}];
-  var GOAL=SUB===5?GOALS[0]:GOALS[(STG*3+1)%5];
+  var GOAL=SUB===WPS?GOALS[0]:GOALS[(STG*3+1)%5];
   function goalOk(){ if(GOAL.k==='nodmg') return S.hp>=S.maxHp; if(GOAL.k==='tower5') return (S.maxTw||0)<=5; if(GOAL.k==='eng') return S.wrong===0&&S.right>0; if(GOAL.k==='hero5') return hero.lv>=5; return !S.usedMine; }
   function startGame(){ panel.style.display='none'; S.paused=false; S.asking=false; S.last=0;
     hud2(); nextWave(); }
   function showStart(){ S.paused=true; S.asking=true; var info=null; try{ info=opt.research&&opt.research.get(); }catch(e){}
     showPanel('<div style="font-size:13px;opacity:.7;font-weight:800;">ワールド '+WORLD+' - '+SUB+(LOOP?'　（'+(LOOP+1)+'しゅうめ）':'')+'</div><div style="font-size:28px;font-weight:900;margin:2px 0 4px;">'+MP.name+'</div>'+worldRow(WORLD)+
-      '<div style="font-size:12px;opacity:.8;margin-top:6px;">ウェーブ '+NW+'　'+(SUB===5?'👑 ボス：'+BINFO.name:'さいごに ちゅうボス')+'</div><div style="font-size:12px;margin-top:4px;background:#fef3c7;border-radius:8px;padding:3px 6px;">⭐ ミッション：'+GOAL.t+'</div>',
+      '<div style="font-size:12px;opacity:.8;margin-top:6px;">ウェーブ '+NW+'　'+(SUB===WPS?'👑 ボス：'+BINFO.name:'さいごに ちゅうボス')+'</div><div style="font-size:12px;margin-top:4px;background:#fef3c7;border-radius:8px;padding:3px 6px;">⭐ ミッション：'+GOAL.t+'</div>',
       [{t:'▶ スタート',c:'#15803d',f:startGame}].concat(opt.pickStage?[{t:'🗺 ワールドマップ',c:'#0f766e',f:showWorld}]:[])
       
       .concat([{t:'🐾 ゆうしゃ ／ 📖 ずかん',c:'#b45309',f:showBook}])); }
@@ -977,11 +983,11 @@ function start(opt){
   var WNAME=['みどりの おか','ゆきの やま','すなの さばく','ほのおの やま','まおうの しろ'], WBOSS=['🐗','❄️','🦂','🐉','👿'];
   function stInfo(){ try{ return opt.research.get(); }catch(e){ return {}; } }
   function worldRow(w){ var info=stInfo(), st=info.starsBy||{}, mx=info.maxStage||STG; var h='<div style="display:flex;justify-content:center;align-items:center;gap:4px;margin-top:4px;">';
-    for(var i=1;i<=5;i++){ var n=(LOOP*25)+(w-1)*5+i, cur=n===STG, open=n<=mx, sv=st[n]||0;
-      h+=(i>1?'<span style="width:10px;height:3px;background:'+(open?'#86efac':'#d1d5db')+';"></span>':'')+'<span data-st="'+n+'" style="display:inline-flex;flex-direction:column;align-items:center;justify-content:center;width:'+(i===5?44:36)+'px;height:'+(i===5?44:36)+'px;border-radius:50%;background:'+(cur?'#f59e0b':open?'#16a34a':'#d1d5db')+';color:#fff;font-weight:900;font-size:'+(i===5?18:13)+'px;border:3px solid #fff;box-shadow:0 2px 4px rgba(0,0,0,.3);cursor:'+(open?'pointer':'default')+';">'+(i===5?WBOSS[w-1]:i)+'<span style="font-size:8px;line-height:1;color:#fde047;">'+'★'.repeat(sv)+'</span></span>'; }
+    for(var i=1;i<=WPS;i++){ var n=(LOOP*WPS*5)+(w-1)*WPS+i, cur=n===STG, open=n<=mx, sv=st[n]||0;
+      h+=(i>1?'<span style="width:4px;height:3px;background:'+(open?'#86efac':'#d1d5db')+';"></span>':'')+'<span data-st="'+n+'" style="display:inline-flex;flex-direction:column;align-items:center;justify-content:center;width:'+(i===WPS?38:28)+'px;height:'+(i===WPS?38:28)+'px;border-radius:50%;background:'+(cur?'#f59e0b':open?'#16a34a':'#d1d5db')+';color:#fff;font-weight:900;font-size:'+(i===WPS?16:11)+'px;border:3px solid #fff;box-shadow:0 2px 4px rgba(0,0,0,.3);cursor:'+(open?'pointer':'default')+';">'+(i===WPS?WBOSS[w-1]:i)+'<span style="font-size:8px;line-height:1;color:#fde047;">'+'★'.repeat(sv)+'</span></span>'; }
     return h+'</div>'; }
   function showWorld(){ var info=stInfo(), mx=info.maxStage||STG, h='<div style="font-size:22px;font-weight:900;">🗺 ワールドマップ</div><div style="font-size:11px;opacity:.7;margin-bottom:6px;">まるを タップで その ステージへ（★を あつめなおせる）</div>';
-    for(var w=1;w<=5;w++){ var first=(LOOP*25)+(w-1)*5+1, open=first<=mx; h+='<div style="margin:6px 0;padding:6px;border-radius:12px;background:'+(open?'#f0fdf4':'#f3f4f6')+';opacity:'+(open?1:0.55)+';"><div style="font-weight:900;font-size:13px;text-align:left;">ワールド '+w+'　'+WNAME[w-1]+(open?'':'　🔒')+'</div>'+worldRow(w)+'</div>'; }
+    for(var w=1;w<=5;w++){ var first=(LOOP*WPS*5)+(w-1)*WPS+1, open=first<=mx; h+='<div style="margin:6px 0;padding:6px;border-radius:12px;background:'+(open?'#f0fdf4':'#f3f4f6')+';opacity:'+(open?1:0.55)+';"><div style="font-weight:900;font-size:13px;text-align:left;">ワールド '+w+'　'+WNAME[w-1]+(open?'':'　🔒')+'</div>'+worldRow(w)+'</div>'; }
     showPanel(h,[{t:'もどる',c:'#6b7280',f:showStart}]);
     [].forEach.call(panel.querySelectorAll('[data-st]'),function(n){ n.onclick=function(e){ e.stopPropagation(); var v=+n.dataset.st; if(v>mx){ snd('wrong'); return; } if(v===STG){ showStart(); return; } snd('tap'); opt.pickStage(v); }; }); }
   setTimeout(function(){ if(R.S===S){ showStart(); [].forEach.call(panel.querySelectorAll('[data-st]'),function(n){ n.onclick=function(e){ e.stopPropagation(); var v=+n.dataset.st, mx=(stInfo().maxStage||STG); if(v<=mx&&v!==STG&&opt.pickStage){ snd('tap'); opt.pickStage(v); } }; }); } },300);

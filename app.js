@@ -962,7 +962,7 @@ window._eigoPetInit = function() {
   document.getElementById('backSelect').onclick=function(){ show('home'); render(); };
   var RETRY_COST=10;                                        // やられてから 再開する ときの えさ
   function renderGameSelect(){ var w=document.getElementById('selWarSub'); if(w) w.textContent='ステージ '+(state.warStage||1)+'　なかまを ふやして てきの ぐんだんを たおせ！';
-    var tw=document.getElementById('selTowerSub'); if(tw){ var sv=state.towerStars||{}, tot=0; for(var k in sv) tot+=sv[k]; var ts=state.towerStage||1; tw.textContent='ワールド '+(((Math.ceil(ts/5)-1)%5)+1)+'-'+((ts-1)%5+1)+(tot?'　★'+tot:'')+'　タワーを たてて おしろを まもれ！'; } }
+    var tw=document.getElementById('selTowerSub'); if(tw){ var sv=state.towerStars||{}, tot=0; for(var k in sv) tot+=sv[k]; var ts=state.towerStage||1; tw.textContent='ワールド '+(((Math.ceil(ts/8)-1)%5)+1)+'-'+((ts-1)%8+1)+(tot?'　★'+tot:'')+'　タワーを たてて おしろを まもれ！'; } }
   var startPick=function(fn,cost,retry){ return function(){ cost=cost||1;
     if(state.food<cost){ bubble(cost>1?('えさが '+cost+'こ ひつよう だよ'):'えさが たりない'); return; }
     consumePlay(cost); lastGame=fn; lastCost=cost; lastRetry=retry||fn; fn(); }; };
@@ -990,7 +990,7 @@ window._eigoPetInit = function() {
           if(r.stars){ state.towerStars=state.towerStars||{}; state.towerStars[r.stage]=Math.max(state.towerStars[r.stage]||0,r.stars); }
           save();
           return {reward:'ごきげん +'+happyGain+(r.right?'　／　えいご '+r.right+'もん せいかい':''),
-                  retryLabel:(r.win?(wasNew?(r.stage%5===0?'つぎの ワールドへ':'ステージ '+(state.towerStage)+' へ'):'さいしんの ステージへ'):'もういちど')+'（えさ1）'+(state.food<1?'　えさが たりない':'')};
+                  retryLabel:(r.win?(wasNew?(r.stage%8===0?'つぎの ワールドへ':'ステージ '+(state.towerStage)+' へ'):'さいしんの ステージへ'):'もういちど')+'（えさ1）'+(state.food<1?'　えさが たりない':'')};
         },
         onRetry:function(){
           if(state.food<1){ bubble('えさが たりない'); EigoTower.stop(); renderGameSelect(); show('gameSelect'); return; }
