@@ -489,7 +489,7 @@ function start(opt){
     panel.appendChild(card); }
 
   // --- じょうたい ---
-  var stage=Math.max(1,opt.stage||1), NW=4+Math.min(4,stage), ENDLESS=false;
+  var stage=Math.max(1,opt.stage||1), NW=4+Math.min(4,stage);
   // けんきゅう（★で つよくなる・ずっと のこる）
   var RES=[{k:'atk',ico:'⚔',name:'タワーの こうげき',per:'+10%'},{k:'coin',ico:'🪙',name:'スタートの コイン',per:'+15'},{k:'hp',ico:'❤️',name:'おしろの たいりょく',per:'+3'},{k:'bolt',ico:'⚡',name:'さいしょの かみなり',per:'+1'},{k:'hero',ico:'🗡',name:'ゆうしゃの つよさ',per:'+25%'}];
   function resLv(k){ try{ return (opt.research&&opt.research.get().lv[k])||0; }catch(e){ return 0; } }
@@ -503,10 +503,10 @@ function start(opt){
     for(var i=0;i<n;i++){ var r=Math.random()*tot, ty='n'; for(var j=0;j<pool.length;j++){ r-=pool[j][1]; if(r<=0){ ty=pool[j][0]; break; } }
       if(ty==='ra'){ for(var rr=0;rr<4;rr++) q.push({ty:'ra',gap:0.15}); }
       q.push({ty:ty,gap:ty==='b'||ty==='sh'||ty==='go'?0.9:ty==='f'?0.35:0.5}); }
-    if(ENDLESS?w%5===0:w===NW){ q.splice(Math.floor(n*0.6),0,{ty:'boss',gap:1.2}); }
+    if(w===NW){ q.splice(Math.floor(n*0.6),0,{ty:'boss',gap:1.2}); }
     return q; }
   function hud2(){ document.getElementById('twHp').textContent=Math.max(0,S.hp); document.getElementById('twCoin').textContent=S.coins;
-    document.getElementById('twWave').textContent=ENDLESS?S.wave+'/∞':Math.min(S.wave,NW)+'/'+NW; boltBtn.style.display=S.bolts>0&&!S.over?'block':'none'; document.getElementById('twBolt').textContent='×'+S.bolts; if(sel) renderMenu(); }
+    document.getElementById('twWave').textContent=Math.min(S.wave,NW)+'/'+NW; boltBtn.style.display=S.bolts>0&&!S.over?'block':'none'; document.getElementById('twBolt').textContent='×'+S.bolts; if(sel) renderMenu(); }
 
   // --- えいごの もんだい（ウェーブの まえ） ---
   function askEnglish(then,chest){
@@ -555,7 +555,7 @@ function start(opt){
     askEnglish(function(){ S.phase='prep'; S.prepT=S.wave===1?1.5:3;
       var nw=makeWave(S.wave), fresh=[]; nw.forEach(function(it){ if(!S.seen[it.ty]&&it.ty!=='n'){ S.seen[it.ty]=1; fresh.push(it.ty); } }); S.nextQ=nw;
       if(fresh.length){ newEn.innerHTML='あたらしい てき：'+fresh.map(function(k){ return EICO[k]+ET[k].name+weakTxt(k); }).join('・'); newEn.style.display='block'; setTimeout(function(){ newEn.style.display='none'; },7000); }
-      setTimeout(function(){ if(S.over) return; var bw=ENDLESS?S.wave%5===0:S.wave===NW; say('ウェーブ '+S.wave+(bw?'　ボスが くる！':''),bw?'#fecaca':'#fff',1300); },S.wave===1?0:1400); }); }
+      setTimeout(function(){ if(S.over) return; var bw=S.wave===NW; say('ウェーブ '+S.wave+(bw?'　ボスが くる！':''),bw?'#fecaca':'#fff',1300); },S.wave===1?0:1400); }); }
 
   // --- タップ：タワーを えらぶ／レベルアップ／うる ---
   var sel=null;
@@ -651,12 +651,12 @@ function start(opt){
     else if(S.phase==='run'){
       S.spawnT-=dt; if(S.spawnQ.length&&S.spawnT<=0){ var it=S.spawnQ.shift(); spawn(it.ty); S.spawnT=it.gap; }
       if(!S.spawnQ.length&&!S.called&&!S.en.some(function(a){ return !a.dead; })){ S.en=[];
-        if(!ENDLESS&&S.wave>=NW){ finish(true); return; }
+        if(S.wave>=NW){ finish(true); return; }
         S.phase='wait'; var inc=5+S.wave*2, mine=0; pads.forEach(function(q){ if(q.lv&&TT[q.type].eco){ mine+=TT.mine.lv[q.lv-1].gold; fx.burst(q.x,1.2,q.z,12,0xfbbf24,3,0.6); coinPop(q.x,1.5,q.z,TT.mine.lv[q.lv-1].gold); } });
         var intr=cv('interest')?Math.min(30*cv('interest'),Math.floor(S.coins*0.1*cv('interest'))):0; S.coins+=inc+mine+intr; hud2();
         say('ウェーブ クリア！ 🪙+'+(inc+mine+intr)+(intr?'<div style="font-size:14px;">（りし +'+intr+'）</div>':''),'#bbf7d0',1100); setTimeout(function(){ if(!S.over) drawCards(nextWave); },1300); }
       // はやく よぶ：でる てきが のこって いない とき
-      callBtn.style.display=(!S.spawnQ.length&&(ENDLESS||S.wave<NW)&&!S.called)?'block':'none';
+      callBtn.style.display=(!S.spawnQ.length&&S.wave<NW&&!S.called)?'block':'none';
       // たからばこ
       S.chestCd=(S.chestCd===undefined?rnd(8,14):S.chestCd)-dt; if(S.chestCd<=0&&!S.chest){ spawnChest(); S.chestCd=rnd(22,32); } }
     else callBtn.style.display='none';
@@ -776,14 +776,11 @@ function start(opt){
   }
   function finish(win,quit){
     if(S.over) return; S.over=true; panel.style.display='none'; S.asking=false; closeMenu();
-    var stars=win&&!ENDLESS?(S.hp>=18?3:S.hp>=10?2:1):0;
-    var res={endless:ENDLESS,win:!!win,quit:!!quit,stage:stage,wave:S.wave,waves:NW,right:S.right,wrong:S.wrong,kills:S.kills,hp:S.hp,stars:stars};
+    var stars=win?(S.hp>=18?3:S.hp>=10?2:1):0;
+    var res={win:!!win,quit:!!quit,stage:stage,wave:S.wave,waves:NW,right:S.right,wrong:S.wrong,kills:S.kills,hp:S.hp,stars:stars};
     var extra={}; try{ extra=opt.onEnd?opt.onEnd(res)||{}:{}; }catch(e){}
     hud2();
     setTimeout(function(){ if(!R.S||R.S!==S) return;
-      if(ENDLESS){ showPanel('<div style="font-size:14px;font-weight:800;opacity:.7;">♾ むげんモード</div><div style="font-size:44px;font-weight:900;color:#7c3aed;">ウェーブ '+S.wave+'</div>'+(extra.best?'<div style="font-size:16px;font-weight:900;color:#ea580c;">🏆 しんきろく！</div>':'<div style="font-size:12px;opacity:.7;">さいこう ウェーブ '+(extra.bestWave||S.wave)+'</div>')+
-        '<div style="display:flex;justify-content:space-around;background:#f5f3ff;border-radius:12px;padding:10px 4px;margin-top:8px;font-weight:900;font-size:15px;"><div>💥 '+S.kills+'</div><div style="color:#16a34a;">○ '+S.right+'</div><div style="color:#dc2626;">× '+S.wrong+'</div></div>'+(extra.reward?'<div style="font-size:12px;font-weight:800;margin-top:10px;opacity:.8;">'+extra.reward+'</div>':''),
-        [{t:'もういちど（えさ1）',c:'#7c3aed',f:function(){ if(opt.onRetry) opt.onRetry(); }},{t:'もどる',c:'#8a9392',f:function(){ stop(); if(opt.onExit) opt.onExit(); }}]); return; }
       showPanel('<div style="font-size:14px;font-weight:800;opacity:.7;">STAGE '+stage+'</div>'+
       '<div style="font-size:30px;font-weight:900;line-height:1.2;margin:4px 0 6px;color:'+(win?'#15803d':'#b91c1c')+';">'+(win?'おしろを まもった！':(quit?'おつかれさま':'おしろが おちた…'))+'</div>'+
       (win?'<div style="font-size:40px;letter-spacing:4px;margin-bottom:6px;">'+[1,2,3].map(function(i){ return '<span style="color:'+(i<=stars?'#f59e0b':'#d1d5db')+';">★</span>'; }).join('')+'</div><div style="font-size:11px;opacity:.7;margin-bottom:8px;">'+(stars<3?'❤️を 18いじょう のこすと ★3':'パーフェクト！')+'</div>':'')+
