@@ -1007,11 +1007,15 @@ window._eigoPetInit = function() {
     loadThree(function(){
       runQ=[];
       EigoWar.start({
+        research:{ get:function(){ return {lv:state.warRes||{}, medals:state.warMedals||0, leader:state.warLeader||'thunder'}; },
+                   setLeader:function(k){ state.warLeader=k; save(); },
+                   buy:function(k,cost){ if((state.warMedals||0)<cost) return false; state.warRes=state.warRes||{}; if((state.warRes[k]||0)>=5) return false; state.warRes[k]=(state.warRes[k]||0)+1; state.warMedals-=cost; save(); return true; } },
         container:root, stage:state.warStage||1, getQuestion:runnerQuestion, onAnswer:runnerAnswer, sfx:sfx, speak:speak,
         onEnd:function(r){
           var happyGain=r.quit?Math.min(8,1+r.right):Math.min(30,4+r.right*2+(r.win?6:0));
           state.happy=Math.min(100,state.happy+happyGain); addXp(5);
           if(r.win) state.warStage=(state.warStage||1)+1;
+          if(r.medals) state.warMedals=(state.warMedals||0)+r.medals;
           state.warBest=Math.max(state.warBest||0,r.win?r.stage:(state.warBest||0)); save();
           return {reward:'ごきげん +'+happyGain+(r.right?'　／　えいご '+r.right+'もん せいかい':''),
                   retryLabel:(r.win?'ステージ '+(state.warStage)+' へ':'もういちど')+'（えさ1）'+(state.food<1?'　えさが たりない':'')};
