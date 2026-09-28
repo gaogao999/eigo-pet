@@ -981,9 +981,7 @@ window._eigoPetInit = function() {
       EigoTower.start({
         container:root, stage:stg, pickStage:function(n){ startTower(n); }, getQuestion:runnerQuestion, onAnswer:runnerAnswer, sfx:sfx, speak:speak,
         research:{ get:function(){ var sv=state.towerStars||{}, tot=0; for(var k in sv) tot+=sv[k]; return {lv:state.towerRes||{}, stars:tot-(state.towerSpent||0), total:tot, skin:state.towerSkin||'red', cls:state.towerCls||'knight', starsBy:state.towerStars||{}, maxStage:state.towerStage||1}; },
-                   setSkin:function(k){ state.towerSkin=k; save(); },
-                   setCls:function(k){ state.towerCls=k; save(); },
-                   buy:function(k,cost){ var info=this.get(); if(info.stars<cost||(info.lv[k]||0)>=3) return false; state.towerRes=state.towerRes||{}; state.towerRes[k]=(state.towerRes[k]||0)+1; state.towerSpent=(state.towerSpent||0)+cost; save(); return true; } },
+                   setCls:function(k){ state.towerCls=k; save(); } },
         onEnd:function(r){
           var happyGain=r.quit?Math.min(8,1+r.right):Math.min(30,4+r.right*2+(r.win?6:0));
           state.happy=Math.min(100,state.happy+happyGain); addXp(5);

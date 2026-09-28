@@ -483,7 +483,7 @@ function start(opt){
     evoBeam.position.set(hero.x,12,hero.z); evoBeam.visible=true; evoBeam.material.opacity=0.9; S.evoT=1.4;
     for(var i=0;i<3;i++) ringFx(hero.x,hero.z,[0xfff3b0,0xfde047,0xffffff][i],2+i*1.2,0.6+i*0.2); fx.burst(hero.x,1,hero.z,70,0xfde047,6,1); fx.burst(hero.x,1,hero.z,40,0xffffff,4,0.8);
     evoBan.innerHTML='✨ しんか！<div style="font-size:22px;">'+HC.ico+' '+HC.forms[f-1]+'</div>'; evoBan.style.display='block'; evoBan.style.animation='none'; void evoBan.offsetWidth; evoBan.style.animation='twBoss 2s ease-out forwards'; setTimeout(function(){ evoBan.style.display='none'; },2000); }
-  function heroStep(dt){ if(hero.stun>0){ hero.stun-=dt; if(Math.random()<0.3) fx.emit(hero.x,1.8,hero.z,0,0.5,0,0xfde047,0.3); return; } var H=hero, dx=H.tx-H.x, dz=H.tz-H.z, d=Math.hypot(dx,dz), mul=(1+0.25*resLv('hero'))*(1+0.12*(stage-1))*(1+0.12*(H.lv-1))*FORM_MUL[H.form-1], F=H.form;
+  function heroStep(dt){ if(hero.stun>0){ hero.stun-=dt; if(Math.random()<0.3) fx.emit(hero.x,1.8,hero.z,0,0.5,0,0xfde047,0.3); return; } var H=hero, dx=H.tx-H.x, dz=H.tz-H.z, d=Math.hypot(dx,dz), mul=(1+0.12*(stage-1))*(1+0.12*(H.lv-1))*FORM_MUL[H.form-1], F=H.form;
     var air=HC.range>2, tgt=null, td=1e9; S.en.forEach(function(a){ if(a.dead||((a.fly||ET[a.ty].air)&&!air)||a.under>0||!canHit(a,HC.k==='mage'||HC.k==='fairy'?'magic':'hero')) return; var e=Math.hypot(a.x-H.x,a.z-H.z); if(e<td){ td=e; tgt=a; } });
     if(d>0.08){ var sp=Math.min(d,HC.spd*dt); H.x+=dx/d*sp; H.z+=dz/d*sp; H.ry=Math.atan2(-dx,-dz); H.walk+=dt*12; }
     else if(tgt&&td<HC.range+0.1){ H.ry=Math.atan2(-(tgt.x-H.x),-(tgt.z-H.z)); }
@@ -571,8 +571,6 @@ function start(opt){
   // --- じょうたい ---
   var stage=STG, NW=5+Math.min(3,Math.floor((WORLD+SUB-2)/2));
   // けんきゅう（★で つよくなる・ずっと のこる）
-  var RES=[{k:'atk',ico:'⚔',name:'タワーの こうげき',per:'+10%'},{k:'coin',ico:'🪙',name:'スタートの コイン',per:'+15'},{k:'hp',ico:'❤️',name:'おしろの たいりょく',per:'+3'},{k:'bolt',ico:'⚡',name:'さいしょの かみなり',per:'+1'},{k:'hero',ico:'🗡',name:'ゆうしゃの つよさ',per:'+25%'}];
-  function resLv(k){ try{ return (opt.research&&opt.research.get().lv[k])||0; }catch(e){ return 0; } }
   var S={speed:1,streak:0,freeze:0,slow:0,coins:40+stage*10,hp:20,maxHp:20,wave:0,phase:'prep',prepT:0,spawnQ:[],spawnT:0,en:[],proj:[],bolts:0,right:0,wrong:0,kills:0,over:false,paused:false,last:0,t:0,shake:0,seen:{}};
   R.S=S;
   document.getElementById('twStage').textContent=stage;
@@ -821,7 +819,7 @@ function start(opt){
     labels.appendChild(d); requestAnimationFrame(function(){ d.style.transform='translate(-50%,-180%)'; d.style.opacity='0'; }); setTimeout(function(){ d.remove(); },950); }
   var SRC=null;
   function land(pr){ SRC=pr.type; land0(pr); SRC=null; }
-  function land0(pr){ var L0=pr.L, tg=pr.tg, am=(1+0.1*resLv('atk'))*(1+(pr.type==='cannon'?0.15:0.25)*cv(pr.type))*(pr.type!=='hero'&&Math.random()<0.1*cv('crit')?(pr.critc=2.2):1), L={dmg:L0.dmg*am,splash:L0.splash&&L0.splash*(1+0.2*(pr.type==='cannon'?cv('cannon'):0)),slow:L0.slow,chain:L0.chain,curse:L0.curse,stop:L0.stop,air:L0.air,pierce:L0.pierce};
+  function land0(pr){ var L0=pr.L, tg=pr.tg, am=(1+(pr.type==='cannon'?0.15:0.25)*cv(pr.type))*(pr.type!=='hero'&&Math.random()<0.1*cv('crit')?(pr.critc=2.2):1), L={dmg:L0.dmg*am,splash:L0.splash&&L0.splash*(1+0.2*(pr.type==='cannon'?cv('cannon'):0)),slow:L0.slow,chain:L0.chain,curse:L0.curse,stop:L0.stop,air:L0.air,pierce:L0.pierce};
     if(pr.critc&&pr.type!=='arrow'){ dmgPop(tg,L.dmg,true); }
     if(pr.type==='hero'){ hurt(tg,pr.dmg*(1+0.4*cv('hero')),pr.magic); fx.burst(tg.x,(tg.y||0.6)+0.3,tg.z,8,pr.col,2.5,0.35); return; }
     if(pr.type==='cannon'){ var cmb=false; S.en.forEach(function(a){ if(!a.dead&&(!(a.fly||ET[a.ty].air)||L.air)&&Math.hypot(a.x-tg.x,a.z-tg.z)<=L.splash){ var fz=a.slowT>0; if(fz) cmb=true; hurt(a,L.dmg*(fz?(cv('combo')?2.5:2):1),false,fz&&Math.random()<0.3); } }); if(cmb) combo('❄️×💣 コンボ！',tg);
@@ -915,28 +913,17 @@ function start(opt){
   }
   hud2();
   R.raf=requestAnimationFrame(frame);
-  var SKINS=[{k:'red',name:'あかマント',need:0,cape:0xdc2626,crown:0xfbbf24,tint:[1,1,1]},{k:'royal',name:'ロイヤル',need:5,cape:0x7c3aed,crown:0xfbbf24,tint:[0.95,0.85,1.2]},
-    {k:'gold',name:'ゴールド',need:10,cape:0xf59e0b,crown:0xfde047,tint:[1.5,1.25,0.55]},{k:'ninja',name:'にんじゃ',need:15,cape:0x111827,crown:0x374151,tint:[0.45,0.45,0.5]},{k:'ice',name:'こおりの きし',need:20,cape:0x67e8f9,crown:0xe0f2fe,tint:[0.8,1.1,1.4]}];
   var skinK='red';
-  function applySkin(k){ var sk=SKINS.filter(function(x){ return x.k===k; })[0]||SKINS[0]; skinK=sk.k; HM.cape.color.set(sk.k==='red'?HCOL[HC.k][0]:sk.cape); HM.trim.color.setHex(sk.crown); HM.body.color.setRGB(sk.tint[0],sk.tint[1],sk.tint[2]); }
-  try{ applySkin(opt.research&&opt.research.get().skin); }catch(e){}
-  function showSkin(){ var info=opt.research.get();
-    showPanel('<div style="font-size:22px;font-weight:900;">👕 ゆうしゃの きせかえ</div><div style="font-size:12px;opacity:.75;margin-bottom:6px;">あつめた ★の ごうけい：'+info.total+'</div>',
-      SKINS.map(function(sk){ var ok=info.total>=sk.need, on=(info.skin||'red')===sk.k;
-        return {t:'<span style="display:inline-block;width:14px;height:14px;border-radius:50%;background:#'+('00000'+sk.cape.toString(16)).slice(-6)+';border:2px solid #fff;vertical-align:-2px;"></span> '+sk.name+(on?'（そうび中）':ok?'':'　🔒★'+sk.need),
-          c:on?'#0e7490':ok?'#0891b2':'#9ca3af',f:function(){ if(!ok){ say('★ '+sk.need+'で かいほう','#fecaca',900); return; } opt.research.setSkin(sk.k); applySkin(sk.k); snd('correct'); showSkin(); }}; })
-      .concat([{t:'もどる',c:'#6b7280',f:showStart}])); }
   var GOALS=[{k:'nodmg',t:'❤️を へらさずに クリア'},{k:'tower5',t:'タワー 5ほん いないで クリア'},{k:'eng',t:'えいごを ぜんもん せいかい'},{k:'hero5',t:'ゆうしゃを Lv5 いじょうに'},{k:'nomine',t:'⛏きんこうを つかわずに クリア'}];
   var GOAL=SUB===5?GOALS[0]:GOALS[(STG*3+1)%5];
   function goalOk(){ if(GOAL.k==='nodmg') return S.hp>=S.maxHp; if(GOAL.k==='tower5') return (S.maxTw||0)<=5; if(GOAL.k==='eng') return S.wrong===0&&S.right>0; if(GOAL.k==='hero5') return hero.lv>=5; return !S.usedMine; }
   function startGame(){ panel.style.display='none'; S.paused=false; S.asking=false; S.last=0;
-    S.coins+=15*resLv('coin'); S.hp=S.maxHp=20+3*resLv('hp'); S.bolts+=resLv('bolt'); hud2(); nextWave(); }
+    hud2(); nextWave(); }
   function showStart(){ S.paused=true; S.asking=true; var info=null; try{ info=opt.research&&opt.research.get(); }catch(e){}
-    var bonus=RES.filter(function(r){ return resLv(r.k); }).map(function(r){ return r.ico+'Lv'+resLv(r.k); }).join(' ');
     showPanel('<div style="font-size:13px;opacity:.7;font-weight:800;">ワールド '+WORLD+' - '+SUB+(LOOP?'　（'+(LOOP+1)+'しゅうめ）':'')+'</div><div style="font-size:28px;font-weight:900;margin:2px 0 4px;">'+MP.name+'</div>'+worldRow(WORLD)+
-      '<div style="font-size:12px;opacity:.8;margin-top:6px;">ウェーブ '+NW+'　'+(SUB===5?'👑 ボス：'+BINFO.name:'さいごに ちゅうボス')+'</div><div style="font-size:12px;margin-top:4px;background:#fef3c7;border-radius:8px;padding:3px 6px;">⭐ ミッション：'+GOAL.t+'</div>'+(bonus?'<div style="font-size:12px;margin-top:6px;color:#1d4ed8;">'+bonus+'</div>':''),
+      '<div style="font-size:12px;opacity:.8;margin-top:6px;">ウェーブ '+NW+'　'+(SUB===5?'👑 ボス：'+BINFO.name:'さいごに ちゅうボス')+'</div><div style="font-size:12px;margin-top:4px;background:#fef3c7;border-radius:8px;padding:3px 6px;">⭐ ミッション：'+GOAL.t+'</div>',
       [{t:'▶ スタート',c:'#15803d',f:startGame}].concat(opt.pickStage?[{t:'🗺 ワールドマップ',c:'#0f766e',f:showWorld}]:[])
-      .concat(info?[{t:'🔬 けんきゅう（★ '+info.stars+'）',c:'#7c3aed',f:showRes},{t:'👕 きせかえ',c:'#0891b2',f:showSkin}]:[])
+      
       .concat([{t:'🐾 ゆうしゃ ／ 📖 ずかん',c:'#b45309',f:showBook}])); }
   function bar(v,max){ var n=Math.max(1,Math.min(5,Math.round(v/max*5))); return '<span style="color:#f59e0b;letter-spacing:1px;">'+'■'.repeat(n)+'</span><span style="color:#e5e7eb;">'+'■'.repeat(5-n)+'</span>'; }
   function showBook(){ var nm='ゆうしゃ';
@@ -961,12 +948,6 @@ function start(opt){
     for(var w=1;w<=5;w++){ var first=(LOOP*25)+(w-1)*5+1, open=first<=mx; h+='<div style="margin:6px 0;padding:6px;border-radius:12px;background:'+(open?'#f0fdf4':'#f3f4f6')+';opacity:'+(open?1:0.55)+';"><div style="font-weight:900;font-size:13px;text-align:left;">ワールド '+w+'　'+WNAME[w-1]+(open?'':'　🔒')+'</div>'+worldRow(w)+'</div>'; }
     showPanel(h,[{t:'もどる',c:'#6b7280',f:showStart}]);
     [].forEach.call(panel.querySelectorAll('[data-st]'),function(n){ n.onclick=function(e){ e.stopPropagation(); var v=+n.dataset.st; if(v>mx){ snd('wrong'); return; } if(v===STG){ showStart(); return; } snd('tap'); opt.pickStage(v); }; }); }
-  function showRes(){ var info=opt.research.get();
-    var html='<div style="font-size:22px;font-weight:900;">🔬 けんきゅう</div><div style="font-size:12px;opacity:.75;margin-bottom:8px;">ステージの ★で ずっと つよくなる（のこり ★ '+info.stars+'）</div>';
-    showPanel(html,RES.map(function(r){ var lv=info.lv[r.k]||0, cost=lv+1, max=lv>=3;
-      return {t:'<div style="display:flex;align-items:center;gap:6px;font-size:14px;"><span style="font-size:20px;">'+r.ico+'</span><span style="flex:1;text-align:left;">'+r.name+' <span style="font-size:11px;opacity:.85;">'+r.per+'</span><br><span style="font-size:12px;letter-spacing:2px;">'+'●'.repeat(lv)+'○'.repeat(3-lv)+'</span></span><span>'+(max?'MAX':'★'+cost)+'</span></div>',
-        c:max?'#9ca3af':info.stars>=cost?'#7c3aed':'#a78bfa',f:function(){ if(max) return; if(opt.research.buy(r.k,cost)){ snd('correct'); showRes(); } else { snd('wrong'); say('★が たりない','#fecaca',800); } }}; })
-      .concat([{t:'もどる',c:'#6b7280',f:showStart}])); }
   setTimeout(function(){ if(R.S===S){ showStart(); [].forEach.call(panel.querySelectorAll('[data-st]'),function(n){ n.onclick=function(e){ e.stopPropagation(); var v=+n.dataset.st, mx=(stInfo().maxStage||STG); if(v<=mx&&v!==STG&&opt.pickStage){ snd('tap'); opt.pickStage(v); } }; }); } },300);
   R.debug={PATHS:PATHS,W:WORLD,evolve:evolve,buildHero:buildHero,CLS:CLS,setHC:function(k){ HC=CLS.filter(function(c){ return c.k===k; })[0]; buildHero(HC,1); },cards:function(){ return S.card; },HC:HC,upgrade:upgrade,go:startGame,hero:hero,cam:cam,S:S,pads:pads,finish:finish,TT:TT,
     build:function(i,k){ var q=pads[i]; if(!q) return false; return q.lv?upgrade(q):build(q,k||'arrow'); },
