@@ -600,10 +600,10 @@ function start(opt){
   R.S=S;
   document.getElementById('twStage').textContent=stage;
   var ECO=Math.max(0.65,1-0.01*(STG-1));   // あとの ステージは コインが すこし へる
-  function baseHp(w){ return 4*(1+0.22*(w-1))*(1+0.12*(stage-1))*Math.pow(1.03,stage-1)*(1+0.6*LOOP); }   // あとの ステージほど ぐんと つよく
+  function baseHp(w){ return 4*(1+0.22*(w-1))*(1+0.15*(stage-1))*Math.pow(1.05,stage-1)*(1+0.6*LOOP); }   // あとの ステージほど ぐんと つよく
   var WPOOL=[[['f',2],['sl',2],['ra',1],['b',1]],[['f',2],['fly',2],['sh',2],['mo',2],['sp',1]],[['ra',1],['mo',2],['heal',1],['cham',2],['go',1]],[['f',2],['fb',2],['b',1],['flag',1],['sl',2]],[['gh',2],['sh',2],['flag',1],['heal',1],['go',1],['sp',1],['cham',1]]];
   function heavy(){ var h=[]; if(SUB>=4||WORLD>=2) h.push(['tr',Math.min(2,0.5+stage*0.06)]); if(SUB>=6||WORLD>=3) h.push(['kn',Math.min(2,0.3+stage*0.05)]); return h; }
-  function makeWave(w){ var q=[], n=Math.round((8+w*4+stage)*(S.mod&&S.mod.k==='swarm'?1.4:1)), u=w+SUB-1, pool=[['n',5]].concat(WPOOL[WORLD-1].slice(0,Math.min(7,1+Math.floor(u/2)))).concat(w>=3?heavy():[]);
+  function makeWave(w){ var q=[], n=Math.round((8+w*4+stage*1.4)*(S.mod&&S.mod.k==='swarm'?1.4:1)), u=w+SUB-1, pool=[['n',5]].concat(WPOOL[WORLD-1].slice(0,Math.min(7,1+Math.floor(u/2)))).concat(w>=3?heavy():[]);
     var tot=pool.reduce(function(a,b){ return a+b[1]; },0);
     for(var i=0;i<n;i++){ var r=Math.random()*tot, ty='n'; for(var j=0;j<pool.length;j++){ r-=pool[j][1]; if(r<=0){ ty=pool[j][0]; break; } }
       if(ty==='ra'){ for(var rr=0;rr<4;rr++) q.push({ty:'ra',gap:0.15}); }
