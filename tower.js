@@ -22,8 +22,8 @@ var TT={
   cannon:{name:'たいほう',ico:'💣',desc:'まとめて ドカン',air:false,lv:[{cost:35,dmg:4,rate:0.55,range:4.0,splash:1.0},{cost:45,dmg:6,rate:0.6,range:4.3,splash:1.2},{cost:60,dmg:9,rate:0.7,range:4.6,splash:1.4}]}
   ,mine:  {name:'きんこう',ico:'⛏',desc:'ウェーブごとに コイン',air:false,eco:true,lv:[{cost:40,gold:7,range:0},{cost:45,gold:14,range:0},{cost:55,gold:24,range:0}]}
   ,farm:  {name:'はたけ',ico:'🌾',desc:'ウェーブごとに すこし コイン',air:false,eco:true,fac:1,lv:[{cost:20,gold:4,range:0},{cost:25,gold:8,range:0},{cost:35,gold:13,range:0}]}
-  ,lab:   {name:'けんきゅうじょ',ico:'🔬',desc:'けんきゅう ポイントを つくる',air:false,eco:true,fac:1,lv:[{cost:50,rp:1,range:0},{cost:60,rp:2,range:0},{cost:80,rp:3,range:0}]}
-  ,forge: {name:'かじや',ico:'🔨',desc:'ちかくの タワーが つよく',air:false,eco:true,fac:1,lv:[{cost:45,buff:0.15,range:3.2},{cost:55,buff:0.25,range:3.6},{cost:70,buff:0.35,range:4.0}]}
+  ,lab:   {name:'けんきゅうじょ',ico:'🔬',desc:'けんきゅう ポイントを つくる',air:false,eco:true,fac:1,lv:[{cost:50,rp:1,range:0},{cost:60,rp:2,range:0},{cost:80,rp:3,range:0},{cost:120,rp:4,range:0}]}
+  ,forge: {name:'かじや',ico:'🔨',desc:'ちかくの タワーが つよく',air:false,eco:true,fac:1,lv:[{cost:45,buff:0.15,rate:0.12,range:3.2},{cost:55,buff:0.25,rate:0.22,range:3.6},{cost:70,buff:0.35,rate:0.35,range:4.0}]}
   ,church:{name:'きょうかい',ico:'⛪',desc:'ウェーブごとに ❤️を なおす',air:false,eco:true,fac:1,lv:[{cost:40,heal:1,range:0},{cost:50,heal:2,range:0},{cost:65,heal:3,range:0}]}
 }, TKEYS=['arrow','magic','ice','cannon'], FKEYS=['farm','mine','lab','forge','church'];
 TT.mine.fac=1;
@@ -436,6 +436,16 @@ function start(opt){
   var tGeo={}, hGeo={}; TKEYS.concat(FKEYS).forEach(function(k){ tGeo[k]=[null]; hGeo[k]=[null]; for(var i=1;i<=3;i++){ tGeo[k].push(towerParts(k,i)); hGeo[k].push(headParts(k,i)); } tGeo[k].push(tGeo[k][3]); hGeo[k].push(hGeo[k][3]); tGeo[k].push(tGeo[k][3]); hGeo[k].push(hGeo[k][3]); });
   var glowMat={magic:new THREE.MeshLambertMaterial({vertexColors:true,emissive:0x0891b2,emissiveIntensity:0.7}),ice:new THREE.MeshLambertMaterial({vertexColors:true,emissive:0x0ea5e9,emissiveIntensity:0.45,transparent:true,opacity:0.92})};
   var auraTex=GX.glowTex();
+  // ちいさな けんちくかさん
+  var wkMat=null;
+  function startBuild(p){ p.building=2.4; if(p.workers) scene.remove(p.workers);
+    if(!wkMat) wkMat=new THREE.MeshLambertMaterial({vertexColors:true});
+    var wg=new THREE.Group(); wg.position.set(p.x,0,p.z); p.workers=wg; p.wk=[];
+    for(var i=0;i<3;i++){ var w=new THREE.Group(), a=i*2.094+Math.random();
+      w.add(new THREE.Mesh(M([P(new THREE.CylinderGeometry(0.09,0.11,0.26,8),'#2563eb',0,0.2,0),P(new THREE.SphereGeometry(0.09,10,8),'#fcd9b6',0,0.41,0),P(new THREE.SphereGeometry(0.1,10,6,0,Math.PI*2,0,Math.PI/2),'#facc15',0,0.44,0),P(new THREE.BoxGeometry(0.05,0.12,0.05),'#1e293b',-0.04,0.05,0),P(new THREE.BoxGeometry(0.05,0.12,0.05),'#1e293b',0.04,0.05,0)]),wkMat));
+      var arm=new THREE.Group(); arm.position.set(0.1,0.3,0); arm.add(new THREE.Mesh(M([P(new THREE.BoxGeometry(0.04,0.16,0.04),'#2563eb',0,-0.07,0),P(new THREE.BoxGeometry(0.02,0.02,0.18),'#92400e',0,-0.15,0.08),P(new THREE.BoxGeometry(0.06,0.06,0.08),'#6b7280',0,-0.15,0.17)]),wkMat)); w.add(arm);
+      w.userData={a:a,arm:arm,ph:Math.random()*6}; wg.add(w); p.wk.push(w); }
+    scene.add(wg); }
   function setTower(p){ if(p.mesh) scene.remove(p.mesh);
     var g=new THREE.Group(); g.add(new THREE.Mesh(tGeo[p.type][p.lv],lam)); var h=TH[p.lv-1]*(p.type==='cannon'?0.7:1);
     var hd=new THREE.Mesh(hGeo[p.type][p.lv],glowMat[p.type]||lam);
@@ -444,7 +454,7 @@ function start(opt){
     if(p.lv===5){ var L5=Lof(p.type,5,p.br,p.br2), c5=p.br2?0xa78bfa:0xfbbf24, cr5=new THREE.Mesh(M([P(new THREE.CylinderGeometry(0.34,0.38,0.14,10),'#fbbf24',0,0,0),P(new THREE.ConeGeometry(0.07,0.22,4),'#fbbf24',-0.24,0.16,0),P(new THREE.ConeGeometry(0.07,0.26,4),'#fbbf24',0,0.18,0),P(new THREE.ConeGeometry(0.07,0.22,4),'#fbbf24',0.24,0.16,0)]),new THREE.MeshLambertMaterial({vertexColors:true,emissive:0x553300}));
       cr5.position.y=TH[4]*(p.type==='cannon'?0.7:1)+(p.type==='arrow'?1.75:p.type==='cannon'?0.75:1.55); g.add(cr5); p.orbs=[]; for(var oi=0;oi<3;oi++){ var ob=new THREE.Mesh(new THREE.OctahedronGeometry(0.12,0),new THREE.MeshBasicMaterial({color:c5})); g.add(ob); p.orbs.push(ob); }
       var au5=new THREE.Mesh(new THREE.RingGeometry(1.0,1.2,40),new THREE.MeshBasicMaterial({color:c5,transparent:true,opacity:0.75,blending:THREE.AdditiveBlending,depthWrite:false})); au5.rotation.x=-Math.PI/2; au5.position.y=0.12; g.add(au5); p.aur=au5; g.scale.setScalar(1.08); }
-    if(p.lv>=4){ var bc=[0xf43f5e,0x22d3ee][p.br||0], gem=new THREE.Mesh(new THREE.OctahedronGeometry(0.22,0),new THREE.MeshLambertMaterial({color:bc,emissive:bc,emissiveIntensity:0.6})); gem.position.set(0,h*0.55,0.72); g.add(gem);
+    if(p.lv>=4&&!TT[p.type].fac){ var bc=[0xf43f5e,0x22d3ee][p.br||0], gem=new THREE.Mesh(new THREE.OctahedronGeometry(0.22,0),new THREE.MeshLambertMaterial({color:bc,emissive:bc,emissiveIntensity:0.6})); gem.position.set(0,h*0.55,0.72); g.add(gem);
       var au=new THREE.Mesh(new THREE.RingGeometry(0.9,1.05,32),new THREE.MeshBasicMaterial({color:bc,transparent:true,opacity:0.7,blending:THREE.AdditiveBlending,depthWrite:false})); au.rotation.x=-Math.PI/2; au.position.y=0.1; g.add(au); p.aur=au; }
     if(p.lv>=3){ var fl=new THREE.Mesh(new THREE.PlaneGeometry(0.4,0.26),new THREE.MeshLambertMaterial({color:p.lv>=4?[0xf43f5e,0x22d3ee][p.br||0]:0xfbbf24,side:THREE.DoubleSide})); fl.position.set(0.2,h+(p.type==='arrow'?2.0:1.2),0); g.add(fl);
       var pl=new THREE.Mesh(new THREE.CylinderGeometry(0.02,0.02,0.6,4),new THREE.MeshLambertMaterial({color:0x444444})); pl.position.set(0,h+(p.type==='arrow'?1.9:1.1),0); g.add(pl); p.flag=fl; }
@@ -861,22 +871,27 @@ function start(opt){
         var b=btn('<div style="font-size:22px;">'+T.ico+'</div>'+T.name+'<div style="font-size:9px;opacity:.9;">'+T.desc+'</div><div>🪙'+c+'</div>',ok,function(){ build(p,k); }); b.style.background=ok?'#a16207':'#9ca3af';
         b.onpointerenter=function(){ showRange(p,k,1); }; row.appendChild(b); });
       showRange(p,'arrow',1); }
-    else { var T=TT[p.type]; menu.appendChild(el('div','font-size:14px;margin:0 0 6px 4px;',T.ico+' '+T.name+(T.fac?'':' タワー')+'　Lv'+p.lv+(p.lv===4?'　'+BR[p.type][p.br].ico+BR[p.type][p.br].name:p.lv>=5?'　'+Lof(p.type,5,p.br,p.br2).ico+Lof(p.type,5,p.br,p.br2).name+'（きわみ）':'')));
-      if(p.lv===4){ B5[BR[p.type][p.br].key].forEach(function(bb,bi){ var cb=costOf(bb.cost), okb=S.coins>=cb; var b3=btn('<div style="font-size:18px;">'+bb.ico+'</div>'+bb.name+'<div style="font-size:9px;">'+bb.desc+'</div><div>🪙'+cb+'</div>',okb,function(){ upgrade(p,bi); }); b3.style.background=okb?(bi?'#6d28d9':'#b45309'):'#9ca3af'; b3.onpointerenter=function(){ showRange(p,p.type,5,p.br,bi); }; row.appendChild(b3); }); }
-      if(p.lv===3&&BR[p.type]){ BR[p.type].forEach(function(bb,bi){ var okb=S.coins>=bb.cost; var b2=btn('<div style="font-size:18px;">'+bb.ico+'</div>'+bb.name+'<div style="font-size:10px;">'+bb.desc+'</div><div>🪙'+bb.cost+'</div>',okb,function(){ upgrade(p,bi); }); b2.style.background=okb?(bi?'#0e7490':'#be123c'):'#9ca3af'; b2.onpointerenter=function(){ showRange(p,p.type,4,bi); }; row.appendChild(b2); }); }
-      if(p.lv<3){ var c2=costOf(T.lv[p.lv].cost), ok2=S.coins>=c2; row.appendChild(btn('<div style="font-size:18px;">⬆</div>レベル'+(p.lv+1)+'<div>🪙'+c2+'</div>'+(T.fac?'<div style="font-size:10px;">'+facTxt(p.type,p.lv+1)+'</div>':p.lv===2?'<div style="font-size:10px;">'+(p.type==='arrow'?'れんしゃ':p.type==='magic'?'れんさ まほう':p.type==='ice'?'まわりも こおる':'だい ばくはつ')+'</div>':''),ok2,function(){ upgrade(p); })); }
+    else { var T=TT[p.type]; menu.appendChild(el('div','font-size:14px;margin:0 0 6px 4px;',T.ico+' '+T.name+(T.fac?'':' タワー')+'　Lv'+p.lv+(p.lv===4&&BR[p.type]?'　'+BR[p.type][p.br].ico+BR[p.type][p.br].name:p.lv>=5&&BR[p.type]?'　'+Lof(p.type,5,p.br,p.br2).ico+Lof(p.type,5,p.br,p.br2).name+'（きわみ）':'')));
+      if(locked(p)&&p.lv<5){ menu.appendChild(el('div','font-size:12px;margin:0 4px 6px;color:#b91c1c;','🔒 レベルアップには 🔬けんきゅうじょ Lv'+needLab(p)+' が ひつよう（いま Lv'+labLv()+'）')); }
+      if(p.lv===4&&BR[p.type]){ B5[BR[p.type][p.br].key].forEach(function(bb,bi){ var cb=costOf(bb.cost), okb=S.coins>=cb&&!locked(p); var b3=btn('<div style="font-size:18px;">'+bb.ico+'</div>'+bb.name+'<div style="font-size:9px;">'+bb.desc+'</div><div>🪙'+cb+'</div>',okb,function(){ upgrade(p,bi); }); b3.style.background=okb?(bi?'#6d28d9':'#b45309'):'#9ca3af'; b3.onpointerenter=function(){ showRange(p,p.type,5,p.br,bi); }; row.appendChild(b3); }); }
+      if(p.lv===3&&BR[p.type]){ BR[p.type].forEach(function(bb,bi){ var okb=S.coins>=bb.cost&&!locked(p); var b2=btn('<div style="font-size:18px;">'+bb.ico+'</div>'+bb.name+'<div style="font-size:10px;">'+bb.desc+'</div><div>🪙'+bb.cost+'</div>',okb,function(){ upgrade(p,bi); }); b2.style.background=okb?(bi?'#0e7490':'#be123c'):'#9ca3af'; b2.onpointerenter=function(){ showRange(p,p.type,4,bi); }; row.appendChild(b2); }); }
+      if(p.lv<(T.fac?T.lv.length:3)){ var c2=costOf(T.lv[p.lv].cost), ok2=S.coins>=c2&&!locked(p); row.appendChild(btn('<div style="font-size:18px;">⬆</div>レベル'+(p.lv+1)+'<div>🪙'+c2+'</div>'+(T.fac?'<div style="font-size:10px;">'+facTxt(p.type,p.lv+1)+'</div>':p.lv===2?'<div style="font-size:10px;">'+(p.type==='arrow'?'れんしゃ':p.type==='magic'?'れんさ まほう':p.type==='ice'?'まわりも こおる':'だい ばくはつ')+'</div>':''),ok2,function(){ upgrade(p); })); }
       if(!TT[p.type].eco){ var PR=['🚩さきとう','💪つよい','📍ちかい']; row.appendChild(btn('<div style="font-size:18px;">🎯</div>ねらい<div style="font-size:11px;">'+PR[p.prio||0]+'</div>',true,function(){ p.prio=((p.prio||0)+1)%3; snd('tap'); renderMenu(); })); row.lastChild.style.background='#b45309'; }
       else menu.appendChild(el('div','font-size:11px;margin:-2px 4px 6px;',facTxt(p.type,p.lv)));
       var back=Math.floor(p.spent*0.6); row.appendChild(btn('<div style="font-size:18px;">💰</div>うる<div>🪙+'+back+'</div>',true,function(){ sell(p); }));
       showRange(p,p.type,p.lv,p.br,p.br2); }
     row.appendChild(btn('<div style="font-size:18px;">✕</div>とじる',true,closeMenu)); row.lastChild.style.background='#6b7280'; row.lastChild.style.flex='0.6';
     menu.appendChild(row); hint.style.display='none'; }
-  function facTxt(k,lv){ var X=TT[k].lv[lv-1]; return X.gold?'ウェーブごとに 🪙+'+X.gold:X.rp?'ウェーブごとに 🔬+'+X.rp:X.heal?'ウェーブごとに ❤️+'+X.heal:X.buff?'まわりの タワー ダメージ +'+Math.round(X.buff*100)+'%':''; }
+  function facTxt(k,lv){ var X=TT[k].lv[lv-1]; return X.gold?'ウェーブごとに 🪙+'+X.gold:X.rp?'ウェーブごとに 🔬+'+X.rp:X.heal?'ウェーブごとに ❤️+'+X.heal:X.buff?'まわりの タワー ダメージ +'+Math.round(X.buff*100)+'% / こうげきそくど +'+Math.round(X.rate*100)+'%':''; }
   function build(p,k){ if(k==='mine') S.usedMine=true; setTimeout(function(){ S.maxTw=Math.max(S.maxTw||0,pads.filter(function(q){ return q.lv; }).length); },0); var c=costOf(TT[k].lv[0].cost); if(S.coins<c){ say('🪙が たりない','#fecaca',700); snd('wrong'); return false; }
-    S.coins-=c; p.temp=false; p.type=k; p.lv=1; p.spent=c; p.cd=0.3; setTower(p); snd('coin'); fx.burst(p.x,1.2,p.z,26,0xfff1b8,4,0.7); ringFx(p.x,p.z,0xfff1b8,2,0.45); closeMenu(); hud2(); return true; }
-  function upgrade(p,bi){ if(p.lv>=5||(TT[p.type].eco&&p.lv>=3)) return false; if(bi===undefined&&p.lv>=3) bi=Math.random()<0.5?0:1; var c=costOf(p.lv===4?Lof(p.type,5,p.br,bi).cost:Lof(p.type,p.lv+1,bi).cost); if(S.coins>=c){ if(p.lv===3) p.br=bi; if(p.lv===4) p.br2=bi; } if(S.coins<c){ say('🪙が たりない','#fecaca',700); snd('wrong'); return false; }
-    S.coins-=c; p.spent+=c; p.lv++; setTower(p); snd('correct'); fx.burst(p.x,1.8,p.z,34,0x93c5fd,4.5,0.8); ringFx(p.x,p.z,0x93c5fd,2.4,0.5); if(p.lv===5){ var f5=Lof(p.type,5,p.br,p.br2); S.slow=0.6; fx.burst(p.x,2,p.z,60,0xfde047,6,1); ringFx(p.x,p.z,0xfde047,3.5,0.7); }
-    say(p.lv===5?'✨ きわみ しんか！<br>'+Lof(p.type,5,p.br,p.br2).ico+' '+Lof(p.type,5,p.br,p.br2).name:p.lv===4?BR[p.type][p.br].ico+' '+BR[p.type][p.br].name+' に しんか！':'レベル '+p.lv+'！',p.lv>=4?'#fde68a':'#fff',1300); if(sel===p) renderMenu(); hud2(); return true; }
+    S.coins-=c; p.temp=false; p.type=k; p.lv=1; p.spent=c; p.cd=0.3; setTower(p); startBuild(p); snd('coin'); fx.burst(p.x,1.2,p.z,26,0xfff1b8,4,0.7); ringFx(p.x,p.z,0xfff1b8,2,0.45); closeMenu(); hud2(); return true; }
+  function labLv(){ var m=0; pads.forEach(function(q){ if(q.type==='lab'&&q.lv>m) m=q.lv; }); return m; }
+  function needLab(p){ return TT[p.type].fac?0:p.lv; }   // タワー Lv(n+1) には けんきゅうじょ Lvn が ひつよう
+  function locked(p){ return labLv()<needLab(p); }
+  function upgrade(p,bi){ if(p.lv>=5||(TT[p.type].eco&&p.lv>=TT[p.type].lv.length)) return false;
+    if(locked(p)){ say('🔒 けんきゅうじょ Lv'+needLab(p)+' が ひつよう','#fecaca',1100); snd('wrong'); return false; } if(bi===undefined&&p.lv>=3) bi=Math.random()<0.5?0:1; var F=TT[p.type].fac; var c=costOf(F?TT[p.type].lv[p.lv].cost:p.lv===4?Lof(p.type,5,p.br,bi).cost:Lof(p.type,p.lv+1,bi).cost); if(S.coins>=c&&!F){ if(p.lv===3) p.br=bi; if(p.lv===4) p.br2=bi; } if(S.coins<c){ say('🪙が たりない','#fecaca',700); snd('wrong'); return false; }
+    S.coins-=c; p.spent+=c; p.lv++; setTower(p); startBuild(p); snd('correct'); fx.burst(p.x,1.8,p.z,34,0x93c5fd,4.5,0.8); ringFx(p.x,p.z,0x93c5fd,2.4,0.5); if(p.lv===5){ var f5=Lof(p.type,5,p.br,p.br2); S.slow=0.6; fx.burst(p.x,2,p.z,60,0xfde047,6,1); ringFx(p.x,p.z,0xfde047,3.5,0.7); }
+    say(p.lv===5?'✨ きわみ しんか！<br>'+Lof(p.type,5,p.br,p.br2).ico+' '+Lof(p.type,5,p.br,p.br2).name:p.lv===4&&BR[p.type]?BR[p.type][p.br].ico+' '+BR[p.type][p.br].name+' に しんか！':'レベル '+p.lv+'！',p.lv>=4?'#fde68a':'#fff',1300); if(sel===p) renderMenu(); hud2(); return true; }
   // じゆうに たてる：みち・き・がけ・いけ・おしろ・もん・ほかの タワーの そば いがいなら どこでも
   function canBuild(x,z){ if(Math.abs(x)>15.5||z<-16||z>13.5) return 'そとがわ'; if(distToPath(x,z)<1.75) return 'みち';
     if(pads.some(function(q){ return Math.hypot(q.x-x,q.z-z)<1.8; })) return 'タワー'; if(OBST.some(function(o){ return Math.hypot(o.x-x,o.z-z)<o.r+0.8; })) return 'き';
@@ -885,7 +900,7 @@ function start(opt){
   function newPad(x,z){ var p={x:x,z:z,lv:0,type:null,cd:0,mesh:null,aim:0,spent:0,prio:0,temp:true}; padMeshes(p); p.ring.visible=true; pads.push(p); addLbl(); return p; }
   function removePad(p){ var i=pads.indexOf(p); if(i<0||p.high) return; [p.base,p.ring,p.mesh].forEach(function(m){ if(m) scene.remove(m); }); pads.splice(i,1); var d=lbl.splice(i,1)[0]; if(d) d.remove(); }
   var noMark=new THREE.Mesh(new THREE.RingGeometry(0.4,0.6,4),new THREE.MeshBasicMaterial({color:0xef4444,transparent:true,opacity:0,depthWrite:false})); noMark.rotation.x=-Math.PI/2; noMark.position.y=0.3; scene.add(noMark);
-  function sell(p){ S.coins+=Math.floor(p.spent*0.6); scene.remove(p.mesh); p.mesh=null; p.head=null; p.lv=0; p.br=undefined; p.br2=undefined; p.orbs=null; p.type=null; p.spent=0; p.ring.visible=true; fx.burst(p.x,1,p.z,20,0xffd34d,3,0.6); snd('coin'); closeMenu(); if(!p.high) removePad(p); hud2(); }
+  function sell(p){ S.coins+=Math.floor(p.spent*0.6); scene.remove(p.mesh); if(p.workers){ scene.remove(p.workers); p.workers=null; p.wk=null; } p.building=0; p.mesh=null; p.head=null; p.lv=0; p.br=undefined; p.br2=undefined; p.orbs=null; p.type=null; p.spent=0; p.ring.visible=true; fx.burst(p.x,1,p.z,20,0xffd34d,3,0.6); snd('coin'); closeMenu(); if(!p.high) removePad(p); hud2(); }
   var ray=new THREE.Raycaster(), ndc=new THREE.Vector2(), gpl=new THREE.Plane(new THREE.Vector3(0,1,0),0), hitP=new THREE.Vector3();
   function tap(e){ if(S.over||S.paused) return; var pt=e.touches?e.touches[0]:e, rc=renderer.domElement.getBoundingClientRect();
     ndc.set((pt.clientX-rc.left)/rc.width*2-1,-(pt.clientY-rc.top)/rc.height*2+1); ray.setFromCamera(ndc,cam);
@@ -1057,7 +1072,7 @@ function start(opt){
       if(L.storm||L.nova){ q.pT=(q.pT===undefined?2:q.pT)-dt; if(q.pT<=0){ q.pT=L.storm?4:5; var inR=S.en.filter(function(a){ return !a.dead&&!a.under&&canHit(a,'magic')&&Math.hypot(a.x-q.x,a.z-q.z)<=RG; });
           if(L.storm){ inR.sort(function(){ return Math.random()-0.5; }).slice(0,L.storm).forEach(function(a){ SRC='magic'; hurt(a,L.dmg*3,true); SRC=null; fx.burst(a.x,1,a.z,20,0xbfe6ff,4,0.5); for(var yb=0;yb<8;yb++) fx.emit(a.x+rnd(-0.2,0.2),1+yb*0.8,a.z,0,0,0,0xe0f2fe,0.25); }); if(inR.length) snd('crash'); }
           else { inR.forEach(function(a){ SRC='ice'; hurt(a,L.dmg*2); SRC=null; a.slowT=2; a.slowK=Math.max(a.slowK,0.6); if(a.ty!=='boss') a.stun=1.6; }); ringFx(q.x,q.z,0xbae6fd,RG,0.7); fx.burst(q.x,1,q.z,50,0xe0f2fe,6,0.8); } } }
-      q.cd-=dt*(q.boostT>0?1.6:1)*(1+0.12*cv('rate')); if(q.boostT>0) q.boostT-=dt; if(q.cd>0) return;
+      if(q.building>0) return; var fr=0; pads.forEach(function(f){ if(f.type==='forge'&&f.lv){ var FL=TT.forge.lv[f.lv-1]; if(Math.hypot(f.x-q.x,f.z-q.z)<=FL.range) fr=Math.max(fr,FL.rate); } }); q.cd-=dt*(q.boostT>0?1.6:1)*(1+0.12*cv('rate'))*(1+fr); if(q.boostT>0) q.boostT-=dt; if(q.cd>0) return;
       var tg=null, far=-1e9; for(var j=0;j<S.en.length;j++){ var a=S.en[j]; if(a.dead) continue; if((a.fly||ET[a.ty].air)&&!(L.air!==undefined?L.air:T.air)) continue; if(!canHit(a,q.type)) continue; if(a.under>0) continue;
         if(q.type==='ice'&&a.slowT>0.6&&tg) continue;
         var dd=Math.hypot(a.x-q.x,a.z-q.z); if(dd>RG) continue; var pr0=L.force||q.prio, sc=pr0===1?a.hp:pr0===2?-dd:a.s; if(sc>far){ far=sc; tg=a; } }
@@ -1162,10 +1177,14 @@ function start(opt){
         if(q.gears){ var gsp=(q.kick>0?6:1.6)*(q.frozen>0?0:1); q.gears.forEach(function(gr){ gr.rotateZ(dt*gsp*gr.userData.sp); }); }
         if(q.stack&&(q.type==='arrow'||q.type==='cannon')&&Math.random()<dt*(q.kick>0?14:2.5)) fx.emit(q.x+q.stack[0],q.stack[1]+0.2,q.z+q.stack[2],rnd(-0.2,0.2),1.2,rnd(-0.2,0.2),0xd1d5db,0.9);
         if(q.orbs){ q.orbs.forEach(function(ob,oi){ var oa=S.t*2+oi*2.09; ob.position.set(Math.cos(oa)*0.95,1.2+Math.sin(S.t*3+oi)*0.25,Math.sin(oa)*0.95); ob.rotation.y+=dt*3; }); if(q.aur) q.aur.rotation.z+=dt; }
-        if(q.pop>0){ q.pop-=dt; var ps=1+Math.sin(q.pop/0.35*Math.PI)*0.18; q.mesh.scale.set(ps,1/ps+0.0,ps); } else q.mesh.scale.set(1,1,1); }
+        if(q.building>0&&q.mesh){ q.building-=dt; var bp=Math.min(1,1-q.building/2.4); q.mesh.scale.set(1,0.25+0.75*bp,1);
+          if(q.wk) q.wk.forEach(function(w,wi){ var ud=w.userData, aa=ud.a+S.t*0.5; w.position.set(Math.cos(aa)*0.95,Math.abs(Math.sin(S.t*8+ud.ph))*0.04,Math.sin(aa)*0.95); w.rotation.y=-aa-Math.PI/2+Math.PI; var sw=Math.sin(S.t*14+ud.ph); ud.arm.rotation.x=-0.6+sw*0.9;
+            if(sw>0.97&&Math.random()<0.5){ fx.emit(q.x+Math.cos(aa)*0.75,0.25,q.z+Math.sin(aa)*0.75,rnd(-0.6,0.6),1.4,rnd(-0.6,0.6),0xfde047,0.25); if(wi===0&&Math.random()<0.3) snd('tap'); } });
+          if(q.building<=0){ q.building=0; if(q.workers){ scene.remove(q.workers); q.workers=null; q.wk=null; } q.mesh.scale.set(1,1,1); fx.burst(q.x,1.2,q.z,18,0xfff1b8,3,0.5); } }
+        else if(q.pop>0){ q.pop-=dt; var ps=1+Math.sin(q.pop/0.35*Math.PI)*0.18; q.mesh.scale.set(ps,1/ps+0.0,ps); } else q.mesh.scale.set(1,1,1); }
       var d=lbl[idx];
       if(!d) return; if(q.lv>=5||S.over||sel===q||(!q.lv&&!q.high)){ d.style.display='none'; return; }
-      if(q.lv>=3&&TT[q.type].eco){ d.style.display='none'; return; } var c=q.lv?costOf((q.lv===4?Lof(q.type,5,q.br,0):Lof(q.type,q.lv+1,0)).cost):costOf(20), ok=S.coins>=c, sp=toScreen(q.x,q.lv?TH[q.lv-1]*(q.type==='cannon'?0.7:1)+1.5:0.5,q.z);
+      if(TT[q.type].eco&&q.lv>=TT[q.type].lv.length){ d.style.display='none'; return; } if(q.lv&&locked(q)){ d.style.display='none'; return; } var c=q.lv?costOf((q.lv===4?Lof(q.type,5,q.br,0):Lof(q.type,q.lv+1,0)).cost):costOf(20), ok=S.coins>=c, sp=toScreen(q.x,q.lv?TH[q.lv-1]*(q.type==='cannon'?0.7:1)+1.5:0.5,q.z);
       if(q.lv&&!ok){ d.style.display='none'; return; }
       d.style.display='block'; d.style.left=sp.x+'px'; d.style.top=sp.y+'px';
       var txt=q.lv?'⬆🪙'+c:'⛰ たかだい（しゃてい+25%）'; if(d._t!==txt+ok){ d._t=txt+ok; d.textContent=txt; d.style.background=ok?(q.lv?'linear-gradient(#3b82f6,#1d4ed8)':'linear-gradient(#22c55e,#15803d)'):'rgba(60,60,60,.75)'; d.style.color='#fff'; }
