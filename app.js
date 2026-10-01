@@ -979,6 +979,7 @@ window._eigoPetInit = function() {
     loadThree(function(){
       runQ=[];
       EigoTower.start({
+        layout:state.towerLayout||null,
         container:root, stage:stg, pickStage:function(n){ startTower(n); }, getQuestion:runnerQuestion, onAnswer:runnerAnswer, sfx:sfx, speak:speak,
         research:{ get:function(){ var sv=state.towerStars||{}, tot=0; for(var k in sv) tot+=sv[k]; return {lv:state.towerRes||{}, stars:tot-(state.towerSpent||0), total:tot, skin:state.towerSkin||'red', cls:state.towerCls||'knight', starsBy:state.towerStars||{}, maxStage:state.towerStage||1}; },
                    setCls:function(k){ state.towerCls=k; save(); } },
@@ -986,6 +987,7 @@ window._eigoPetInit = function() {
           var happyGain=r.quit?Math.min(8,1+r.right):Math.min(30,4+r.right*2+(r.win?6:0));
           state.happy=Math.min(100,state.happy+happyGain); addXp(5);
           lastTowerLose=r.win?0:r.stage;
+          if(r.layout) state.towerLayout=r.layout;
           var wasNew=r.win&&r.stage>=(state.towerStage||1); if(wasNew) state.towerStage=r.stage+1;
           if(r.stars){ state.towerStars=state.towerStars||{}; state.towerStars[r.stage]=Math.max(state.towerStars[r.stage]||0,r.stars); }
           save();
