@@ -16,6 +16,7 @@ function part(geo,color,x,y,z,sx,sy,sz,rx,ry,rz){
   var n=geo.attributes.position.count, col=new Float32Array(n*3), c=new THREE.Color(color);
   for(var i=0;i<n;i++){ col[i*3]=c.r; col[i*3+1]=c.g; col[i*3+2]=c.b; }
   geo.setAttribute('color',new THREE.BufferAttribute(col,3));
+  var mr=G.pbrOf?G.pbrOf(color):[0,0.85], pb=new Float32Array(n*2); for(var j=0;j<n;j++){ pb[j*2]=mr[0]; pb[j*2+1]=mr[1]; } geo.setAttribute('pbr',new THREE.BufferAttribute(pb,2));
   if(geo.attributes.uv) geo.deleteAttribute('uv');
   return geo;
 }
@@ -25,15 +26,27 @@ function merge(list){
   list.forEach(function(g){ pos.set(g.attributes.position.array,o*3); nor.set(g.attributes.normal.array,o*3); col.set(g.attributes.color.array,o*3); o+=g.attributes.position.count; });
   var out=new THREE.BufferGeometry();
   out.setAttribute('position',new THREE.BufferAttribute(pos,3)); out.setAttribute('normal',new THREE.BufferAttribute(nor,3)); out.setAttribute('color',new THREE.BufferAttribute(col,3));
+  var pb=new Float32Array(n*2), o2=0; list.forEach(function(g){ var c2=g.attributes.position.count; if(g.attributes.pbr) pb.set(g.attributes.pbr.array,o2*2); else for(var k=0;k<c2;k++){ pb[(o2+k)*2+1]=0.85; } o2+=c2; });
+  out.setAttribute('pbr',new THREE.BufferAttribute(pb,2));
   return out;
 }
 G.part=part; G.merge=merge;
+// ちょうてんごとの きんぞくかん・ざらざらかん（pbr ぞくせい）を つかう マテリアル
+G.pbrMat=function(extra){ var m=new THREE.MeshStandardMaterial(Object.assign({vertexColors:true,roughness:1,metalness:1},extra||{}));
+  m.onBeforeCompile=function(sh){ sh.vertexShader=sh.vertexShader.replace('#include <common>','#include <common>\nattribute vec2 pbr; varying vec2 vPbr;').replace('#include <begin_vertex>','#include <begin_vertex>\nvPbr=pbr;');
+    sh.fragmentShader=sh.fragmentShader.replace('#include <common>','#include <common>\nvarying vec2 vPbr;').replace('#include <metalnessmap_fragment>','float metalnessFactor = metalness*vPbr.x;').replace('#include <roughnessmap_fragment>','float roughnessFactor = roughness*vPbr.y;'); };
+  return m; };
+G.envMap=function(renderer,top,hor,sun){ var sc2=new THREE.Scene(), g=new THREE.SphereGeometry(10,32,16);
+  var m=new THREE.ShaderMaterial({side:THREE.BackSide,uniforms:{t:{value:new THREE.Color(top)},h:{value:new THREE.Color(hor)},s:{value:new THREE.Color(sun)}},
+    vertexShader:'varying vec3 d; void main(){ d=normalize(position); gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }',
+    fragmentShader:'uniform vec3 t; uniform vec3 h; uniform vec3 s; varying vec3 d; void main(){ float y=d.y; vec3 c=mix(h*0.55,t,smoothstep(-0.2,0.7,y)); c=mix(vec3(0.5,0.44,0.34),c,smoothstep(-0.25,0.05,y)); float sd=max(dot(d,normalize(vec3(-0.6,0.55,0.4))),0.0); c+=s*pow(sd,40.0)*3.0+s*pow(sd,4.0)*0.25; gl_FragColor=vec4(c,1.0); }'});
+  sc2.add(new THREE.Mesh(g,m)); var pm=new THREE.PMREMGenerator(renderer); var rt=pm.fromScene(sc2,0.02); pm.dispose(); return rt.texture; };
 function canvasTex(w,h,draw,srgb){ var c=document.createElement('canvas'); c.width=w; c.height=h; draw(c.getContext('2d'),w,h);
   var t=new THREE.CanvasTexture(c); t.anisotropy=8; if(srgb!==false) t.encoding=THREE.sRGBEncoding; return t; }
 G.canvasTex=canvasTex;
 
 G.setup=function(renderer){
-  G.pastel=null; G.flat=false;
+  G.pastel=null; G.flat=false; G.pbrOf=null;
   THREE.ColorManagement.legacyMode=false;        // '#2f6fe0' などを ただしく あつかう（あせた 色に ならない）
   renderer.outputEncoding=THREE.sRGBEncoding;
   renderer.toneMapping=THREE.NoToneMapping;
@@ -178,7 +191,7 @@ G.shadowTex=function(){ return canvasTex(64,64,function(g,w,h){ var r=g.createRa
 
 /* 1チームぶんの インスタンス（からだ・ひだりあし・みぎあし・かげ） */
 G.army=function(scene,team,max,custom){
-  var geo=custom||G.soldier(team), mat=G.flat?new THREE.MeshStandardMaterial({vertexColors:true,flatShading:true,roughness:0.95,metalness:0}):new THREE.MeshLambertMaterial({vertexColors:true});
+  var geo=custom||G.soldier(team), mat=G.pbrOf?G.pbrMat():G.flat?new THREE.MeshStandardMaterial({vertexColors:true,flatShading:true,roughness:0.95,metalness:0}):new THREE.MeshLambertMaterial({vertexColors:true});
   var a={body:new THREE.InstancedMesh(geo.body,mat,max),lL:new THREE.InstancedMesh(geo.leg,mat,max),lR:new THREE.InstancedMesh(geo.leg,mat,max),
          sh:new THREE.InstancedMesh(new THREE.PlaneGeometry(0.62,0.62),new THREE.MeshBasicMaterial({map:G.shadowTex(),transparent:true,depthWrite:false}),max),n:0,geo:geo};
   ['body','lL','lR','sh'].forEach(function(k){ a[k].instanceMatrix.setUsage(THREE.DynamicDrawUsage); a[k].frustumCulled=false; scene.add(a[k]); });
