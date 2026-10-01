@@ -746,8 +746,10 @@ function start(opt){
   hud.appendChild(spdBtn); spdBtn.onclick=function(e){ e.stopPropagation(); S.speed=S.speed===1?2:1; spdBtn.innerHTML='⏩ ×'+S.speed; spdBtn.style.background=S.speed===2?'#ea580c':''; snd('tap'); };
   var nightBtn=el('button','position:absolute;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));transform:translateX(-50%);pointer-events:auto;border:3px solid #fff;border-radius:18px;background:linear-gradient(#4338ca,#1e1b4b);color:#fff;font-weight:900;font-size:18px;padding:12px 22px;cursor:pointer;font-family:inherit;display:none;box-shadow:0 6px 18px rgba(0,0,0,.35);white-space:nowrap;','🌙 よるに する<div style="font-size:11px;opacity:.85;">てきが くる</div>');
   hud.appendChild(nightBtn);
-  function dayStart(){ if(S.over) return; S.phase='day'; S.night=false; nightBtn.style.display='block'; say('☀️ あさ！ たてる じかん','#fef3c7',1200); }
-  nightBtn.onclick=function(e){ e.stopPropagation(); if(S.over||S.paused||S.phase!=='day') return; nightBtn.style.display='none'; S.night=true; S.phase='wait'; snd('crash'); nextWave(); };
+  function dayStart(){ if(S.over) return; S.phase='day'; S.night=false; S.dayT=S.dayMax=S.wave===0?30:20; nightBtn.style.display='block'; dayTxt(); say('☀️ あさ！ たてる じかん','#fef3c7',1200); }
+  nightBtn.style.pointerEvents='none'; nightBtn.style.minWidth='170px';
+  function dayTxt(){ var f=Math.max(0,S.dayT/S.dayMax); nightBtn.innerHTML='<div>☀️ あさ　🌙まで '+Math.ceil(S.dayT)+'びょう</div><div style="height:6px;border-radius:3px;background:rgba(255,255,255,.25);margin-top:6px;overflow:hidden;"><div style="height:100%;width:'+(f*100)+'%;background:#fde047;"></div></div>'; }
+  nightBtn.onclick=function(e){ e&&e.stopPropagation&&e.stopPropagation(); if(S.over||S.phase!=='day') return; nightBtn.style.display='none'; S.night=true; S.phase='wait'; snd('crash'); nextWave(); };
   var callBtn=el('button','position:absolute;left:50%;top:calc(62px + env(safe-area-inset-top));transform:translateX(-50%);pointer-events:auto;border:2px solid #fff;border-radius:12px;background:#b91c1c;color:#fff;font-weight:900;font-size:13px;padding:6px 12px;cursor:pointer;font-family:inherit;display:none;box-shadow:0 3px 10px rgba(0,0,0,.3);','⚔ つぎの ウェーブを よぶ 🪙+10');
   hud.appendChild(callBtn); callBtn.onclick=function(e){ e.stopPropagation(); if(S.over||S.paused||S.called) return; S.called=true; callBtn.style.display='none'; S.coins+=10; hud2(); say('はやよび！ 🪙+10','#fecaca',900); nextWave(); };
   var st=document.createElement('style'); st.textContent='@keyframes twBoss{0%{transform:translate(-50%,-50%) scale(2.2);opacity:0}15%{transform:translate(-50%,-50%) scale(1);opacity:1}80%{opacity:1}100%{opacity:0;transform:translate(-50%,-50%) scale(1.05)}}'; root.appendChild(st);
@@ -1017,6 +1019,7 @@ function start(opt){
     draw(dt);
   }
   function step(dt){
+    if(S.phase==='day'&&!S.over){ var o=Math.ceil(S.dayT*10); S.dayT-=dt; if(S.dayT<=0) nightBtn.onclick(); else if(Math.ceil(S.dayT*10)!==o) dayTxt(); }
     pads.forEach(function(q){ if(q.building>0) q.building=Math.max(0,q.building-dt); });
     if(S.phase==='prep'){ if(S.wave>0){ S.prepT-=dt; if(S.prepT<=0){ S.phase='run'; S.spawnQ=S.nextQ||makeWave(S.wave); S.spawnT=0; S.called=false; } } }
     else if(S.phase==='run'){
