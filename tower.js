@@ -1063,7 +1063,7 @@ function start(opt){
       if(q.lv>=3&&TT[q.type].eco){ d.style.display='none'; return; } var c=q.lv?costOf((q.lv===4?Lof(q.type,5,q.br,0):Lof(q.type,q.lv+1,0)).cost):costOf(20), ok=S.coins>=c, sp=toScreen(q.x,q.lv?TH[q.lv-1]*(q.type==='cannon'?0.7:1)+1.5:0.5,q.z);
       if(q.lv&&!ok){ d.style.display='none'; return; }
       d.style.display='block'; d.style.left=sp.x+'px'; d.style.top=sp.y+'px';
-      var txt=q.lv?'⬆🪙'+c:'🪙'+c+'〜'; if(d._t!==txt+ok){ d._t=txt+ok; d.textContent=txt; d.style.background=ok?(q.lv?'linear-gradient(#3b82f6,#1d4ed8)':'linear-gradient(#22c55e,#15803d)'):'rgba(60,60,60,.75)'; d.style.color='#fff'; }
+      var txt=q.lv?'⬆🪙'+c:'⛰ たかだい（しゃてい+25%）'; if(d._t!==txt+ok){ d._t=txt+ok; d.textContent=txt; d.style.background=ok?(q.lv?'linear-gradient(#3b82f6,#1d4ed8)':'linear-gradient(#22c55e,#15803d)'):'rgba(60,60,60,.75)'; d.style.color='#fff'; }
       if(!q.lv) q.ring.scale.setScalar(ok?1+Math.sin(S.t*5)*0.06:1); });
     // こうか
     for(var r=rings.length-1;r>=0;r--){ var rg=rings[r]; rg.t+=dt; var kk=rg.t/rg.life; if(kk>=1){ scene.remove(rg.m); rg.m.geometry.dispose(); rg.m.material.dispose(); rings.splice(r,1); continue; }
