@@ -9,6 +9,7 @@ function hash(i){ var x=Math.sin(i*127.1+311.7)*43758.5453; return x-Math.floor(
 
 /* ---------- ジオメトリを 1つに まとめる（色つき） ---------- */
 function part(geo,color,x,y,z,sx,sy,sz,rx,ry,rz){
+  if(G.pastel) color=G.pastel(color);
   geo=geo.index?geo.toNonIndexed():geo;
   var q=new THREE.Quaternion().setFromEuler(new THREE.Euler(rx||0,ry||0,rz||0));
   geo.applyMatrix4(new THREE.Matrix4().compose(new THREE.Vector3(x,y,z),q,new THREE.Vector3(sx||1,sy||1,sz||1)));
@@ -32,6 +33,7 @@ function canvasTex(w,h,draw,srgb){ var c=document.createElement('canvas'); c.wid
 G.canvasTex=canvasTex;
 
 G.setup=function(renderer){
+  G.pastel=null; G.flat=false;
   THREE.ColorManagement.legacyMode=false;        // '#2f6fe0' などを ただしく あつかう（あせた 色に ならない）
   renderer.outputEncoding=THREE.sRGBEncoding;
   renderer.toneMapping=THREE.NoToneMapping;
@@ -176,7 +178,7 @@ G.shadowTex=function(){ return canvasTex(64,64,function(g,w,h){ var r=g.createRa
 
 /* 1チームぶんの インスタンス（からだ・ひだりあし・みぎあし・かげ） */
 G.army=function(scene,team,max,custom){
-  var geo=custom||G.soldier(team), mat=new THREE.MeshLambertMaterial({vertexColors:true});
+  var geo=custom||G.soldier(team), mat=G.flat?new THREE.MeshStandardMaterial({vertexColors:true,flatShading:true,roughness:0.95,metalness:0}):new THREE.MeshLambertMaterial({vertexColors:true});
   var a={body:new THREE.InstancedMesh(geo.body,mat,max),lL:new THREE.InstancedMesh(geo.leg,mat,max),lR:new THREE.InstancedMesh(geo.leg,mat,max),
          sh:new THREE.InstancedMesh(new THREE.PlaneGeometry(0.62,0.62),new THREE.MeshBasicMaterial({map:G.shadowTex(),transparent:true,depthWrite:false}),max),n:0,geo:geo};
   ['body','lL','lR','sh'].forEach(function(k){ a[k].instanceMatrix.setUsage(THREE.DynamicDrawUsage); a[k].frustumCulled=false; scene.add(a[k]); });
