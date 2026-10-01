@@ -167,7 +167,7 @@ function start(opt){
     PATHS.forEach(function(PP,pi){ for(var s=4;s<PP.len-4;s+=1.2){ var p=atS(s,pi), l=Math.hypot(p.dx,p.dz)||1, nx=-p.dz/l, nz=p.dx/l;
       [1,-1].forEach(function(sd){ cand.push({x:p.x+nx*2.25*sd,z:p.z+nz*2.25*sd,s:s}); }); } });
     cand.sort(function(){ return Math.random()-0.5; });
-    cand.forEach(function(c3){ if(pads.length>=2) return; if(Math.abs(c3.x)>6.6||c3.z<-11.8||c3.z>9.8) return;
+    cand.forEach(function(c3){ if(pads.length>=0) return; if(Math.abs(c3.x)>6.6||c3.z<-11.8||c3.z>9.8) return;
       if(distToPath(c3.x,c3.z)<2.0) return; if(pads.some(function(q){ return Math.hypot(q.x-c3.x,q.z-c3.z)<5.0; })) return;
       pads.push({x:c3.x,z:c3.z,lv:0,type:null,cd:0,mesh:null,aim:0,spent:0,prio:0}); });
     pads.slice(0,2).forEach(function(q){ q.high=true; });   // たかだい：しゃてい +25%
