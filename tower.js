@@ -20,12 +20,14 @@ var TT={
   magic: {name:'まほう',  ico:'🔮',desc:'よろいに つよい',air:true, magic:true, lv:[{cost:30,dmg:4,rate:0.8,range:3.8},{cost:40,dmg:7,rate:0.9,range:4.1},{cost:55,dmg:10,rate:1.0,range:4.4,chain:2}]},
   ice:   {name:'こおり',  ico:'❄️',desc:'てきを おそくする',air:true, lv:[{cost:25,dmg:1,rate:1.0,range:3.6,slow:0.4},{cost:35,dmg:1.5,rate:1.1,range:3.9,slow:0.5},{cost:45,dmg:2,rate:1.2,range:4.2,slow:0.6,splash:1.1}]},
   cannon:{name:'たいほう',ico:'💣',desc:'まとめて ドカン',air:false,lv:[{cost:35,dmg:4,rate:0.55,range:4.0,splash:1.0},{cost:45,dmg:6,rate:0.6,range:4.3,splash:1.2},{cost:60,dmg:9,rate:0.7,range:4.6,splash:1.4}]}
-  ,mine:  {name:'きんこう',ico:'⛏',desc:'ウェーブごとに コイン',air:false,eco:true,lv:[{cost:40,gold:7,range:0},{cost:45,gold:14,range:0},{cost:55,gold:24,range:0}]}
-  ,farm:  {name:'はたけ',ico:'🌾',desc:'ウェーブごとに すこし コイン',air:false,eco:true,fac:1,lv:[{cost:20,gold:4,range:0},{cost:25,gold:8,range:0},{cost:35,gold:13,range:0}]}
-  ,lab:   {name:'けんきゅうじょ',ico:'🔬',desc:'けんきゅう ポイントを つくる',air:false,eco:true,fac:1,lv:[{cost:50,rp:1,range:0},{cost:60,rp:2,range:0},{cost:80,rp:3,range:0},{cost:120,rp:4,range:0}]}
-  ,forge: {name:'かじや',ico:'🔨',desc:'ちかくの タワーが つよく',air:false,eco:true,fac:1,lv:[{cost:45,buff:0.15,rate:0.12,range:3.2},{cost:55,buff:0.25,rate:0.22,range:3.6},{cost:70,buff:0.35,rate:0.35,range:4.0}]}
-  ,church:{name:'きょうかい',ico:'⛪',desc:'ウェーブごとに ❤️を なおす',air:false,eco:true,fac:1,lv:[{cost:40,heal:1,range:0},{cost:50,heal:2,range:0},{cost:65,heal:3,range:0}]}
-}, TKEYS=['arrow','magic','ice','cannon'], FKEYS=['farm','mine','lab','forge','church'];
+  ,mine:  {name:'きんこう',ico:'⛏',desc:'ウェーブごとに しざい🪨',air:false,eco:true,lv:[{cost:40,mat:5,range:0},{cost:50,mat:9,range:0},{cost:65,mat:14,range:0}]}
+  ,farm:  {name:'はたけ',ico:'🌾',desc:'ウェーブごとに すこし しざい🪨',air:false,eco:true,fac:1,lv:[{cost:20,mat:2,range:0},{cost:25,mat:3,range:0},{cost:35,mat:5,range:0}]}
+  ,lab:   {name:'けんきゅうじょ',ico:'🔬',desc:'タワーの かいはつ・しんか',air:false,eco:true,fac:1,lv:[{cost:40,range:0},{cost:60,range:0},{cost:80,range:0},{cost:110,range:0}]}
+  ,forge: {name:'かじや',ico:'🔨',desc:'タワーの しんか・ちかくを つよく',air:false,eco:true,fac:1,lv:[{cost:40,buff:0.15,rate:0.12,range:3.2},{cost:55,buff:0.25,rate:0.22,range:3.6},{cost:75,buff:0.35,rate:0.35,range:4.0},{cost:100,buff:0.45,rate:0.5,range:4.4}]}
+}, TKEYS=['arrow','magic','ice','cannon'], FKEYS=['farm','mine','lab','forge'];
+var UNL={arrow:0,ice:1,magic:2,cannon:3};   // けんきゅうじょの レベルで かいはつ
+var MATUP=[0,0,4,8,14,22];   // タワー Lv の しざい
+function matCost(k,lv){ return TT[k].fac?(lv<=1?(k==='lab'||k==='forge'?4:0):lv*4):(lv<=1?0:MATUP[lv]); }
 TT.mine.fac=1;
 // けんきゅう（けんきゅうじょの ポイントで この ステージの あいだ つよくなる）
 var RSCH=[{k:'arrow',ico:'🏹',name:'ゆみの つる',txt:'🏹 ダメージ +25%'},{k:'magic',ico:'🔮',name:'まほうの しょ',txt:'🔮 ダメージ +25%'},{k:'ice',ico:'❄️',name:'ひょうが',txt:'❄️ ダメージ+25%・こおる じかん+50%'},{k:'cannon',ico:'💣',name:'かやく',txt:'💣 ダメージ+15%・ばくはつ+20%'},
@@ -438,7 +440,7 @@ function start(opt){
   var auraTex=GX.glowTex();
   // ちいさな けんちくかさん
   var wkMat=null;
-  function startBuild(p){ p.building=2.4; if(p.workers) scene.remove(p.workers);
+  function startBuild(p){ p.building=p.buildT=TT[p.type].fac?4+p.lv*2:3+p.lv*2.5; if(p.workers) scene.remove(p.workers);
     if(!wkMat) wkMat=new THREE.MeshLambertMaterial({vertexColors:true});
     var wg=new THREE.Group(); wg.position.set(p.x,0,p.z); p.workers=wg; p.wk=[];
     for(var i=0;i<3;i++){ var w=new THREE.Group(), a=i*2.094+Math.random();
@@ -736,6 +738,7 @@ function start(opt){
   var right=el('div','position:absolute;right:10px;top:calc(10px + env(safe-area-inset-top));display:flex;gap:6px;align-items:center;pointer-events:auto;');
   right.appendChild(el('div',pill+'font-size:16px;','❤️ <span id="twHp"></span>'));
   right.appendChild(el('div',pill+'font-size:16px;','🪙 <span id="twCoin"></span>'));
+  right.appendChild(el('div',pill+'font-size:16px;','🪨 <span id="twMat"></span>'));
   var pauseBtn=el('button',pill+'font-size:18px;border:none;width:40px;height:40px;padding:0;cursor:pointer;','Ⅱ'); right.appendChild(pauseBtn); hud.appendChild(right);
   var boltBtn=el('button','position:absolute;right:14px;bottom:calc(18px + env(safe-area-inset-bottom));pointer-events:auto;border:3px solid #fff;border-radius:50%;width:74px;height:74px;font-size:30px;font-weight:900;background:radial-gradient(circle at 35% 30%,#fde68a,#f59e0b);color:#7c2d12;box-shadow:0 4px 14px rgba(0,0,0,.35);display:none;cursor:pointer;font-family:inherit;line-height:1;','⚡<div id="twBolt" style="font-size:13px;"></div>');
   hud.appendChild(boltBtn);
@@ -777,7 +780,7 @@ function start(opt){
   // --- じょうたい ---
   var stage=STG, NW=5+Math.min(4,Math.floor((WORLD+SUB-2)/2));
   // けんきゅう（★で つよくなる・ずっと のこる）
-  var S={graves:[],speed:1,streak:0,freeze:0,slow:0,coins:40+stage*10,hp:20,maxHp:20,wave:0,phase:'prep',prepT:0,spawnQ:[],spawnT:0,en:[],proj:[],bolts:0,right:0,wrong:0,kills:0,over:false,paused:false,last:0,t:0,shake:0,seen:{}};
+  var S={graves:[],speed:1,streak:0,freeze:0,slow:0,coins:40+stage*10,mat:10,hp:20,maxHp:20,wave:0,phase:'prep',prepT:0,spawnQ:[],spawnT:0,en:[],proj:[],bolts:0,right:0,wrong:0,kills:0,over:false,paused:false,last:0,t:0,shake:0,seen:{}};
   R.S=S;
   document.getElementById('twStage').textContent=stage;
   var ECO=Math.max(0.65,1-0.01*(STG-1));   // あとの ステージは コインが すこし へる
@@ -792,7 +795,7 @@ function start(opt){
     if(w===NW){ q.splice(Math.floor(n*0.6),0,{ty:'boss',gap:1.2}); }
     q.forEach(function(it){ if(it.ty==='fb') it.gap=0.4; });
     return q; }
-  function hud2(){ var hasLab=pads.some(function(q){ return q.type==='lab'&&q.lv; }); rsBtn.style.display=(hasLab||(S.rp||0)>0)&&!S.over?'block':'none'; rsBtn.textContent='🔬 '+(S.rp||0); document.getElementById('twHp').textContent=Math.max(0,S.hp); document.getElementById('twCoin').textContent=S.coins;
+  function hud2(){ var hasLab=pads.some(function(q){ return q.type==='lab'&&q.lv; }); rsBtn.style.display='none'; rsBtn.textContent='🔬 '+(S.rp||0); document.getElementById('twHp').textContent=Math.max(0,S.hp); document.getElementById('twCoin').textContent=S.coins; document.getElementById('twMat').textContent=S.mat;
     document.getElementById('twWave').textContent=Math.min(S.wave,NW)+'/'+NW; boltBtn.style.display=S.bolts>0&&!S.over?'block':'none'; document.getElementById('twBolt').textContent='×'+S.bolts; if(sel) renderMenu(); }
 
   // --- えいごの もんだい（ウェーブの まえ） ---
@@ -863,34 +866,37 @@ function start(opt){
   function renderMenu(){ var p=sel; if(!p) return; menu.innerHTML=''; menu.style.display='block';
     var row=el('div','display:flex;gap:6px;');
     if(!p.lv){ menu.appendChild(el('div','font-size:12px;opacity:.7;margin:0 0 6px 4px;','どの タワーに する？'));
-      TKEYS.forEach(function(k){ var T=TT[k], c=costOf(T.lv[0].cost), ok=S.coins>=c;
-        var b=btn('<div style="font-size:24px;">'+T.ico+'</div>'+T.name+'<div style="font-size:10px;opacity:.9;">'+T.desc+'</div><div>🪙'+c+'</div>',ok,function(){ build(p,k); });
+      TKEYS.forEach(function(k){ var T=TT[k], c=costOf(T.lv[0].cost), dv=devOk(k), ok=S.coins>=c&&dv;
+        var b=btn('<div style="font-size:24px;">'+(dv?T.ico:'🔒')+'</div>'+T.name+'<div style="font-size:10px;opacity:.9;">'+(dv?T.desc:'🔬Lv'+UNL[k]+'で かいはつ')+'</div><div>🪙'+c+'</div>',ok,function(){ build(p,k); });
         b.onpointerenter=function(){ showRange(p,k,1); }; row.appendChild(b); });
       menu.appendChild(row); menu.appendChild(el('div','font-size:12px;opacity:.7;margin:8px 0 6px 4px;','🏘 しせつ（まちづくり）')); row=el('div','display:flex;gap:6px;');
-      FKEYS.forEach(function(k){ var T=TT[k], c=costOf(T.lv[0].cost), ok=S.coins>=c;
-        var b=btn('<div style="font-size:22px;">'+T.ico+'</div>'+T.name+'<div style="font-size:9px;opacity:.9;">'+T.desc+'</div><div>🪙'+c+'</div>',ok,function(){ build(p,k); }); b.style.background=ok?'#a16207':'#9ca3af';
+      FKEYS.forEach(function(k){ var T=TT[k], c=costOf(T.lv[0].cost), mc=matCost(k,1), ok=S.coins>=c&&S.mat>=mc;
+        var b=btn('<div style="font-size:22px;">'+T.ico+'</div>'+T.name+'<div style="font-size:9px;opacity:.9;">'+T.desc+'</div><div>🪙'+c+(mc?' 🪨'+mc:'')+'</div>',ok,function(){ build(p,k); }); b.style.background=ok?'#a16207':'#9ca3af';
         b.onpointerenter=function(){ showRange(p,k,1); }; row.appendChild(b); });
       showRange(p,'arrow',1); }
     else { var T=TT[p.type]; menu.appendChild(el('div','font-size:14px;margin:0 0 6px 4px;',T.ico+' '+T.name+(T.fac?'':' タワー')+'　Lv'+p.lv+(p.lv===4&&BR[p.type]?'　'+BR[p.type][p.br].ico+BR[p.type][p.br].name:p.lv>=5&&BR[p.type]?'　'+Lof(p.type,5,p.br,p.br2).ico+Lof(p.type,5,p.br,p.br2).name+'（きわみ）':'')));
-      if(locked(p)&&p.lv<5){ menu.appendChild(el('div','font-size:12px;margin:0 4px 6px;color:#b91c1c;','🔒 レベルアップには 🔬けんきゅうじょ Lv'+needLab(p)+' が ひつよう（いま Lv'+labLv()+'）')); }
-      if(p.lv===4&&BR[p.type]){ B5[BR[p.type][p.br].key].forEach(function(bb,bi){ var cb=costOf(bb.cost), okb=S.coins>=cb&&!locked(p); var b3=btn('<div style="font-size:18px;">'+bb.ico+'</div>'+bb.name+'<div style="font-size:9px;">'+bb.desc+'</div><div>🪙'+cb+'</div>',okb,function(){ upgrade(p,bi); }); b3.style.background=okb?(bi?'#6d28d9':'#b45309'):'#9ca3af'; b3.onpointerenter=function(){ showRange(p,p.type,5,p.br,bi); }; row.appendChild(b3); }); }
-      if(p.lv===3&&BR[p.type]){ BR[p.type].forEach(function(bb,bi){ var okb=S.coins>=bb.cost&&!locked(p); var b2=btn('<div style="font-size:18px;">'+bb.ico+'</div>'+bb.name+'<div style="font-size:10px;">'+bb.desc+'</div><div>🪙'+bb.cost+'</div>',okb,function(){ upgrade(p,bi); }); b2.style.background=okb?(bi?'#0e7490':'#be123c'):'#9ca3af'; b2.onpointerenter=function(){ showRange(p,p.type,4,bi); }; row.appendChild(b2); }); }
-      if(p.lv<(T.fac?T.lv.length:3)){ var c2=costOf(T.lv[p.lv].cost), ok2=S.coins>=c2&&!locked(p); row.appendChild(btn('<div style="font-size:18px;">⬆</div>レベル'+(p.lv+1)+'<div>🪙'+c2+'</div>'+(T.fac?'<div style="font-size:10px;">'+facTxt(p.type,p.lv+1)+'</div>':p.lv===2?'<div style="font-size:10px;">'+(p.type==='arrow'?'れんしゃ':p.type==='magic'?'れんさ まほう':p.type==='ice'?'まわりも こおる':'だい ばくはつ')+'</div>':''),ok2,function(){ upgrade(p); })); }
+      if(locked(p)&&p.lv<5){ menu.appendChild(el('div','font-size:12px;margin:0 4px 6px;color:#b91c1c;','🔒 レベルアップには '+lockTxt(p)+' が ひつよう')); }
+      if(p.lv===4&&BR[p.type]){ B5[BR[p.type][p.br].key].forEach(function(bb,bi){ var cb=costOf(bb.cost), okb=S.coins>=cb&&S.mat>=MATUP[5]&&!locked(p); var b3=btn('<div style="font-size:18px;">'+bb.ico+'</div>'+bb.name+'<div style="font-size:9px;">'+bb.desc+'</div><div>🪙'+cb+' 🪨'+MATUP[5]+'</div>',okb,function(){ upgrade(p,bi); }); b3.style.background=okb?(bi?'#6d28d9':'#b45309'):'#9ca3af'; b3.onpointerenter=function(){ showRange(p,p.type,5,p.br,bi); }; row.appendChild(b3); }); }
+      if(p.lv===3&&BR[p.type]){ BR[p.type].forEach(function(bb,bi){ var okb=S.coins>=bb.cost&&S.mat>=MATUP[4]&&!locked(p); var b2=btn('<div style="font-size:18px;">'+bb.ico+'</div>'+bb.name+'<div style="font-size:10px;">'+bb.desc+'</div><div>🪙'+bb.cost+' 🪨'+MATUP[4]+'</div>',okb,function(){ upgrade(p,bi); }); b2.style.background=okb?(bi?'#0e7490':'#be123c'):'#9ca3af'; b2.onpointerenter=function(){ showRange(p,p.type,4,bi); }; row.appendChild(b2); }); }
+      if(p.lv<(T.fac?T.lv.length:3)){ var c2=costOf(T.lv[p.lv].cost), m2=matCost(p.type,p.lv+1), ok2=S.coins>=c2&&S.mat>=m2&&!locked(p); row.appendChild(btn('<div style="font-size:18px;">⬆</div>レベル'+(p.lv+1)+'<div>🪙'+c2+(m2?' 🪨'+m2:'')+'</div>'+(T.fac?'<div style="font-size:10px;">'+facTxt(p.type,p.lv+1)+'</div>':p.lv===2?'<div style="font-size:10px;">'+(p.type==='arrow'?'れんしゃ':p.type==='magic'?'れんさ まほう':p.type==='ice'?'まわりも こおる':'だい ばくはつ')+'</div>':''),ok2,function(){ upgrade(p); })); }
       if(!TT[p.type].eco){ var PR=['🚩さきとう','💪つよい','📍ちかい']; row.appendChild(btn('<div style="font-size:18px;">🎯</div>ねらい<div style="font-size:11px;">'+PR[p.prio||0]+'</div>',true,function(){ p.prio=((p.prio||0)+1)%3; snd('tap'); renderMenu(); })); row.lastChild.style.background='#b45309'; }
       else menu.appendChild(el('div','font-size:11px;margin:-2px 4px 6px;',facTxt(p.type,p.lv)));
       var back=Math.floor(p.spent*0.6); row.appendChild(btn('<div style="font-size:18px;">💰</div>うる<div>🪙+'+back+'</div>',true,function(){ sell(p); }));
       showRange(p,p.type,p.lv,p.br,p.br2); }
     row.appendChild(btn('<div style="font-size:18px;">✕</div>とじる',true,closeMenu)); row.lastChild.style.background='#6b7280'; row.lastChild.style.flex='0.6';
     menu.appendChild(row); hint.style.display='none'; }
-  function facTxt(k,lv){ var X=TT[k].lv[lv-1]; return X.gold?'ウェーブごとに 🪙+'+X.gold:X.rp?'ウェーブごとに 🔬+'+X.rp:X.heal?'ウェーブごとに ❤️+'+X.heal:X.buff?'まわりの タワー ダメージ +'+Math.round(X.buff*100)+'% / こうげきそくど +'+Math.round(X.rate*100)+'%':''; }
-  function build(p,k){ if(k==='mine') S.usedMine=true; setTimeout(function(){ S.maxTw=Math.max(S.maxTw||0,pads.filter(function(q){ return q.lv; }).length); },0); var c=costOf(TT[k].lv[0].cost); if(S.coins<c){ say('🪙が たりない','#fecaca',700); snd('wrong'); return false; }
+  function facTxt(k,lv){ var X=TT[k].lv[lv-1]; return X.mat?'ウェーブごとに 🪨+'+X.mat:k==='lab'?'タワー Lv'+(lv+1)+'まで しんか OK・'+(Object.keys(UNL).filter(function(t){ return UNL[t]===lv; }).map(function(t){ return TT[t].ico+TT[t].name; }).join('')||'')+(Object.keys(UNL).some(function(t){ return UNL[t]===lv; })?' かいはつ':''):k==='forge'?'タワー Lv'+(lv+1)+'まで しんか OK・ダメージ +'+Math.round(X.buff*100)+'% そくど +'+Math.round(X.rate*100)+'%':X.rp?'ウェーブごとに 🔬+'+X.rp:X.heal?'ウェーブごとに ❤️+'+X.heal:X.buff?'まわりの タワー ダメージ +'+Math.round(X.buff*100)+'% / こうげきそくど +'+Math.round(X.rate*100)+'%':''; }
+  function build(p,k){  setTimeout(function(){ S.maxTw=Math.max(S.maxTw||0,pads.filter(function(q){ return q.lv&&!TT[q.type].fac; }).length); },0); if(!devOk(k)){ say('🔒 🔬けんきゅうじょ Lv'+UNL[k]+' で かいはつ','#fecaca',1200); snd('wrong'); return false; } var c=costOf(TT[k].lv[0].cost), mc=matCost(k,1); if(S.coins<c){ say('🪙が たりない','#fecaca',700); snd('wrong'); return false; } if(S.mat<mc){ say('🪨 しざいが たりない','#fecaca',900); snd('wrong'); return false; } S.mat-=mc;
     S.coins-=c; p.temp=false; p.type=k; p.lv=1; p.spent=c; p.cd=0.3; setTower(p); startBuild(p); snd('coin'); fx.burst(p.x,1.2,p.z,26,0xfff1b8,4,0.7); ringFx(p.x,p.z,0xfff1b8,2,0.45); closeMenu(); hud2(); return true; }
   function labLv(){ var m=0; pads.forEach(function(q){ if(q.type==='lab'&&q.lv>m) m=q.lv; }); return m; }
-  function needLab(p){ return TT[p.type].fac?0:p.lv; }   // タワー Lv(n+1) には けんきゅうじょ Lvn が ひつよう
-  function locked(p){ return labLv()<needLab(p); }
+  function forgeLv(){ var m=0; pads.forEach(function(q){ if(q.type==='forge'&&q.lv>m) m=q.lv; }); return m; }
+  function needLab(p){ return TT[p.type].fac?0:p.lv; }   // タワー Lv(n+1) には けんきゅうじょ と かじや Lvn が ひつよう
+  function locked(p){ return labLv()<needLab(p)||forgeLv()<needLab(p); }
+  function lockTxt(p){ var n=needLab(p); return '🔬けんきゅうじょ Lv'+n+'（いま'+labLv()+'）と 🔨かじや Lv'+n+'（いま'+forgeLv()+'）'; }
+  function devOk(k){ return TT[k].fac||labLv()>=(UNL[k]||0); }
   function upgrade(p,bi){ if(p.lv>=5||(TT[p.type].eco&&p.lv>=TT[p.type].lv.length)) return false;
-    if(locked(p)){ say('🔒 けんきゅうじょ Lv'+needLab(p)+' が ひつよう','#fecaca',1100); snd('wrong'); return false; } if(bi===undefined&&p.lv>=3) bi=Math.random()<0.5?0:1; var F=TT[p.type].fac; var c=costOf(F?TT[p.type].lv[p.lv].cost:p.lv===4?Lof(p.type,5,p.br,bi).cost:Lof(p.type,p.lv+1,bi).cost); if(S.coins>=c&&!F){ if(p.lv===3) p.br=bi; if(p.lv===4) p.br2=bi; } if(S.coins<c){ say('🪙が たりない','#fecaca',700); snd('wrong'); return false; }
-    S.coins-=c; p.spent+=c; p.lv++; setTower(p); startBuild(p); snd('correct'); fx.burst(p.x,1.8,p.z,34,0x93c5fd,4.5,0.8); ringFx(p.x,p.z,0x93c5fd,2.4,0.5); if(p.lv===5){ var f5=Lof(p.type,5,p.br,p.br2); S.slow=0.6; fx.burst(p.x,2,p.z,60,0xfde047,6,1); ringFx(p.x,p.z,0xfde047,3.5,0.7); }
+    if(p.building>0){ say('🔨 けんせつちゅう…','#fde68a',900); snd('wrong'); return false; } if(locked(p)){ say('🔒 '+lockTxt(p)+' が ひつよう','#fecaca',1400); snd('wrong'); return false; } if(bi===undefined&&p.lv>=3) bi=Math.random()<0.5?0:1; var F=TT[p.type].fac; var c=costOf(F?TT[p.type].lv[p.lv].cost:p.lv===4?Lof(p.type,5,p.br,bi).cost:Lof(p.type,p.lv+1,bi).cost); var mc=matCost(p.type,p.lv+1); if(S.mat<mc){ say('🪨 しざいが たりない（'+mc+'）<div style="font-size:13px;">⛏きんこうで あつめよう</div>','#fecaca',1300); snd('wrong'); return false; } if(S.coins>=c&&!F){ if(p.lv===3) p.br=bi; if(p.lv===4) p.br2=bi; } if(S.coins<c){ say('🪙が たりない','#fecaca',700); snd('wrong'); return false; }
+    S.coins-=c; S.mat-=mc; p.spent+=c; p.lv++; setTower(p); startBuild(p); snd('correct'); fx.burst(p.x,1.8,p.z,34,0x93c5fd,4.5,0.8); ringFx(p.x,p.z,0x93c5fd,2.4,0.5); if(p.lv===5){ var f5=Lof(p.type,5,p.br,p.br2); S.slow=0.6; fx.burst(p.x,2,p.z,60,0xfde047,6,1); ringFx(p.x,p.z,0xfde047,3.5,0.7); }
     say(p.lv===5?'✨ きわみ しんか！<br>'+Lof(p.type,5,p.br,p.br2).ico+' '+Lof(p.type,5,p.br,p.br2).name:p.lv===4&&BR[p.type]?BR[p.type][p.br].ico+' '+BR[p.type][p.br].name+' に しんか！':'レベル '+p.lv+'！',p.lv>=4?'#fde68a':'#fff',1300); if(sel===p) renderMenu(); hud2(); return true; }
   // じゆうに たてる：みち・き・がけ・いけ・おしろ・もん・ほかの タワーの そば いがいなら どこでも
   function canBuild(x,z){ if(Math.abs(x)>15.5||z<-16||z>13.5) return 'そとがわ'; if(distToPath(x,z)<1.75) return 'みち';
@@ -985,7 +991,7 @@ function start(opt){
       if(a.ty!=='boss'&&a.ty!=='sk'&&a.ty!=='spl'&&a.ty!=='sl2') S.graves.push({x:a.x,z:a.z,s:a.s,pi:a.pi,t:S.t});
       if(e3.thief){ S.coins+=5; coinPop(a.x,1.4,a.z,5); } }
     if(a.hp<=0){ a.dead=true; S.kills++; var et=ET[a.ty]; heroXp(a.ty==='boss'?10:a.elite?4:1); if(a.elite){ S.coins+=et.coin*2; coinPop(a.x,1.2,a.z,et.coin*3); }
-      if(et.split){ for(var sp2=0;sp2<2;sp2++){ spawn('sl2'); var ch=S.en[S.en.length-1]; ch.pi=a.pi; ch.s=Math.max(0,a.s-0.4*sp2); ch.off=a.off+(sp2?0.35:-0.35); ch.x=a.x; ch.z=a.z; } fx.burst(a.x,0.4,a.z,12,0x4ade80,3,0.5); } var cg=(et.coin+cv('gold'))*(S.mod&&S.mod.k==='gold'?2:S.mod&&S.mod.k==='tough'?1.5:1); S.coins+=Math.max(1,Math.round(cg*ECO)); hud2(); var y=a.y||0.6;
+      if(et.split){ for(var sp2=0;sp2<2;sp2++){ spawn('sl2'); var ch=S.en[S.en.length-1]; ch.pi=a.pi; ch.s=Math.max(0,a.s-0.4*sp2); ch.off=a.off+(sp2?0.35:-0.35); ch.x=a.x; ch.z=a.z; } fx.burst(a.x,0.4,a.z,12,0x4ade80,3,0.5); } var cg=(et.coin+cv('gold'))*(S.mod&&S.mod.k==='gold'?2:S.mod&&S.mod.k==='tough'?1.5:1); S.coins+=Math.max(1,Math.round(cg*ECO*1.6)); hud2(); var y=a.y||0.6;
       fx.burst(a.x,y,a.z,a.ty==='boss'?60:5,0xffd34d,a.ty==='boss'?6:2.2,0.5); fx.burst(a.x,y,a.z,a.ty==='fly'?8:4,a.ty==='fly'?0x7e22ce:0xffffff,2,0.35);
       if(et.coin>=3) coinPop(a.x,y+0.6,a.z,et.coin);
       if(a.ty==='boss'){ snd('fanfare'); say(BINFO.name+' げきは！','#fde047',1300); S.shake=1; ringFx(a.x,a.z,0xffd34d,4,0.7); }
@@ -1016,11 +1022,11 @@ function start(opt){
       S.spawnT-=dt; if(S.spawnQ.length&&S.spawnT<=0){ var it=S.spawnQ.shift(); spawn(it.ty); S.spawnT=it.gap; }
       if(!S.spawnQ.length&&!S.called&&!S.en.some(function(a){ return !a.dead; })){ S.en=[];
         if(S.wave>=NW){ finish(true); return; }
-        S.phase='wait'; var inc=Math.round((5+S.wave*2)*ECO), mine=0, rp=0, hl=0; pads.forEach(function(q){ if(!q.lv||!TT[q.type].eco) return; var LV=TT[q.type].lv[q.lv-1];
-          if(LV.gold){ mine+=LV.gold; fx.burst(q.x,1.2,q.z,12,0xfbbf24,3,0.6); coinPop(q.x,1.5,q.z,LV.gold); } if(LV.rp){ rp+=LV.rp; fx.burst(q.x,1.5,q.z,12,0x60a5fa,3,0.6); } if(LV.heal) hl+=LV.heal; });
+        S.phase='wait'; var inc=0, mine=0, rp=0, hl=0; pads.forEach(function(q){ if(!q.lv||!TT[q.type].eco) return; var LV=TT[q.type].lv[q.lv-1];
+          if(LV.mat){ mine+=LV.mat; fx.burst(q.x,1.2,q.z,12,0xa8a29e,3,0.6); } if(LV.rp){ rp+=LV.rp; fx.burst(q.x,1.5,q.z,12,0x60a5fa,3,0.6); } if(LV.heal) hl+=LV.heal; });
         if(rp){ S.rp=(S.rp||0)+rp; } if(hl){ S.hp=Math.min(S.maxHp,S.hp+hl); }
-        var intr=cv('interest')?Math.min(30*cv('interest'),Math.floor(S.coins*0.1*cv('interest'))):0; S.coins+=inc+mine+intr; hud2();
-        say('ウェーブ クリア！ 🪙+'+(inc+mine+intr)+(rp?' 🔬+'+rp:'')+(hl?' ❤️+'+hl:'')+(intr?'<div style="font-size:14px;">（りし +'+intr+'）</div>':''),'#bbf7d0',1100); setTimeout(dayStart,1300); }
+        var intr=cv('interest')?Math.min(30*cv('interest'),Math.floor(S.coins*0.1*cv('interest'))):0; S.mat+=mine; S.coins+=intr; hud2();
+        say('ウェーブ クリア！'+(mine?' 🪨+'+mine:'')+(intr?' 🪙+'+intr:'')+(rp?' 🔬+'+rp:'')+(hl?' ❤️+'+hl:'')+(intr?'<div style="font-size:14px;">（りし +'+intr+'）</div>':''),'#bbf7d0',1100); setTimeout(dayStart,1300); }
       // はやく よぶ：でる てきが のこって いない とき
       callBtn.style.display=(!S.spawnQ.length&&S.wave<NW&&!S.called)?'block':'none';
       // たからばこ
@@ -1177,7 +1183,7 @@ function start(opt){
         if(q.gears){ var gsp=(q.kick>0?6:1.6)*(q.frozen>0?0:1); q.gears.forEach(function(gr){ gr.rotateZ(dt*gsp*gr.userData.sp); }); }
         if(q.stack&&(q.type==='arrow'||q.type==='cannon')&&Math.random()<dt*(q.kick>0?14:2.5)) fx.emit(q.x+q.stack[0],q.stack[1]+0.2,q.z+q.stack[2],rnd(-0.2,0.2),1.2,rnd(-0.2,0.2),0xd1d5db,0.9);
         if(q.orbs){ q.orbs.forEach(function(ob,oi){ var oa=S.t*2+oi*2.09; ob.position.set(Math.cos(oa)*0.95,1.2+Math.sin(S.t*3+oi)*0.25,Math.sin(oa)*0.95); ob.rotation.y+=dt*3; }); if(q.aur) q.aur.rotation.z+=dt; }
-        if(q.building>0&&q.mesh){ q.building-=dt; var bp=Math.min(1,1-q.building/2.4); q.mesh.scale.set(1,0.25+0.75*bp,1);
+        if(q.building>0&&q.mesh){ q.building-=dt; var bp=Math.min(1,1-q.building/q.buildT); if(q.lbl0===undefined) q.lbl0=0; if(Math.floor(q.building)!==q.lbl0){ q.lbl0=Math.floor(q.building); if(q.building>0.5) dmgPop({x:q.x,z:q.z,y:1.6},'🔨'+Math.ceil(q.building)+'s',false); } q.mesh.scale.set(1,0.25+0.75*bp,1);
           if(q.wk) q.wk.forEach(function(w,wi){ var ud=w.userData, aa=ud.a+S.t*0.5; w.position.set(Math.cos(aa)*0.95,Math.abs(Math.sin(S.t*8+ud.ph))*0.04,Math.sin(aa)*0.95); w.rotation.y=-aa-Math.PI/2+Math.PI; var sw=Math.sin(S.t*14+ud.ph); ud.arm.rotation.x=-0.6+sw*0.9;
             if(sw>0.97&&Math.random()<0.5){ fx.emit(q.x+Math.cos(aa)*0.75,0.25,q.z+Math.sin(aa)*0.75,rnd(-0.6,0.6),1.4,rnd(-0.6,0.6),0xfde047,0.25); if(wi===0&&Math.random()<0.3) snd('tap'); } });
           if(q.building<=0){ q.building=0; if(q.workers){ scene.remove(q.workers); q.workers=null; q.wk=null; } q.mesh.scale.set(1,1,1); fx.burst(q.x,1.2,q.z,18,0xfff1b8,3,0.5); } }
@@ -1210,7 +1216,7 @@ function start(opt){
   }
   function layout(){ return {world:WORLD,loop:LOOP,stage:STG,pads:pads.filter(function(q){ return q.lv; }).map(function(q){ return {x:q.x,z:q.z,type:q.type,lv:q.lv,br:q.br,br2:q.br2,prio:q.prio,high:!!q.high,spent:q.spent}; })}; }
   function restoreLayout(){ var L=opt.layout; if(!L||L.world!==WORLD||L.loop!==LOOP||SUB===1) return; var n=0;
-    L.pads.forEach(function(d){ var p=pads.filter(function(q){ return Math.hypot(q.x-d.x,q.z-d.z)<0.6; })[0];
+    L.pads.forEach(function(d){ if(!TT[d.type]) return; var p=pads.filter(function(q){ return Math.hypot(q.x-d.x,q.z-d.z)<0.6; })[0];
       if(!p){ if(distToPath(d.x,d.z)<1.75) return; p={x:d.x,z:d.z,lv:0,type:null,cd:0,mesh:null,aim:0,spent:0,prio:0}; padMeshes(p); pads.push(p); addLbl(); }
       p.type=d.type; p.lv=d.lv; p.br=d.br; p.br2=d.br2; p.prio=d.prio||0; p.spent=d.spent||0; p.temp=false; setTower(p); n++; });
     if(n){ S.coins=30+Math.round(stage*2); say('🏘 まちを ひきついだ！（'+n+'）','#bbf7d0',1400); } }
@@ -1232,9 +1238,9 @@ function start(opt){
   hud2();
   R.raf=requestAnimationFrame(frame);
   var skinK='red';
-  var GOALS=[{k:'nodmg',t:'❤️を へらさずに クリア'},{k:'tower5',t:'タワー 5ほん いないで クリア'},{k:'eng',t:'えいごを ぜんもん せいかい'},{k:'hero5',t:'ゆうしゃを Lv5 いじょうに'},{k:'nomine',t:'⛏きんこうを つかわずに クリア'}];
+  var GOALS=[{k:'nodmg',t:'❤️を へらさずに クリア'},{k:'tower5',t:'タワー 5ほん いないで クリア'},{k:'eng',t:'えいごを ぜんもん せいかい'},{k:'hero5',t:'ゆうしゃを Lv5 いじょうに'},{k:'nomine',t:'⛏きんこうを 1つ いないで クリア'}];
   var GOAL=SUB===WPS?GOALS[0]:GOALS[(STG*3+1)%5];
-  function goalOk(){ if(GOAL.k==='nodmg') return S.hp>=S.maxHp; if(GOAL.k==='tower5') return (S.maxTw||0)<=5; if(GOAL.k==='eng') return S.wrong===0&&S.right>0; if(GOAL.k==='hero5') return hero.lv>=5; return !S.usedMine; }
+  function goalOk(){ if(GOAL.k==='nodmg') return S.hp>=S.maxHp; if(GOAL.k==='tower5') return (S.maxTw||0)<=5; if(GOAL.k==='eng') return S.wrong===0&&S.right>0; if(GOAL.k==='hero5') return hero.lv>=5; return pads.filter(function(q){ return q.type==='mine'&&q.lv; }).length<=1; }
   function startGame(){ panel.style.display='none'; S.paused=false; S.asking=false; S.last=0;
     restoreLayout(); hud2(); dayStart(); }
   function showStart(){ S.paused=true; S.asking=true; var info=null; try{ info=opt.research&&opt.research.get(); }catch(e){}
