@@ -20,9 +20,9 @@ var TT={
   magic: {name:'まほう',  ico:'🔮',desc:'よろいに つよい',air:true, magic:true, lv:[{cost:30,dmg:4,rate:0.8,range:3.8},{cost:40,dmg:7,rate:0.9,range:4.1},{cost:55,dmg:10,rate:1.0,range:4.4,chain:2}]},
   ice:   {name:'こおり',  ico:'❄️',desc:'てきを おそくする',air:true, lv:[{cost:25,dmg:1,rate:1.0,range:3.6,slow:0.4},{cost:35,dmg:1.5,rate:1.1,range:3.9,slow:0.5},{cost:45,dmg:2,rate:1.2,range:4.2,slow:0.6,splash:1.1}]},
   cannon:{name:'たいほう',ico:'💣',desc:'まとめて ドカン',air:false,lv:[{cost:35,dmg:4,rate:0.55,range:4.0,splash:1.0},{cost:45,dmg:6,rate:0.6,range:4.3,splash:1.2},{cost:60,dmg:9,rate:0.7,range:4.6,splash:1.4}]}
-  ,mine:  {name:'きんこう',ico:'⛏',desc:'ウェーブごとに しざい🪨',air:false,eco:true,lv:[{cost:40,mat:5,range:0},{cost:50,mat:9,range:0},{cost:65,mat:14,range:0}]}
-  ,farm:  {name:'はたけ',ico:'🌾',desc:'ウェーブごとに すこし しざい🪨',air:false,eco:true,fac:1,lv:[{cost:20,mat:2,range:0},{cost:25,mat:3,range:0},{cost:35,mat:5,range:0}]}
-  ,lab:   {name:'けんきゅうじょ',ico:'🔬',desc:'タワーの かいはつ・しんか',air:false,eco:true,fac:1,lv:[{cost:40,range:0},{cost:60,range:0},{cost:80,range:0},{cost:110,range:0}]}
+  ,mine:  {name:'きんこう',ico:'⛏',desc:'ウェーブごとに しざい🪨',air:false,eco:true,lv:[{cost:40,mat:6,range:0},{cost:50,mat:10,range:0},{cost:65,mat:15,range:0}]}
+  ,farm:  {name:'はたけ',ico:'🌾',desc:'ウェーブごとに すこし しざい🪨',air:false,eco:true,fac:1,lv:[{cost:20,mat:2,range:0},{cost:25,mat:4,range:0},{cost:35,mat:6,range:0}]}
+  ,lab:   {name:'けんきゅうじょ',ico:'🔬',desc:'タワーの かいはつ・しんか',air:false,eco:true,fac:1,lv:[{cost:40,range:0},{cost:60,range:0},{cost:80,range:0}]}
   ,forge: {name:'かじや',ico:'🔨',desc:'タワーの しんか・ちかくを つよく',air:false,eco:true,fac:1,lv:[{cost:40,buff:0.15,rate:0.12,range:3.2},{cost:55,buff:0.25,rate:0.22,range:3.6},{cost:75,buff:0.35,rate:0.35,range:4.0},{cost:100,buff:0.45,rate:0.5,range:4.4}]}
 }, TKEYS=['arrow','magic','ice','cannon'], FKEYS=['farm','mine','lab','forge'];
 var UNL={arrow:0,ice:1,magic:2,cannon:3};   // けんきゅうじょの レベルで かいはつ
@@ -780,7 +780,7 @@ function start(opt){
   // --- じょうたい ---
   var stage=STG, NW=5+Math.min(4,Math.floor((WORLD+SUB-2)/2));
   // けんきゅう（★で つよくなる・ずっと のこる）
-  var S={graves:[],speed:1,streak:0,freeze:0,slow:0,coins:40+stage*10,mat:10,hp:20,maxHp:20,wave:0,phase:'prep',prepT:0,spawnQ:[],spawnT:0,en:[],proj:[],bolts:0,right:0,wrong:0,kills:0,over:false,paused:false,last:0,t:0,shake:0,seen:{}};
+  var S={graves:[],speed:1,streak:0,freeze:0,slow:0,coins:40+stage*10,mat:12,hp:20,maxHp:20,wave:0,phase:'prep',prepT:0,spawnQ:[],spawnT:0,en:[],proj:[],bolts:0,right:0,wrong:0,kills:0,over:false,paused:false,last:0,t:0,shake:0,seen:{}};
   R.S=S;
   document.getElementById('twStage').textContent=stage;
   var ECO=Math.max(0.65,1-0.01*(STG-1));   // あとの ステージは コインが すこし へる
@@ -885,12 +885,12 @@ function start(opt){
       showRange(p,p.type,p.lv,p.br,p.br2); }
     row.appendChild(btn('<div style="font-size:18px;">✕</div>とじる',true,closeMenu)); row.lastChild.style.background='#6b7280'; row.lastChild.style.flex='0.6';
     menu.appendChild(row); hint.style.display='none'; }
-  function facTxt(k,lv){ var X=TT[k].lv[lv-1]; return X.mat?'ウェーブごとに 🪨+'+X.mat:k==='lab'?'タワー Lv'+(lv+1)+'まで しんか OK・'+(Object.keys(UNL).filter(function(t){ return UNL[t]===lv; }).map(function(t){ return TT[t].ico+TT[t].name; }).join('')||'')+(Object.keys(UNL).some(function(t){ return UNL[t]===lv; })?' かいはつ':''):k==='forge'?'タワー Lv'+(lv+1)+'まで しんか OK・ダメージ +'+Math.round(X.buff*100)+'% そくど +'+Math.round(X.rate*100)+'%':X.rp?'ウェーブごとに 🔬+'+X.rp:X.heal?'ウェーブごとに ❤️+'+X.heal:X.buff?'まわりの タワー ダメージ +'+Math.round(X.buff*100)+'% / こうげきそくど +'+Math.round(X.rate*100)+'%':''; }
+  function facTxt(k,lv){ var X=TT[k].lv[lv-1]; return X.mat?'ウェーブごとに 🪨+'+X.mat:k==='lab'?'タワー Lv'+(lv+2)+'まで しんか OK・'+(Object.keys(UNL).filter(function(t){ return UNL[t]===lv; }).map(function(t){ return TT[t].ico+TT[t].name; }).join('')||'')+(Object.keys(UNL).some(function(t){ return UNL[t]===lv; })?' かいはつ':''):k==='forge'?'タワー Lv'+Math.min(5,lv+2)+'まで しんか OK・ダメージ +'+Math.round(X.buff*100)+'% そくど +'+Math.round(X.rate*100)+'%':X.rp?'ウェーブごとに 🔬+'+X.rp:X.heal?'ウェーブごとに ❤️+'+X.heal:X.buff?'まわりの タワー ダメージ +'+Math.round(X.buff*100)+'% / こうげきそくど +'+Math.round(X.rate*100)+'%':''; }
   function build(p,k){  setTimeout(function(){ S.maxTw=Math.max(S.maxTw||0,pads.filter(function(q){ return q.lv&&!TT[q.type].fac; }).length); },0); if(!devOk(k)){ say('🔒 🔬けんきゅうじょ Lv'+UNL[k]+' で かいはつ','#fecaca',1200); snd('wrong'); return false; } var c=costOf(TT[k].lv[0].cost), mc=matCost(k,1); if(S.coins<c){ say('🪙が たりない','#fecaca',700); snd('wrong'); return false; } if(S.mat<mc){ say('🪨 しざいが たりない','#fecaca',900); snd('wrong'); return false; } S.mat-=mc;
     S.coins-=c; p.temp=false; p.type=k; p.lv=1; p.spent=c; p.cd=0.3; setTower(p); startBuild(p); snd('coin'); fx.burst(p.x,1.2,p.z,26,0xfff1b8,4,0.7); ringFx(p.x,p.z,0xfff1b8,2,0.45); closeMenu(); hud2(); return true; }
   function labLv(){ var m=0; pads.forEach(function(q){ if(q.type==='lab'&&q.lv>m) m=q.lv; }); return m; }
   function forgeLv(){ var m=0; pads.forEach(function(q){ if(q.type==='forge'&&q.lv>m) m=q.lv; }); return m; }
-  function needLab(p){ return TT[p.type].fac?0:p.lv; }   // タワー Lv(n+1) には けんきゅうじょ と かじや Lvn が ひつよう
+  function needLab(p){ return TT[p.type].fac?0:p.lv-1; }   // タワー Lv(n+1) には けんきゅうじょ と かじや Lv(n-1) が ひつよう
   function locked(p){ return labLv()<needLab(p)||forgeLv()<needLab(p); }
   function lockTxt(p){ var n=needLab(p); return '🔬けんきゅうじょ Lv'+n+'（いま'+labLv()+'）と 🔨かじや Lv'+n+'（いま'+forgeLv()+'）'; }
   function devOk(k){ return TT[k].fac||labLv()>=(UNL[k]||0); }
@@ -1017,6 +1017,7 @@ function start(opt){
     draw(dt);
   }
   function step(dt){
+    pads.forEach(function(q){ if(q.building>0) q.building=Math.max(0,q.building-dt); });
     if(S.phase==='prep'){ if(S.wave>0){ S.prepT-=dt; if(S.prepT<=0){ S.phase='run'; S.spawnQ=S.nextQ||makeWave(S.wave); S.spawnT=0; S.called=false; } } }
     else if(S.phase==='run'){
       S.spawnT-=dt; if(S.spawnQ.length&&S.spawnT<=0){ var it=S.spawnQ.shift(); spawn(it.ty); S.spawnT=it.gap; }
@@ -1183,10 +1184,10 @@ function start(opt){
         if(q.gears){ var gsp=(q.kick>0?6:1.6)*(q.frozen>0?0:1); q.gears.forEach(function(gr){ gr.rotateZ(dt*gsp*gr.userData.sp); }); }
         if(q.stack&&(q.type==='arrow'||q.type==='cannon')&&Math.random()<dt*(q.kick>0?14:2.5)) fx.emit(q.x+q.stack[0],q.stack[1]+0.2,q.z+q.stack[2],rnd(-0.2,0.2),1.2,rnd(-0.2,0.2),0xd1d5db,0.9);
         if(q.orbs){ q.orbs.forEach(function(ob,oi){ var oa=S.t*2+oi*2.09; ob.position.set(Math.cos(oa)*0.95,1.2+Math.sin(S.t*3+oi)*0.25,Math.sin(oa)*0.95); ob.rotation.y+=dt*3; }); if(q.aur) q.aur.rotation.z+=dt; }
-        if(q.building>0&&q.mesh){ q.building-=dt; var bp=Math.min(1,1-q.building/q.buildT); if(q.lbl0===undefined) q.lbl0=0; if(Math.floor(q.building)!==q.lbl0){ q.lbl0=Math.floor(q.building); if(q.building>0.5) dmgPop({x:q.x,z:q.z,y:1.6},'🔨'+Math.ceil(q.building)+'s',false); } q.mesh.scale.set(1,0.25+0.75*bp,1);
+        if(q.workers&&q.mesh){ var bp=Math.min(1,1-q.building/q.buildT); if(q.lbl0===undefined) q.lbl0=0; if(Math.floor(q.building)!==q.lbl0){ q.lbl0=Math.floor(q.building); if(q.building>0.5) dmgPop({x:q.x,z:q.z,y:1.6},'🔨'+Math.ceil(q.building)+'s',false); } q.mesh.scale.set(1,0.25+0.75*bp,1);
           if(q.wk) q.wk.forEach(function(w,wi){ var ud=w.userData, aa=ud.a+S.t*0.5; w.position.set(Math.cos(aa)*0.95,Math.abs(Math.sin(S.t*8+ud.ph))*0.04,Math.sin(aa)*0.95); w.rotation.y=-aa-Math.PI/2+Math.PI; var sw=Math.sin(S.t*14+ud.ph); ud.arm.rotation.x=-0.6+sw*0.9;
             if(sw>0.97&&Math.random()<0.5){ fx.emit(q.x+Math.cos(aa)*0.75,0.25,q.z+Math.sin(aa)*0.75,rnd(-0.6,0.6),1.4,rnd(-0.6,0.6),0xfde047,0.25); if(wi===0&&Math.random()<0.3) snd('tap'); } });
-          if(q.building<=0){ q.building=0; if(q.workers){ scene.remove(q.workers); q.workers=null; q.wk=null; } q.mesh.scale.set(1,1,1); fx.burst(q.x,1.2,q.z,18,0xfff1b8,3,0.5); } }
+          if(!(q.building>0)){ if(q.workers){ scene.remove(q.workers); q.workers=null; q.wk=null; } q.mesh.scale.set(1,1,1); fx.burst(q.x,1.2,q.z,18,0xfff1b8,3,0.5); } }
         else if(q.pop>0){ q.pop-=dt; var ps=1+Math.sin(q.pop/0.35*Math.PI)*0.18; q.mesh.scale.set(ps,1/ps+0.0,ps); } else q.mesh.scale.set(1,1,1); }
       var d=lbl[idx];
       if(!d) return; if(q.lv>=5||S.over||sel===q||(!q.lv&&!q.high)){ d.style.display='none'; return; }
@@ -1273,7 +1274,7 @@ function start(opt){
     showPanel(h,[{t:'もどる',c:'#6b7280',f:showStart}]);
     [].forEach.call(panel.querySelectorAll('[data-st]'),function(n){ n.onclick=function(e){ e.stopPropagation(); var v=+n.dataset.st; if(v>mx){ snd('wrong'); return; } if(v===STG){ showStart(); return; } snd('tap'); opt.pickStage(v); }; }); }
   setTimeout(function(){ if(R.S===S){ showStart(); [].forEach.call(panel.querySelectorAll('[data-st]'),function(n){ n.onclick=function(e){ e.stopPropagation(); var v=+n.dataset.st, mx=(stInfo().maxStage||STG); if(v<=mx&&v!==STG&&opt.pickStage){ snd('tap'); opt.pickStage(v); } }; }); } },300);
-  R.debug={setTower:setTower,layout:layout,zones:function(){ return zones.length; },night:function(){ nightBtn.onclick({stopPropagation:function(){}}); },place:function(x,z,k){ if(canBuild(x,z)) return false; var p=newPad(x,z); return build(p,k||'arrow'); },canBuild:canBuild,camBase:camBase,PATHS:PATHS,W:WORLD,evolve:evolve,buildHero:buildHero,CLS:CLS,setHC:function(k){ HC=CLS.filter(function(c){ return c.k===k; })[0]; buildHero(HC,1); },cards:function(){ return S.card; },HC:HC,upgrade:upgrade,go:startGame,hero:hero,cam:cam,S:S,pads:pads,finish:finish,TT:TT,
+  R.debug={step:function(dt){ step(dt); },dayStart:dayStart,distToPath:distToPath,panel:panel,setTower:setTower,layout:layout,zones:function(){ return zones.length; },night:function(){ nightBtn.onclick({stopPropagation:function(){}}); },place:function(x,z,k){ if(canBuild(x,z)) return false; var p=newPad(x,z); return build(p,k||'arrow'); },canBuild:canBuild,camBase:camBase,PATHS:PATHS,W:WORLD,evolve:evolve,buildHero:buildHero,CLS:CLS,setHC:function(k){ HC=CLS.filter(function(c){ return c.k===k; })[0]; buildHero(HC,1); },cards:function(){ return S.card; },HC:HC,upgrade:upgrade,go:startGame,hero:hero,cam:cam,S:S,pads:pads,finish:finish,TT:TT,
     build:function(i,k){ var q=pads[i]; if(!q) return false; return q.lv?upgrade(q):build(q,k||'arrow'); },
     select:function(i){ sel=pads[i]; renderMenu(); },
     bolt:function(){ boltBtn.onclick({stopPropagation:function(){}}); },info:function(){ var i=renderer.info; return {calls:i.render.calls,tris:i.render.triangles}; }};
