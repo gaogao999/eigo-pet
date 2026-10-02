@@ -783,9 +783,9 @@ function start(opt){
   hud.appendChild(spdBtn); spdBtn.onclick=function(e){ e.stopPropagation(); S.speed=S.speed===1?2:1; spdBtn.innerHTML='⏩ ×'+S.speed; spdBtn.style.background=S.speed===2?'#ea580c':''; snd('tap'); };
   var nightBtn=el('button','position:absolute;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));transform:translateX(-50%);pointer-events:auto;border:3px solid #fff;border-radius:18px;background:linear-gradient(#4338ca,#1e1b4b);color:#fff;font-weight:900;font-size:18px;padding:12px 22px;cursor:pointer;font-family:inherit;display:none;box-shadow:0 6px 18px rgba(0,0,0,.35);white-space:nowrap;','🌙 よるに する<div style="font-size:11px;opacity:.85;">てきが くる</div>');
   hud.appendChild(nightBtn);
-  function dayStart(){ if(S.over) return; S.phase='day'; S.night=false; S.dayT=S.dayMax=S.wave===0?30:20; nightBtn.style.display='block'; dayTxt(); say('☀️ あさ！ たてる じかん','#fef3c7',1200); }
+  function dayStart(){ if(S.over) return; S.phase='day'; S.night=false; S.dayT=S.dayMax=S.wave===0?30:20; S.plan=S.wave<NW?makeWave(S.wave+1):null; nightBtn.style.display='block'; dayTxt(); say('☀️ あさ！ たてる じかん','#fef3c7',1200); }
   nightBtn.style.pointerEvents='none'; nightBtn.style.minWidth='170px';
-  function dayTxt(){ var f=Math.max(0,S.dayT/S.dayMax); nightBtn.innerHTML='<div>☀️ あさ　🌙まで '+Math.ceil(S.dayT)+'びょう</div><div style="height:6px;border-radius:3px;background:rgba(255,255,255,.25);margin-top:6px;overflow:hidden;"><div style="height:100%;width:'+(f*100)+'%;background:#fde047;"></div></div>'; }
+  function dayTxt(){ var f=Math.max(0,S.dayT/S.dayMax); nightBtn.innerHTML='<div>☀️ あさ　🌙まで '+Math.ceil(S.dayT)+'びょう</div>'+(S.plan&&OPEN>1?'<div style="font-size:12px;margin-top:3px;">つぎ：'+planTxt(S.plan)+'</div>':'')+'<div style="height:6px;border-radius:3px;background:rgba(255,255,255,.25);margin-top:6px;overflow:hidden;"><div style="height:100%;width:'+(f*100)+'%;background:#fde047;"></div></div>'; }
   nightBtn.onclick=function(e){ e&&e.stopPropagation&&e.stopPropagation(); if(S.over||S.phase!=='day') return; nightBtn.style.display='none'; S.night=true; S.phase='wait'; snd('crash'); nextWave(); };
   var callBtn=el('button','position:absolute;left:50%;top:calc(62px + env(safe-area-inset-top));transform:translateX(-50%);pointer-events:auto;border:2px solid #fff;border-radius:12px;background:#b91c1c;color:#fff;font-weight:900;font-size:13px;padding:6px 12px;cursor:pointer;font-family:inherit;display:none;box-shadow:0 3px 10px rgba(0,0,0,.3);','⚔ つぎの ウェーブを よぶ 🪙+10');
   hud.appendChild(callBtn); callBtn.onclick=function(e){ e.stopPropagation(); if(S.over||S.paused||S.called) return; S.called=true; callBtn.style.display='none'; S.coins+=10; hud2(); say('はやよび！ 🪙+10','#fecaca',900); nextWave(); };
@@ -833,7 +833,12 @@ function start(opt){
       q.push({ty:ty,gap:ty==='b'||ty==='sh'||ty==='go'||ty==='kn'||ty==='tr'?1.0:ty==='f'?0.35:0.5}); }
     if(w===NW){ q.splice(Math.floor(n*0.6),0,{ty:'boss',gap:1.2}); }
     q.forEach(function(it){ if(it.ty==='fb') it.gap=0.4; });
+    // てきの グループ：グループごとに みちを きめる
+    var gi=0, gpi=0; while(gi<q.length){ var gn=4+Math.floor(Math.random()*4); gpi=OPEN>1?(gi===0?0:Math.floor(Math.random()*OPEN)):0;
+      for(var k=gi;k<Math.min(q.length,gi+gn);k++){ q[k].pi=q[k].ty==='boss'?0:gpi; if(q[k].ty==='ra') gn++; } if(gi>0) q[gi-1].gap+=2.2; gi+=gn; }
     return q; }
+  function pathName(i){ var x=PATHS[i].pts[0][0]; return OPEN<=1?'みち':x<-3?'ひだり':x>3?'みぎ':'まんなか'; }
+  function planTxt(q){ var c={}; q.forEach(function(it){ c[it.pi||0]=(c[it.pi||0]||0)+1; }); return Object.keys(c).map(function(i){ return '🚩'+pathName(+i)+' ×'+c[i]; }).join('　'); }
   function hud2(){ var hasLab=pads.some(function(q){ return q.type==='lab'&&q.lv; }); rsBtn.style.display='none'; rsBtn.textContent='🔬 '+(S.rp||0); document.getElementById('twHp').textContent=Math.max(0,S.hp); document.getElementById('twCoin').textContent=S.coins; document.getElementById('twMat').textContent=S.mat; document.getElementById('twFood').textContent=S.food;
     document.getElementById('twWave').textContent=Math.min(S.wave,NW)+'/'+NW; boltBtn.style.display=S.bolts>0&&!S.over?'block':'none'; document.getElementById('twBolt').textContent='×'+S.bolts; if(sel) renderMenu(); }
 
@@ -888,7 +893,7 @@ function start(opt){
   function nextWave(){ S.wave++; S.mod=(S.wave>=2&&Math.random()<0.5)?MODS[Math.floor(Math.random()*MODS.length)]:null; hud2();
     if(S.mod){ modLab.innerHTML=S.mod.ico+' '+S.mod.name+'：'+S.mod.txt; modLab.style.display='block'; } else modLab.style.display='none';
     askEnglish(function(){ S.phase='prep'; S.prepT=S.wave===1?1.5:3;
-      var nw=makeWave(S.wave), fresh=[]; nw.forEach(function(it){ if(!S.seen[it.ty]&&it.ty!=='n'){ S.seen[it.ty]=1; fresh.push(it.ty); } }); S.nextQ=nw;
+      var nw=S.plan||makeWave(S.wave), fresh=[]; S.plan=null; nw.forEach(function(it){ if(!S.seen[it.ty]&&it.ty!=='n'){ S.seen[it.ty]=1; fresh.push(it.ty); } }); S.nextQ=nw;
       if(fresh.length){ newEn.innerHTML='あたらしい てき：'+fresh.map(function(k){ return EICO[k]+ET[k].name+weakTxt(k); }).join('・'); newEn.style.display='block'; setTimeout(function(){ newEn.style.display='none'; },7000); }
       setTimeout(function(){ if(S.over) return; var bw=S.wave===NW; say('ウェーブ '+S.wave+(bw?'　ボスが くる！':''),bw?'#fecaca':'#fff',1300); },S.wave===1?0:1400); }); }
 
@@ -1040,7 +1045,7 @@ function start(opt){
     labels.appendChild(dd); requestAnimationFrame(function(){ dd.style.transform='translate(-50%,-150%) scale(1)'; dd.style.opacity='0'; }); setTimeout(function(){ dd.remove(); pops--; },650); }
   function coinPop(x,y,z,v){ var sp=toScreen(x,y,z), d=el('div','position:absolute;left:'+sp.x+'px;top:'+sp.y+'px;transform:translate(-50%,-50%);font-weight:900;font-size:15px;color:#fde047;-webkit-text-stroke:3px rgba(60,40,0,.8);paint-order:stroke fill;transition:transform .8s ease-out,opacity .8s;pointer-events:none;','🪙+'+v);
     labels.appendChild(d); requestAnimationFrame(function(){ d.style.transform='translate(-50%,-160%)'; d.style.opacity='0'; }); setTimeout(function(){ d.remove(); },850); }
-  function spawn(ty){ var et=ET[ty], hp=baseHp(S.wave)*et.hp*(ty==='boss'&&BINFO.hp?BINFO.hp:1), elite=ty!=='boss'&&ty!=='sl2'&&ty!=='ra'&&ty!=='spl'&&Math.random()<Math.min(0.2,0.004*stage)+0.06; if(elite) hp*=2.5; if(S.mod){ if(S.mod.k==='tough') hp*=1.3; if(S.mod.k==='swarm') hp*=0.8; } S.pc=(S.pc||0)+1; var spi=ty==='boss'?0:S.pc%OPEN; S.en.push({pi:spi,elite:elite,ty:ty,s:0,off:ty==='boss'?0:rnd(-0.55,0.55),hp:hp,max:hp,spd:et.spd*rnd(0.92,1.08)*(S.mod&&S.mod.k==='fast'?1.25:1),ph:Math.random()*6,x:PATHS[spi].pts[0][0],z:PATHS[spi].pts[0][1],y:et.air?1.7:0,dead:false,flash:0,slowT:0,slowK:0,healT:rnd(0,1)});
+  function spawn(ty,gpi){ var et=ET[ty], hp=baseHp(S.wave)*et.hp*(ty==='boss'&&BINFO.hp?BINFO.hp:1), elite=ty!=='boss'&&ty!=='sl2'&&ty!=='ra'&&ty!=='spl'&&Math.random()<Math.min(0.2,0.004*stage)+0.06; if(elite) hp*=2.5; if(S.mod){ if(S.mod.k==='tough') hp*=1.3; if(S.mod.k==='swarm') hp*=0.8; } S.pc=(S.pc||0)+1; var spi=ty==='boss'?0:gpi!==undefined?gpi:S.pc%OPEN; S.en.push({pi:spi,elite:elite,ty:ty,s:0,off:ty==='boss'?0:rnd(-0.55,0.55),hp:hp,max:hp,spd:et.spd*rnd(0.92,1.08)*(S.mod&&S.mod.k==='fast'?1.25:1),ph:Math.random()*6,x:PATHS[spi].pts[0][0],z:PATHS[spi].pts[0][1],y:et.air?1.7:0,dead:false,flash:0,slowT:0,slowK:0,healT:rnd(0,1)});
     var ne=S.en[S.en.length-1]; if(elite){ var AF=['shield','fast','regen','noslow','noburn','armor'], af=AF[Math.floor(Math.random()*AF.length)]; ne.aff=af;
       if(af==='shield') ne.abs=hp*0.4; if(af==='fast') ne.spd*=1.35; }
     if(ty!=='sl2') fx.burst(PTS[0][0],0.8,PTS[0][1]+1.2,4,0xd946ef,2,0.4);
@@ -1060,7 +1065,7 @@ function start(opt){
     pads.forEach(function(q){ if(q.building>0) q.building=Math.max(0,q.building-dt); });
     if(S.phase==='prep'){ if(S.wave>0){ S.prepT-=dt; if(S.prepT<=0){ S.phase='run'; S.spawnQ=S.nextQ||makeWave(S.wave); S.spawnT=0; S.called=false; } } }
     else if(S.phase==='run'){
-      S.spawnT-=dt; if(S.spawnQ.length&&S.spawnT<=0){ var it=S.spawnQ.shift(); spawn(it.ty); S.spawnT=it.gap; }
+      S.spawnT-=dt; if(S.spawnQ.length&&S.spawnT<=0){ var it=S.spawnQ.shift(); spawn(it.ty,it.pi); S.spawnT=it.gap; }
       if(!S.spawnQ.length&&!S.called&&!S.en.some(function(a){ return !a.dead; })){ S.en=[];
         if(S.wave>=NW){ finish(true); return; }
         S.phase='wait'; var inc=0, food=0, mine=0, rp=0, hl=0; pads.forEach(function(q){ if(!q.lv||!TT[q.type].eco) return; var LV=TT[q.type].lv[q.lv-1];
