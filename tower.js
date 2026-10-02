@@ -16,9 +16,9 @@ function rb(t,y){ if(!(y&&/[一-鿿々]/.test(t))) return escH(t); var f=furi(t,
 
 // タワーの しゅるい（lv[0..2]＝レベル1〜3）。air＝そらの てきに とどく、magic＝よろいを むし
 var TT={
-  arrow: {name:'ゆみ',    ico:'🏹',desc:'はやい・そらにも',air:true, lv:[{cost:20,dmg:2,rate:1.2,range:4.0},{cost:30,dmg:3,rate:1.6,range:4.3},{cost:45,dmg:5,rate:2.0,range:4.7}]},
-  magic: {name:'まほう',  ico:'🔮',desc:'よろいに つよい',air:true, magic:true, lv:[{cost:30,dmg:4,rate:0.8,range:3.8},{cost:40,dmg:7,rate:0.9,range:4.1},{cost:55,dmg:10,rate:1.0,range:4.4,chain:2}]},
-  ice:   {name:'こおり',  ico:'❄️',desc:'てきを おそくする',air:true, lv:[{cost:25,dmg:1,rate:1.0,range:3.6,slow:0.4},{cost:35,dmg:1.5,rate:1.1,range:3.9,slow:0.5},{cost:45,dmg:2,rate:1.2,range:4.2,slow:0.6,splash:1.1}]},
+  arrow: {name:'ゆみ',    ico:'🏹',desc:'はやい・とおく・そらにも',air:true, lv:[{cost:20,dmg:2,rate:1.2,range:4.4},{cost:30,dmg:3,rate:1.6,range:4.7},{cost:45,dmg:5,rate:2.0,range:5.1}]},
+  magic: {name:'まほう',  ico:'🔮',desc:'ちかいが 1たいに だいダメージ',air:true, magic:true, lv:[{cost:30,dmg:5.5,rate:0.7,range:3.3},{cost:40,dmg:9,rate:0.8,range:3.6},{cost:55,dmg:13,rate:0.9,range:3.9,chain:2}]},
+  ice:   {name:'こおり',  ico:'❄️',desc:'とおくから みんな おそく',air:true, lv:[{cost:25,dmg:1,rate:1.0,range:4.6,slow:0.45},{cost:35,dmg:1.5,rate:1.1,range:4.9,slow:0.5},{cost:45,dmg:2,rate:1.2,range:5.2,slow:0.55,splash:1.1}]},
   cannon:{name:'たいほう',ico:'💣',desc:'まとめて ドカン',air:false,lv:[{cost:35,dmg:4,rate:0.55,range:4.0,splash:1.0},{cost:45,dmg:6,rate:0.6,range:4.3,splash:1.2},{cost:60,dmg:9,rate:0.7,range:4.6,splash:1.4}]}
   ,mine:  {name:'きんこう',ico:'⛏',desc:'ウェーブごとに しざい🪨',air:false,eco:true,lv:[{cost:40,mat:6,range:0},{cost:50,mat:10,range:0},{cost:65,mat:15,range:0}]}
   ,farm:  {name:'はたけ',ico:'🌾',desc:'ウェーブごとに しょくりょう🍞',air:false,eco:true,fac:1,lv:[{cost:20,food:3,range:0},{cost:30,food:5,range:0},{cost:40,food:8,range:0}]}
@@ -924,7 +924,7 @@ function start(opt){
       showRange(p,p.type,p.lv,p.br,p.br2); }
     row.appendChild(btn('<div style="font-size:18px;">✕</div>とじる',true,closeMenu)); row.lastChild.style.background='#6b7280'; row.lastChild.style.flex='0.6';
     menu.appendChild(row); hint.style.display='none'; }
-  function facTxt(k,lv){ var X=TT[k].lv[lv-1]; return X.food?'ウェーブごとに 🍞+'+X.food:X.cap?'へいし '+X.cap+'にん・とめた てきは タワーの ダメージ 1.25ばい（🍞2で 1にん）':X.mat?'ウェーブごとに 🪨+'+X.mat:k==='lab'?'タワー Lv'+(lv+2)+'まで しんか OK・'+(Object.keys(UNL).filter(function(t){ return UNL[t]===lv; }).map(function(t){ return TT[t].ico+TT[t].name; }).join('')||'')+(Object.keys(UNL).some(function(t){ return UNL[t]===lv; })?' かいはつ':''):k==='forge'?'タワー Lv'+Math.min(5,lv+2)+'まで しんか OK・ダメージ +'+Math.round(X.buff*100)+'% そくど +'+Math.round(X.rate*100)+'%':X.rp?'ウェーブごとに 🔬+'+X.rp:X.heal?'ウェーブごとに ❤️+'+X.heal:X.buff?'まわりの タワー ダメージ +'+Math.round(X.buff*100)+'% / こうげきそくど +'+Math.round(X.rate*100)+'%':''; }
+  function facTxt(k,lv){ var X=TT[k].lv[lv-1]; return X.food?'ウェーブごとに 🍞+'+X.food:X.cap?'へいし '+X.cap+'にん・とめた てきは タワーの ダメージ 1.2ばい（🍞2で 1にん）':X.mat?'ウェーブごとに 🪨+'+X.mat:k==='lab'?'タワー Lv'+(lv+2)+'まで しんか OK・'+(Object.keys(UNL).filter(function(t){ return UNL[t]===lv; }).map(function(t){ return TT[t].ico+TT[t].name; }).join('')||'')+(Object.keys(UNL).some(function(t){ return UNL[t]===lv; })?' かいはつ':''):k==='forge'?'タワー Lv'+Math.min(5,lv+2)+'まで しんか OK・ダメージ +'+Math.round(X.buff*100)+'% そくど +'+Math.round(X.rate*100)+'%':X.rp?'ウェーブごとに 🔬+'+X.rp:X.heal?'ウェーブごとに ❤️+'+X.heal:X.buff?'まわりの タワー ダメージ +'+Math.round(X.buff*100)+'% / こうげきそくど +'+Math.round(X.rate*100)+'%':''; }
   function build(p,k){  setTimeout(function(){ S.maxTw=Math.max(S.maxTw||0,pads.filter(function(q){ return q.lv&&!TT[q.type].fac; }).length); },0); if(!devOk(k)){ say('🔒 🔬けんきゅうじょ Lv'+UNL[k]+' で かいはつ','#fecaca',1200); snd('wrong'); return false; } var c=costOf(TT[k].lv[0].cost), mc=matCost(k,1); if(S.coins<c){ say('🪙が たりない','#fecaca',700); snd('wrong'); return false; } if(S.mat<mc){ say('🪨 しざいが たりない','#fecaca',900); snd('wrong'); return false; } S.mat-=mc;
     S.coins-=c; p.temp=false; p.type=k; p.lv=1; p.spent=c; p.cd=0.3; setTower(p); startBuild(p); snd('coin'); fx.burst(p.x,1.2,p.z,26,0xfff1b8,4,0.7); ringFx(p.x,p.z,0xfff1b8,2,0.45); closeMenu(); hud2(); return true; }
   function labLv(){ var m=0; pads.forEach(function(q){ if(q.type==='lab'&&q.lv>m) m=q.lv; }); return m; }
@@ -1014,7 +1014,7 @@ function start(opt){
           i++; S.paused=true; setTimeout(next,700); },false,{i:i+1,n:3,name:BINFO.name}); }
     say('⚔ ボス えいごバトル！','#fde68a',1200); setTimeout(next,900); }
   function canHit(a,t){ if(a.phased&&t!=='magic') return false; if(ET[a.ty].hide&&!a.shown) return false; return true; }
-  function hurt(a,d,magic,crit){ if(a.dead||a.under>0) return; if(a.held>0) d*=1.25; if(a.phased&&!magic) return;
+  function hurt(a,d,magic,crit){ if(a.dead||a.under>0) return; if(a.held>0) d*=1.2; if(a.phased&&!magic) return;
     var wk=(ET[a.ty].weak||{})[SRC]||1; d*=wk; if(a.brk) d*=1+0.2*a.brk; if(a.curse>0) d*=(a.cmul||1.4); if(a.prison>0&&a.stun>0) d*=2; if(a.elite) d*=1; if(wk>1&&Math.random()<0.25) fx.emit(a.x,1.2,a.z,0,1.5,0,0xfde047,0.3);
     if(a.barrier>0&&!magic){ d*=0.1; if(Math.random()<0.2) fx.emit(a.x,2,a.z,rnd(-1,1),1,rnd(-1,1),0x93c5fd,0.3); } var ar=magic?0:(ET[a.ty].armor||0); if(ar){ d=Math.max(d*0.25,d-ar); if(Math.random()<0.3) fx.emit(a.x,1,a.z,rnd(-1,1),2,rnd(-1,1),0xe5e7eb,0.25); }
     if(a.aff==='armor'&&!magic) d=Math.max(d*0.3,d-2);
