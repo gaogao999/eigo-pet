@@ -30,6 +30,8 @@ var UNL={arrow:0,ice:1,magic:2,cannon:3};   // けんきゅうじょの レベ�
 var MATUP=[0,3,4,8,14,22];   // タワー Lv の しざい
 function matCost(k,lv){ return TT[k].fac?(lv<=1?(k==='lab'||k==='forge'?4:0):lv*4):MATUP[lv]; }
 TT.mine.fac=1;
+TT.farm.size=3; TT.barracks.size=3;   // マスの おおきさ（ほかは 2×2）
+function sizeOf(k){ return (k&&TT[k]&&TT[k].size)||2; }
 // けんきゅう（けんきゅうじょの ポイントで この ステージの あいだ つよくなる）
 var RSCH=[{k:'arrow',ico:'🏹',name:'ゆみの つる',txt:'🏹 ダメージ +25%'},{k:'magic',ico:'🔮',name:'まほうの しょ',txt:'🔮 ダメージ +25%'},{k:'ice',ico:'❄️',name:'ひょうが',txt:'❄️ ダメージ+25%・こおる じかん+50%'},{k:'cannon',ico:'💣',name:'かやく',txt:'💣 ダメージ+15%・ばくはつ+20%'},
   {k:'rate',ico:'⏱',name:'はやうち',txt:'ぜんぶ +12% はやく うつ'},{k:'range',ico:'🔭',name:'ぼうえんきょう',txt:'しゃてい +10%'},{k:'crit',ico:'🎯',name:'ねらいうち',txt:'クリティカル +10%'},
@@ -473,6 +475,7 @@ function start(opt){
       [[0.62,gh*0.45,0.3,0.28,1],[0.6,gh*0.45+0.32,0.48,0.17,-1.6]].forEach(function(gd,gi){ var gr=new THREE.Mesh(gearGeo(gd[3],0.06,10+gi*2,'#ffffff'),gm); var ang=Math.atan2(gd[2],gd[0]); gr.position.set(Math.cos(ang)*(p.type==='cannon'?0.95:0.72),gd[1],Math.sin(ang)*(p.type==='cannon'?0.95:0.72)); gr.rotation.y=-ang+Math.PI/2; gr.userData.sp=gd[4]; g.add(gr); p.gears.push(gr); });
       p.stack=[p.type==='cannon'?-0.62:-0.45,gh+0.55+p.lv*0.15,p.type==='cannon'?-0.48:-0.4]; }
     g.traverse(function(n){ if(n.isMesh&&!n.material.transparent){ n.castShadow=true; n.receiveShadow=true; } });
+    if(sizeOf(p.type)===3){ g.children[0].scale.setScalar(1.35); p.base.scale.setScalar(1.4); }
     g.position.set(p.x,p.high?0.6:0.16,p.z); scene.add(g); p.mesh=g; p.ring.visible=false; p.pop=0.35; }
 
   // --- てきの かたち ---
@@ -783,10 +786,10 @@ function start(opt){
   hud.appendChild(spdBtn); spdBtn.onclick=function(e){ e.stopPropagation(); S.speed=S.speed===1?2:1; spdBtn.innerHTML='⏩ ×'+S.speed; spdBtn.style.background=S.speed===2?'#ea580c':''; snd('tap'); };
   var nightBtn=el('button','position:absolute;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));transform:translateX(-50%);pointer-events:auto;border:3px solid #fff;border-radius:18px;background:linear-gradient(#4338ca,#1e1b4b);color:#fff;font-weight:900;font-size:18px;padding:12px 22px;cursor:pointer;font-family:inherit;display:none;box-shadow:0 6px 18px rgba(0,0,0,.35);white-space:nowrap;','🌙 よるに する<div style="font-size:11px;opacity:.85;">てきが くる</div>');
   hud.appendChild(nightBtn);
-  function dayStart(){ if(S.over) return; S.phase='day'; S.night=false; S.dayT=S.dayMax=S.wave===0?30:20; S.plan=S.wave<NW?makeWave(S.wave+1):null; nightBtn.style.display='block'; dayTxt(); say('☀️ あさ！ たてる じかん','#fef3c7',1200); }
+  function dayStart(){ if(S.over) return; S.phase='day'; S.night=false; S.dayT=S.dayMax=S.wave===0?30:20; S.plan=S.wave<NW?makeWave(S.wave+1):null; nightBtn.style.display='block'; dayTxt(); say('☀️ あさ！ たてる じかん','#fef3c7',1200); gridRefresh(); }
   nightBtn.style.pointerEvents='none'; nightBtn.style.minWidth='170px';
   function dayTxt(){ var f=Math.max(0,S.dayT/S.dayMax); nightBtn.innerHTML='<div>☀️ あさ　🌙まで '+Math.ceil(S.dayT)+'びょう</div>'+(S.plan&&OPEN>1?'<div style="font-size:12px;margin-top:3px;">つぎ：'+planTxt(S.plan)+'</div>':'')+'<div style="height:6px;border-radius:3px;background:rgba(255,255,255,.25);margin-top:6px;overflow:hidden;"><div style="height:100%;width:'+(f*100)+'%;background:#fde047;"></div></div>'; }
-  nightBtn.onclick=function(e){ e&&e.stopPropagation&&e.stopPropagation(); if(S.over||S.phase!=='day') return; nightBtn.style.display='none'; S.night=true; S.phase='wait'; snd('crash'); nextWave(); };
+  nightBtn.onclick=function(e){ e&&e.stopPropagation&&e.stopPropagation(); if(S.over||S.phase!=='day') return; setTimeout(gridRefresh,0); nightBtn.style.display='none'; S.night=true; S.phase='wait'; snd('crash'); nextWave(); };
   var callBtn=el('button','position:absolute;left:50%;top:calc(62px + env(safe-area-inset-top));transform:translateX(-50%);pointer-events:auto;border:2px solid #fff;border-radius:12px;background:#b91c1c;color:#fff;font-weight:900;font-size:13px;padding:6px 12px;cursor:pointer;font-family:inherit;display:none;box-shadow:0 3px 10px rgba(0,0,0,.3);','⚔ つぎの ウェーブを よぶ 🪙+10');
   hud.appendChild(callBtn); callBtn.onclick=function(e){ e.stopPropagation(); if(S.over||S.paused||S.called) return; S.called=true; callBtn.style.display='none'; S.coins+=10; hud2(); say('はやよび！ 🪙+10','#fecaca',900); nextWave(); };
   var st=document.createElement('style'); st.textContent='@keyframes twBoss{0%{transform:translate(-50%,-50%) scale(2.2);opacity:0}15%{transform:translate(-50%,-50%) scale(1);opacity:1}80%{opacity:1}100%{opacity:0;transform:translate(-50%,-50%) scale(1.05)}}'; root.appendChild(st);
@@ -899,7 +902,7 @@ function start(opt){
 
   // --- タップ：タワーを えらぶ／レベルアップ／うる ---
   var sel=null;
-  function closeMenu(){ if(sel&&sel.temp&&!sel.lv) removePad(sel); sel=null; menu.style.display='none'; rangeRing.visible=false; rangeFill.visible=false; }
+  function closeMenu(){ if(sel&&sel.temp&&!sel.lv) removePad(sel); sel=null; selBox.visible=false; if(typeof gridM!=='undefined') gridRefresh(); menu.style.display='none'; rangeRing.visible=false; rangeFill.visible=false; }
   S.card={}; S.mod=null;
   function cv(k){ return S.card[k]||0; }
   function rangeOf(q,L){ return (L.range||0)*(q.high?1.25:1)*(1+0.1*cv('range'))*(S.mod&&S.mod.k==='fog'?0.85:1)*(S.blizz>0?0.8:1)*(WORLD===5?0.92:1); }
@@ -907,15 +910,15 @@ function start(opt){
   function showRange(p,type,lv,br,br2){ var r=rangeOf(p,Lof(type,lv,br,br2)); if(!r){ rangeRing.visible=false; rangeFill.visible=false; return; } [rangeRing,rangeFill].forEach(function(m){ m.visible=true; m.position.set(p.x,0.22,p.z); m.scale.setScalar(r); }); }
   function btn(html,ok,f){ var b=el('button','flex:1;min-width:0;border:none;border-radius:12px;padding:7px 2px;font-family:inherit;font-weight:900;cursor:pointer;line-height:1.25;color:#fff;background:'+(ok?'#15803d':'#9ca3af')+';font-size:12px;',html);
     b.className='twb'; b.onclick=function(e){ e.stopPropagation(); f(); }; return b; }
-  function renderMenu(){ var p=sel; if(!p) return; menu.innerHTML=''; menu.style.display='block';
+  function renderMenu(){ var p=sel; if(!p) return; var bn=sizeOf(p.type); selBox.scale.set(bn,bn,1); selBox.position.set(p.x,0.24,p.z); selBox.visible=true; menu.innerHTML=''; menu.style.display='block';
     var row=el('div','display:flex;gap:6px;');
     if(!p.lv){ menu.appendChild(el('div','font-size:12px;opacity:.7;margin:0 0 6px 4px;','どの タワーに する？'));
       TKEYS.forEach(function(k){ var T=TT[k], c=costOf(T.lv[0].cost), dv=devOk(k), ok=S.coins>=c&&dv;
         var b=btn('<div style="font-size:24px;">'+(dv?T.ico:'🔒')+'</div>'+T.name+'<div style="font-size:10px;opacity:.9;">'+(dv?T.desc:'🔬Lv'+UNL[k]+'で かいはつ')+'</div><div>🪙'+c+' 🪨'+MATUP[1]+'</div>',ok&&S.mat>=MATUP[1],function(){ build(p,k); });
         b.onpointerenter=function(){ showRange(p,k,1); }; row.appendChild(b); });
       menu.appendChild(row); menu.appendChild(el('div','font-size:12px;opacity:.7;margin:8px 0 6px 4px;','🏘 しせつ（まちづくり）')); row=el('div','display:flex;gap:6px;');
-      FKEYS.forEach(function(k){ var T=TT[k], c=costOf(T.lv[0].cost), mc=matCost(k,1), ok=S.coins>=c&&S.mat>=mc;
-        var b=btn('<div style="font-size:22px;">'+T.ico+'</div>'+T.name+'<div style="font-size:9px;opacity:.9;">'+T.desc+'</div><div>🪙'+c+(mc?' 🪨'+mc:'')+'</div>',ok,function(){ build(p,k); }); b.style.background=ok?'#a16207':'#9ca3af';
+      FKEYS.forEach(function(k){ var T=TT[k], c=costOf(T.lv[0].cost), mc=matCost(k,1), sz=sizeOf(k), fit=sz===2||!canBuild(snapC(p.x,sz),snapC(p.z,sz),sz,p), ok=S.coins>=c&&S.mat>=mc&&fit;
+        var b=btn('<div style="font-size:22px;">'+T.ico+'</div>'+T.name+'<div style="font-size:9px;opacity:.9;">'+(fit?T.desc:'🧱 '+sz+'×'+sz+'マス たりない')+'</div><div>🪙'+c+(mc?' 🪨'+mc:'')+'</div>',ok,function(){ build(p,k); }); b.style.background=ok?'#a16207':'#9ca3af';
         b.onpointerenter=function(){ showRange(p,k,1); }; row.appendChild(b); });
       showRange(p,'arrow',1); }
     else { var T=TT[p.type]; menu.appendChild(el('div','font-size:14px;margin:0 0 6px 4px;',T.ico+' '+T.name+(T.fac?'':' タワー')+'　Lv'+p.lv+(p.lv===4&&BR[p.type]?'　'+BR[p.type][p.br].ico+BR[p.type][p.br].name:p.lv>=5&&BR[p.type]?'　'+Lof(p.type,5,p.br,p.br2).ico+Lof(p.type,5,p.br,p.br2).name+'（きわみ）':'')));
@@ -930,8 +933,8 @@ function start(opt){
     row.appendChild(btn('<div style="font-size:18px;">✕</div>とじる',true,closeMenu)); row.lastChild.style.background='#6b7280'; row.lastChild.style.flex='0.6';
     menu.appendChild(row); hint.style.display='none'; }
   function facTxt(k,lv){ var X=TT[k].lv[lv-1]; return X.food?'ウェーブごとに 🍞+'+X.food:X.cap?'へいし '+X.cap+'にん・とめた てきは タワーの ダメージ 1.2ばい（🍞2で 1にん）':X.mat?'ウェーブごとに 🪨+'+X.mat:k==='lab'?'タワー Lv'+(lv+2)+'まで しんか OK・'+(Object.keys(UNL).filter(function(t){ return UNL[t]===lv; }).map(function(t){ return TT[t].ico+TT[t].name; }).join('')||'')+(Object.keys(UNL).some(function(t){ return UNL[t]===lv; })?' かいはつ':''):k==='forge'?'タワー Lv'+Math.min(5,lv+2)+'まで しんか OK・ダメージ +'+Math.round(X.buff*100)+'% そくど +'+Math.round(X.rate*100)+'%':X.rp?'ウェーブごとに 🔬+'+X.rp:X.heal?'ウェーブごとに ❤️+'+X.heal:X.buff?'まわりの タワー ダメージ +'+Math.round(X.buff*100)+'% / こうげきそくど +'+Math.round(X.rate*100)+'%':''; }
-  function build(p,k){  setTimeout(function(){ S.maxTw=Math.max(S.maxTw||0,pads.filter(function(q){ return q.lv&&!TT[q.type].fac; }).length); },0); if(!devOk(k)){ say('🔒 🔬けんきゅうじょ Lv'+UNL[k]+' で かいはつ','#fecaca',1200); snd('wrong'); return false; } var c=costOf(TT[k].lv[0].cost), mc=matCost(k,1); if(S.coins<c){ say('🪙が たりない','#fecaca',700); snd('wrong'); return false; } if(S.mat<mc){ say('🪨 しざいが たりない','#fecaca',900); snd('wrong'); return false; } S.mat-=mc;
-    S.coins-=c; p.temp=false; p.type=k; p.lv=1; p.spent=c; p.cd=0.3; setTower(p); startBuild(p); snd('coin'); fx.burst(p.x,1.2,p.z,26,0xfff1b8,4,0.7); ringFx(p.x,p.z,0xfff1b8,2,0.45); closeMenu(); hud2(); return true; }
+  function build(p,k){ var n=sizeOf(k); if(n!==2){ var nx=snapC(p.x,n), nz=snapC(p.z,n), w=canBuild(nx,nz,n,p); if(w){ say('🧱 '+n+'×'+n+'マス ひつよう（'+w+'）','#fecaca',1000); snd('wrong'); return false; } }  setTimeout(function(){ S.maxTw=Math.max(S.maxTw||0,pads.filter(function(q){ return q.lv&&!TT[q.type].fac; }).length); },0); if(!devOk(k)){ say('🔒 🔬けんきゅうじょ Lv'+UNL[k]+' で かいはつ','#fecaca',1200); snd('wrong'); return false; } var c=costOf(TT[k].lv[0].cost), mc=matCost(k,1); if(S.coins<c){ say('🪙が たりない','#fecaca',700); snd('wrong'); return false; } if(S.mat<mc){ say('🪨 しざいが たりない','#fecaca',900); snd('wrong'); return false; } S.mat-=mc;
+    if(n!==2){ p.x=snapC(p.x,n); p.z=snapC(p.z,n); p.base.position.set(p.x,p.base.position.y,p.z); p.ring.position.set(p.x,p.ring.position.y,p.z); } S.coins-=c; p.temp=false; p.type=k; p.lv=1; p.spent=c; p.cd=0.3; setTower(p); startBuild(p); gridRefresh(); snd('coin'); fx.burst(p.x,1.2,p.z,26,0xfff1b8,4,0.7); ringFx(p.x,p.z,0xfff1b8,2,0.45); closeMenu(); hud2(); return true; }
   function labLv(){ var m=0; pads.forEach(function(q){ if(q.type==='lab'&&q.lv>m) m=q.lv; }); return m; }
   function forgeLv(){ var m=0; pads.forEach(function(q){ if(q.type==='forge'&&q.lv>m) m=q.lv; }); return m; }
   function needLab(p){ return TT[p.type].fac?0:p.lv-1; }   // タワー Lv(n+1) には けんきゅうじょ と かじや Lv(n-1) が ひつよう
@@ -943,14 +946,25 @@ function start(opt){
     S.coins-=c; S.mat-=mc; p.spent+=c; p.lv++; setTower(p); startBuild(p); snd('correct'); fx.burst(p.x,1.8,p.z,34,0x93c5fd,4.5,0.8); ringFx(p.x,p.z,0x93c5fd,2.4,0.5); if(p.lv===5){ var f5=Lof(p.type,5,p.br,p.br2); S.slow=0.6; fx.burst(p.x,2,p.z,60,0xfde047,6,1); ringFx(p.x,p.z,0xfde047,3.5,0.7); }
     say(p.lv===5?'✨ きわみ しんか！<br>'+Lof(p.type,5,p.br,p.br2).ico+' '+Lof(p.type,5,p.br,p.br2).name:p.lv===4&&BR[p.type]?BR[p.type][p.br].ico+' '+BR[p.type][p.br].name+' に しんか！':'レベル '+p.lv+'！',p.lv>=4?'#fde68a':'#fff',1300); if(sel===p) renderMenu(); hud2(); return true; }
   // じゆうに たてる：みち・き・がけ・いけ・おしろ・もん・ほかの タワーの そば いがいなら どこでも
-  function canBuild(x,z){ if(Math.abs(x)>15.5||z<-16||z>13.5) return 'そとがわ'; if(distToPath(x,z)<1.75) return 'みち';
-    if(pads.some(function(q){ return Math.hypot(q.x-x,q.z-z)<1.8; })) return 'タワー'; if(OBST.some(function(o){ return Math.hypot(o.x-x,o.z-z)<o.r+0.8; })) return 'き';
-    if(CLIFF.some(function(c){ return Math.abs(x-c[0])<c[2]/2+0.8&&Math.abs(z-c[1])<c[4]/2+0.8; })) return 'がけ';
-    if(Math.hypot(x-CS.x,z-CS.z)<3.6||Math.hypot(x-g0[0],z-(g0[1]+1))<2.8) return 'おしろ'; if(pond&&Math.hypot(x-pond.x,z-pond.z)<pond.r+1.0) return 'いけ'; return null; }
+  // マス（1×1）で かんり：みち・き・がけ・いけ・おしろ・ほかの たてもの いがいの マスに たてられる
+  function cellWhy(cx,cz,skip){ if(Math.abs(cx)>15.5||cz<-16||cz>13.5) return 'そとがわ'; if(distToPath(cx,cz)<1.35) return 'みち';
+    if(pads.some(function(q){ if(q===skip||(q.temp&&!q.lv)) return false; var h=sizeOf(q.type)/2; return Math.abs(cx-q.x)<h&&Math.abs(cz-q.z)<h; })) return 'たてもの';
+    if(OBST.some(function(o){ return Math.hypot(o.x-cx,o.z-cz)<o.r+0.45; })) return 'き';
+    if(CLIFF.some(function(c){ return Math.abs(cx-c[0])<c[2]/2+0.5&&Math.abs(cz-c[1])<c[4]/2+0.5; })) return 'がけ';
+    if(Math.hypot(cx-CS.x,cz-CS.z)<3.4||Math.hypot(cx-g0[0],cz-(g0[1]+1))<2.6) return 'おしろ'; if(pond&&Math.hypot(cx-pond.x,cz-pond.z)<pond.r+0.5) return 'いけ'; return null; }
+  function snapC(v,n){ return n%2?Math.floor(v)+0.5:Math.round(v); }   // n×n の まんなか
+  function canBuild(x,z,n,skip){ n=n||2; var h=n/2; for(var i=0;i<n;i++) for(var j=0;j<n;j++){ var w=cellWhy(x-h+i+0.5,z-h+j+0.5,skip); if(w) return w; } return null; }
+  // たてられる マスを じめんに ひょうじ
+  var GRID=[]; for(var gx2=-16;gx2<16;gx2++) for(var gz2=-16;gz2<14;gz2++) GRID.push([gx2+0.5,gz2+0.5]);
+  var gridM=new THREE.InstancedMesh(new THREE.PlaneGeometry(0.9,0.9),new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:0.28,depthWrite:false}),GRID.length); gridM.renderOrder=2; gridM.frustumCulled=false; scene.add(gridM);
+  var selBox=new THREE.Mesh(new THREE.PlaneGeometry(1,1),new THREE.MeshBasicMaterial({color:0x4ade80,transparent:true,opacity:0.35,depthWrite:false})); selBox.rotation.x=-Math.PI/2; selBox.position.y=0.24; selBox.visible=false; scene.add(selBox);
+  function gridRefresh(){ var n=0, m=new THREE.Matrix4(), qt=new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1,0,0),-Math.PI/2), v=new THREE.Vector3(), sc=new THREE.Vector3(1,1,1);
+    if(S.phase==='day'||sel) GRID.forEach(function(c){ if(cellWhy(c[0],c[1])) return; v.set(c[0],0.21,c[1]); m.compose(v,qt,sc); gridM.setMatrixAt(n++,m); });
+    gridM.count=n; gridM.instanceMatrix.needsUpdate=true; }
   function newPad(x,z){ var p={x:x,z:z,lv:0,type:null,cd:0,mesh:null,aim:0,spent:0,prio:0,temp:true}; padMeshes(p); p.ring.visible=true; pads.push(p); addLbl(); return p; }
   function removePad(p){ var i=pads.indexOf(p); if(i<0||p.high) return; [p.base,p.ring,p.mesh].forEach(function(m){ if(m) scene.remove(m); }); pads.splice(i,1); var d=lbl.splice(i,1)[0]; if(d) d.remove(); }
   var noMark=new THREE.Mesh(new THREE.RingGeometry(0.4,0.6,4),new THREE.MeshBasicMaterial({color:0xef4444,transparent:true,opacity:0,depthWrite:false})); noMark.rotation.x=-Math.PI/2; noMark.position.y=0.3; scene.add(noMark);
-  function sell(p){ S.coins+=Math.floor(p.spent*0.6); scene.remove(p.mesh); if(p.workers){ scene.remove(p.workers); p.workers=null; p.wk=null; } p.building=0; S.sol.forEach(function(o){ if(o.home===p){ o.dead=true; scene.remove(o.g); } }); p.mesh=null; p.head=null; p.lv=0; p.br=undefined; p.br2=undefined; p.orbs=null; p.type=null; p.spent=0; p.ring.visible=true; fx.burst(p.x,1,p.z,20,0xffd34d,3,0.6); snd('coin'); closeMenu(); if(!p.high) removePad(p); hud2(); }
+  function sell(p){ setTimeout(gridRefresh,0); S.coins+=Math.floor(p.spent*0.6); scene.remove(p.mesh); if(p.workers){ scene.remove(p.workers); p.workers=null; p.wk=null; } p.building=0; S.sol.forEach(function(o){ if(o.home===p){ o.dead=true; scene.remove(o.g); } }); p.mesh=null; p.head=null; p.lv=0; p.br=undefined; p.br2=undefined; p.orbs=null; p.type=null; p.spent=0; p.ring.visible=true; fx.burst(p.x,1,p.z,20,0xffd34d,3,0.6); snd('coin'); closeMenu(); if(!p.high) removePad(p); hud2(); }
   var ray=new THREE.Raycaster(), ndc=new THREE.Vector2(), gpl=new THREE.Plane(new THREE.Vector3(0,1,0),0), hitP=new THREE.Vector3();
   function tap(e){ if(S.over||S.paused) return; var pt=e.touches?e.touches[0]:e, rc=renderer.domElement.getBoundingClientRect();
     ndc.set((pt.clientX-rc.left)/rc.width*2-1,-(pt.clientY-rc.top)/rc.height*2+1); ray.setFromCamera(ndc,cam);
@@ -960,9 +974,9 @@ function start(opt){
     if(best){ closeMenu(); sel=best; renderMenu(); snd('tap'); return; }
     closeMenu(); hint.style.display='none';
     if(distToPath(hitP.x,hitP.z)<1.5){ hero.tx=hitP.x; hero.tz=hitP.z; marker.position.set(hitP.x,0.25,hitP.z); marker.material.opacity=1; return; }   // みちを タップ → ゆうしゃが いどう
-    var gx=Math.round(hitP.x*2)/2, gz=Math.round(hitP.z*2)/2, why=canBuild(gx,gz);
+    var gx=snapC(hitP.x,2), gz=snapC(hitP.z,2), why=canBuild(gx,gz,2);
     if(why){ noMark.position.set(hitP.x,0.3,hitP.z); noMark.material.opacity=0.9; say('<span style="font-size:18px;">ここには たてられない（'+why+'）</span>','#fecaca',700); snd('wrong'); return; }
-    sel=newPad(gx,gz); renderMenu(); snd('tap'); }
+    sel=newPad(gx,gz); renderMenu(); gridRefresh(); snd('tap'); }
   // ドラッグで うごかす・ピンチ／ホイールで ズーム（タップは そのまま）
   var CV={x:0,z:0,zoom:1}, ptrs={}, drg=null, pinch0=0, zoom0=1;
   function clampCV(){ CV.x=Math.max(-10,Math.min(10,CV.x)); CV.z=Math.max(-10,Math.min(8,CV.z)); CV.zoom=Math.max(0.65,Math.min(1.6,CV.zoom)); }
