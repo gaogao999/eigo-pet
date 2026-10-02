@@ -822,14 +822,14 @@ function start(opt){
   // --- じょうたい ---
   var stage=STG, NW=5+Math.min(4,Math.floor((WORLD+SUB-2)/2));
   // けんきゅう（★で つよくなる・ずっと のこる）
-  var S={graves:[],speed:1,streak:0,freeze:0,slow:0,coins:40+stage*10,mat:15,food:4,sol:[],hp:20,maxHp:20,wave:0,phase:'prep',prepT:0,spawnQ:[],spawnT:0,en:[],proj:[],bolts:0,right:0,wrong:0,kills:0,over:false,paused:false,last:0,t:0,shake:0,seen:{}};
+  var S={graves:[],speed:1,streak:0,freeze:0,slow:0,coins:60+stage*10,mat:20,food:6,sol:[],hp:20,maxHp:20,wave:0,phase:'prep',prepT:0,spawnQ:[],spawnT:0,en:[],proj:[],bolts:0,right:0,wrong:0,kills:0,over:false,paused:false,last:0,t:0,shake:0,seen:{}};
   R.S=S;
   document.getElementById('twStage').textContent=stage;
   var ECO=Math.max(0.65,1-0.01*(STG-1));   // あとの ステージは コインが すこし へる
-  function baseHp(w){ return 4*(1+0.15*(SUB-1))*(1+0.22*(w-1))*(1+0.15*(stage-1))*Math.pow(1.05,stage-1)*(1+0.6*LOOP); }   // あとの ステージほど ぐんと つよく
+  function baseHp(w){ return 3.3*(1+0.13*(SUB-1))*(1+0.22*(w-1))*(1+0.15*(stage-1))*Math.pow(1.05,stage-1)*(1+0.6*LOOP); }   // あとの ステージほど ぐんと つよく
   var WPOOL=[[['f',2],['sl',2],['ra',1],['b',1],['th',1]],[['f',2],['fly',2],['sh',2],['mo',2],['bm',1],['sp',1],['sa',1]],[['ra',1],['mo',2],['heal',1],['cham',2],['gd',1],['th',1],['go',1]],[['f',2],['fb',2],['b',1],['bm',2],['flag',1],['nc',1],['sl',2]],[['gh',2],['sh',2],['nc',1],['flag',1],['gd',1],['sa',1],['go',1],['sp',1],['cham',1]]];
   function heavy(){ var h=[]; if(SUB>=4||WORLD>=2) h.push(['tr',Math.min(2,0.5+stage*0.06)]); if(SUB>=6||WORLD>=3) h.push(['kn',Math.min(2,0.3+stage*0.05)]); return h; }
-  function makeWave(w){ var q=[], n=Math.round((8+w*4+stage*1.4)*(S.mod&&S.mod.k==='swarm'?1.4:1)), u=w+SUB-1, pool=[['n',5]].concat(WPOOL[WORLD-1].slice(0,Math.min(9,1+Math.floor(u/1.6)))).concat(w>=3?heavy():[]);
+  function makeWave(w){ var q=[], n=Math.round((7+w*3.5+stage*1.2)*(S.mod&&S.mod.k==='swarm'?1.4:1)), u=w+SUB-1, pool=[['n',5]].concat(WPOOL[WORLD-1].slice(0,Math.min(9,1+Math.floor(u/1.6)))).concat(w>=3?heavy():[]);
     var tot=pool.reduce(function(a,b){ return a+b[1]; },0);
     for(var i=0;i<n;i++){ var r=Math.random()*tot, ty='n'; for(var j=0;j<pool.length;j++){ r-=pool[j][1]; if(r<=0){ ty=pool[j][0]; break; } }
       if(ty==='ra'){ for(var rr=0;rr<4;rr++) q.push({ty:'ra',gap:0.15}); }
@@ -1049,7 +1049,7 @@ function start(opt){
       if(a.ty!=='boss'&&a.ty!=='sk'&&a.ty!=='spl'&&a.ty!=='sl2') S.graves.push({x:a.x,z:a.z,s:a.s,pi:a.pi,t:S.t});
       if(e3.thief){ S.coins+=5; coinPop(a.x,1.4,a.z,5); } }
     if(a.hp<=0){ a.dead=true; S.kills++; var et=ET[a.ty]; heroXp(a.ty==='boss'?10:a.elite?4:1); if(a.elite){ S.coins+=et.coin*2; coinPop(a.x,1.2,a.z,et.coin*3); }
-      if(et.split){ for(var sp2=0;sp2<2;sp2++){ spawn('sl2'); var ch=S.en[S.en.length-1]; ch.pi=a.pi; ch.s=Math.max(0,a.s-0.4*sp2); ch.off=a.off+(sp2?0.35:-0.35); ch.x=a.x; ch.z=a.z; } fx.burst(a.x,0.4,a.z,12,0x4ade80,3,0.5); } var cg=(et.coin+cv('gold'))*(S.mod&&S.mod.k==='gold'?2:S.mod&&S.mod.k==='tough'?1.5:1); S.coins+=Math.max(1,Math.round(cg*ECO*1.6)); hud2(); var y=a.y||0.6;
+      if(et.split){ for(var sp2=0;sp2<2;sp2++){ spawn('sl2'); var ch=S.en[S.en.length-1]; ch.pi=a.pi; ch.s=Math.max(0,a.s-0.4*sp2); ch.off=a.off+(sp2?0.35:-0.35); ch.x=a.x; ch.z=a.z; } fx.burst(a.x,0.4,a.z,12,0x4ade80,3,0.5); } var cg=(et.coin+cv('gold'))*(S.mod&&S.mod.k==='gold'?2:S.mod&&S.mod.k==='tough'?1.5:1); S.coins+=Math.max(1,Math.round(cg*ECO*1.8)); hud2(); var y=a.y||0.6;
       fx.burst(a.x,y,a.z,a.ty==='boss'?60:5,0xffd34d,a.ty==='boss'?6:2.2,0.5); fx.burst(a.x,y,a.z,a.ty==='fly'?8:4,a.ty==='fly'?0x7e22ce:0xffffff,2,0.35);
       if(et.coin>=3) coinPop(a.x,y+0.6,a.z,et.coin);
       if(a.ty==='boss'){ snd('fanfare'); say(BINFO.name+' げきは！','#fde047',1300); S.shake=1; ringFx(a.x,a.z,0xffd34d,4,0.7); }
