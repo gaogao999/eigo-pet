@@ -34,8 +34,41 @@ G.part=part; G.merge=merge;
 // ちょうてんごとの きんぞくかん・ざらざらかん（pbr ぞくせい）を つかう マテリアル
 G.pbrMat=function(extra){ var m=new THREE.MeshStandardMaterial(Object.assign({vertexColors:true,roughness:1,metalness:1},extra||{}));
   m.onBeforeCompile=function(sh){ sh.vertexShader=sh.vertexShader.replace('#include <common>','#include <common>\nattribute vec2 pbr; varying vec2 vPbr;').replace('#include <begin_vertex>','#include <begin_vertex>\nvPbr=pbr;');
-    sh.fragmentShader=sh.fragmentShader.replace('#include <common>','#include <common>\nvarying vec2 vPbr;').replace('#include <metalnessmap_fragment>','float metalnessFactor = metalness*vPbr.x;').replace('#include <roughnessmap_fragment>','float roughnessFactor = roughness*vPbr.y;'); };
+    sh.fragmentShader=sh.fragmentShader.replace('#include <common>','#include <common>\nvarying vec2 vPbr;').replace('#include <metalnessmap_fragment>','float metalnessFactor = metalness*vPbr.x;').replace('#include <roughnessmap_fragment>','float roughnessFactor = roughness*vPbr.y;')
+      .replace('#include <output_fragment>','float rimF=pow(1.0-clamp(dot(normal,normalize(vViewPosition)),0.0,1.0),3.0); outgoingLight+=vec3(1.0,0.95,0.84)*rimF*0.32*diffuseColor.rgb;\n#include <output_fragment>'); };
   return m; };
+// ちょうてんいろに たかさの かげ（ジオラマの せっちかん）
+G.ao=function(geo,y0,y1,k){ var p=geo.attributes.position, c=geo.attributes.color; if(!c) return geo;
+  for(var i=0;i<p.count;i++){ var t=Math.max(0,Math.min(1,(p.getY(i)-y0)/(y1-y0))); t=t*t*(3-2*t); var f=k+(1-k)*t; c.array[i*3]*=f; c.array[i*3+1]*=f; c.array[i*3+2]*=f; }
+  c.needsUpdate=true; return geo; };
+// ジオラマ：ティルトシフト（うえ・したを ぼかす）＋ いろの しあげ
+G.TILT=G.TILT||{on:true,str:0};
+G.post=function(renderer){
+  var gl2=renderer.capabilities.isWebGL2, HF=THREE.HalfFloatType;
+  var rtA=new THREE.WebGLRenderTarget(4,4,{type:HF,samples:gl2?4:0}), rtB=new THREE.WebGLRenderTarget(2,2,{type:HF}), rtC=new THREE.WebGLRenderTarget(2,2,{type:HF});
+  var oc=new THREE.OrthographicCamera(-1,1,1,-1,0,1), qs=new THREE.Scene(), quad=new THREE.Mesh(new THREE.PlaneGeometry(2,2)); quad.frustumCulled=false; qs.add(quad);
+  var VS='varying vec2 vUv; void main(){ vUv=uv; gl_Position=vec4(position.xy,0.0,1.0); }';
+  var blur=new THREE.ShaderMaterial({depthTest:false,depthWrite:false,toneMapped:false,uniforms:{tex:{value:null},dir:{value:new THREE.Vector2()}},vertexShader:VS,
+    fragmentShader:'uniform sampler2D tex; uniform vec2 dir; varying vec2 vUv; void main(){ vec3 c=texture2D(tex,vUv).rgb*0.227;'+
+      ' c+=(texture2D(tex,vUv+dir*1.4).rgb+texture2D(tex,vUv-dir*1.4).rgb)*0.1946; c+=(texture2D(tex,vUv+dir*2.8).rgb+texture2D(tex,vUv-dir*2.8).rgb)*0.1216;'+
+      ' c+=(texture2D(tex,vUv+dir*4.2).rgb+texture2D(tex,vUv-dir*4.2).rgb)*0.054; c+=(texture2D(tex,vUv+dir*5.6).rgb+texture2D(tex,vUv-dir*5.6).rgb)*0.0162; gl_FragColor=vec4(c,1.0); }'});
+  var comp=new THREE.ShaderMaterial({depthTest:false,depthWrite:false,toneMapped:false,uniforms:{tS:{value:rtA.texture},tB:{value:rtC.texture},str:{value:0.75},asp:{value:1}},vertexShader:VS,
+    fragmentShader:'uniform sampler2D tS; uniform sampler2D tB; uniform float str; uniform float asp; varying vec2 vUv;'+
+      'void main(){ vec3 s=texture2D(tS,vUv).rgb, b=texture2D(tB,vUv).rgb; float d=abs(vUv.y-0.47); float m=smoothstep(0.1,0.42,d)*str; vec3 c=mix(s,b,m);'+
+      ' float l=dot(c,vec3(0.2126,0.7152,0.0722)); c=mix(vec3(l),c,1.14);'+
+      ' vec2 q=(vUv-0.5)*vec2(asp,1.0); c*=1.0-0.28*smoothstep(0.35,0.95,length(q)*1.15);'+
+      ' gl_FragColor=vec4(clamp(c,0.0,1.0),1.0);\n#include <encodings_fragment>\n}'});
+  var W=4,H=4;
+  return {
+    setSize:function(w,h){ var pr=renderer.getPixelRatio(); W=Math.max(4,Math.floor(w*pr)); H=Math.max(4,Math.floor(h*pr)); rtA.setSize(W,H); rtB.setSize(W>>1,H>>1); rtC.setSize(W>>1,H>>1); comp.uniforms.asp.value=w/h; },
+    render:function(scene,cam){ var T=G.TILT; if(!T||!T.on){ renderer.setRenderTarget(null); renderer.render(scene,cam); return; }
+      renderer.setRenderTarget(rtA); renderer.render(scene,cam); var bs=T.str||0;
+      if(bs>0){ quad.material=blur; blur.uniforms.tex.value=rtA.texture; blur.uniforms.dir.value.set(2/W,0); renderer.setRenderTarget(rtB); renderer.render(qs,oc);
+      blur.uniforms.tex.value=rtB.texture; blur.uniforms.dir.value.set(0,2/H); renderer.setRenderTarget(rtC); renderer.render(qs,oc); }
+      quad.material=comp; comp.uniforms.str.value=bs; renderer.setRenderTarget(null); renderer.render(qs,oc); },
+    dispose:function(){ rtA.dispose(); rtB.dispose(); rtC.dispose(); blur.dispose(); comp.dispose(); }
+  };
+};
 G.envMap=function(renderer,top,hor,sun){ var sc2=new THREE.Scene(), g=new THREE.SphereGeometry(10,32,16);
   var m=new THREE.ShaderMaterial({side:THREE.BackSide,uniforms:{t:{value:new THREE.Color(top)},h:{value:new THREE.Color(hor)},s:{value:new THREE.Color(sun)}},
     vertexShader:'varying vec3 d; void main(){ d=normalize(position); gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }',

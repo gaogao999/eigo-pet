@@ -1034,11 +1034,13 @@ window._eigoPetInit = function() {
      えいごゲートの 問題は ふだんの 学習と おなじ じゅんばん（復習が さき）で 出し、
      こたえは 学習きろく（SRS・ログ）に のこす。 */
   function loadThree(cb){
-    if(window.THREE) return cb();
-    var s=document.createElement('script'); s.src='./vendor/three.min.js';
-    s.onload=function(){ cb(); };
-    s.onerror=function(){ s.remove(); bubble('3Dの よみこみに しっぱい しました。つうしんを たしかめてね'); show('gameSelect'); };
-    document.head.appendChild(s);
+    if(window.THREE&&window.TOWER_MODELS&&window.TOWER_MODELS.boss) return cb();
+    // three.min.js → タワーの モデル（tower_core → heroes → buildings → bosses の じゅん）
+    var list=(window.THREE?[]:['./vendor/three.min.js']).concat(['./tower_core.js','./tower_heroes.js','./tower_buildings.js','./tower_bosses.js']), i=0;
+    (function next(){ if(i>=list.length) return cb(); var s=document.createElement('script'); s.src=list[i++]+'?'+(window.APP_REV||'');
+      s.onload=next;
+      s.onerror=function(){ s.remove(); bubble('3Dの よみこみに しっぱい しました。つうしんを たしかめてね'); show('gameSelect'); };
+      document.head.appendChild(s); })();
   }
   function shortJa(w){ var s=splitSenses(w[1])[0]||w[1]||''; return s.replace(/[～~]/g,'').trim(); }
   var runQ=[];
