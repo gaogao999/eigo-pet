@@ -1539,7 +1539,7 @@ window._eigoPetInit = function() {
   function jaT(ja){ return tildePair(ja,'')[0].join('，')||ja; } // プレーン表示用（WORDBANKは書きかえない）
   function rubyHTML(kanjiStr,yomiStr){
     var pr=tildePair(kanjiStr,yomiStr), ks=pr[0], ys=pr[1];
-    return ks.map(function(k,i){ var y=ys[i]; return y?('<ruby>'+escJa(k)+'<rt>'+escJa(y)+'</rt></ruby>'):escJa(k); }).join('，<br>'); }
+    return ks.map(function(k,i){ var y=ys[i]; return (y&&/[一-龯々]/.test(k))?('<ruby>'+escJa(k)+'<rt>'+escJa(y)+'</rt></ruby>'):escJa(k); }).join('，<br>'); }   // かんじが ない ことばには ふりがなを つけない
   function choiceHtml(w){ var lng=(w[1]||'').length>9?' long':''; return '<span class="base'+lng+'">'+rubyHTML(w[1],w[2])+'</span>'; }
   function firstSenseKana(w){ var s=(w[2]||w[1]||''); return s.split(/[\u3001,\uff0c]/)[0].trim(); }
   function easyText(w){ var k=(w[0]||''); var e=(typeof EASY!=='undefined')?(EASY[k]||EASY[k.toLowerCase()]):null; return e||firstSenseKana(w); }
