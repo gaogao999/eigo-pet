@@ -121,8 +121,14 @@ function start(opt){
   var GX=window.WAR_GFX, P=GX.part, M=GX.merge;
   var root=opt.container; root.innerHTML='';
   root.style.cssText='position:fixed;inset:0;z-index:200;overflow:hidden;background:#3f8f4a;touch-action:none;user-select:none;-webkit-user-select:none;';
-  var renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.75));
+  // がしつ（きれい／ふつう／かるい）。じどうの ときは たんまつで きめて、カクつくと じどうで さげる
+  var GQN=['low','mid','high'], GQS={high:{pr:1.75,shadow:4096,soft:true,post:true,grass:1,seg:1,name:'きれい'},mid:{pr:1.4,shadow:2048,soft:true,post:true,grass:0.6,seg:0.75,name:'ふつう'},low:{pr:1,shadow:1024,soft:false,post:false,grass:0.3,seg:0.5,name:'かるい'}};
+  function lsGet(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } } function lsSet(k,v){ try{ if(v==null) localStorage.removeItem(k); else localStorage.setItem(k,v); }catch(e){} }
+  var GQPICK=lsGet('eigoTowerGQpick')||'auto', GQ=GQPICK;
+  if(GQ==='auto'){ GQ=lsGet('eigoTowerGQ'); if(!GQS[GQ]){ var mem=navigator.deviceMemory||4, cores=navigator.hardwareConcurrency||4, small=Math.min(screen.width||999,screen.height||999)<=430;
+    GQ=(mem<=2||cores<=2)?'low':(mem<=4||cores<=4||small)?'mid':'high'; } }
+  var renderer=new THREE.WebGLRenderer({antialias:GQ!=='low',powerPreference:'high-performance'});
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,GQS[GQ].pr));
   root.appendChild(renderer.domElement); renderer.domElement.style.cssText='display:block;width:100%;height:100%;';
   GX.setup(renderer); GX.flat=true; var pastel0=function(c){ return new THREE.Color(c); };
   var METAL={'#b7862f':[1,0.32],'#d4a64a':[1,0.24],'#b0603a':[1,0.35],'#8a4526':[1,0.45],'#3b3f46':[0.85,0.5],'#2a2d33':[0.8,0.55],'#fbbf24':[1,0.2],'#fde047':[1,0.25],'#a16207':[1,0.35],
@@ -156,9 +162,9 @@ function start(opt){
   key.castShadow=true; key.shadow.mapSize.set(2048,2048); var kc=key.shadow.camera; kc.left=-23; kc.right=23; kc.top=22; kc.bottom=-22; kc.near=1; kc.far=60; key.shadow.bias=-0.0008; key.shadow.normalBias=0.03; key.shadow.radius=3;
   var fill=new THREE.DirectionalLight(0xffe4d6,0.25); fill.position.set(8,6,12); scene.add(fill);
   R={renderer:renderer,scene:scene,root:root,raf:0};
-  scene.environment=GX.envMap(renderer,MP.bg,0xfff4e6,0xffe2b8); renderer.shadowMap.type=THREE.PCFSoftShadowMap; key.shadow.mapSize.set(4096,4096);
+  scene.environment=GX.envMap(renderer,MP.bg,0xfff4e6,0xffe2b8); renderer.shadowMap.type=GQS[GQ].soft?THREE.PCFSoftShadowMap:THREE.PCFShadowMap; key.shadow.mapSize.set(GQS[GQ].shadow,GQS[GQ].shadow);
   var lam=GX.pbrMat({flatShading:false});
-  var post=GX.post?GX.post(renderer):null; R.post=post;
+  var post=GX.post?GX.post(renderer):null, usePost=GQS[GQ].post; R.post=post;
   function jit(hex,a,l){ var c=new THREE.Color(hex), hs={}; c.getHSL(hs); c.setHSL(hs.h+rnd(-a,a)*0.3,hs.s,Math.max(0,Math.min(1,hs.l+rnd(-a,a)+(l||0)))); return '#'+c.getHexString(); }
 
   // --- みち（くねくね） ---
@@ -191,7 +197,7 @@ function start(opt){
 
   // じめん（くさの いろむら）
   (function ground(){
-    var g=new THREE.PlaneGeometry(84,76,140,126); g.rotateX(-Math.PI/2);
+    var g=new THREE.PlaneGeometry(84,76,Math.round(140*GQS[GQ].seg),Math.round(126*GQS[GQ].seg)); g.rotateX(-Math.PI/2);
     var pos=g.attributes.position, col=new Float32Array(pos.count*3), c=new THREE.Color();
     for(var i=0;i<pos.count;i++){ var x=pos.getX(i), z=pos.getZ(i)-1, d=distToPath(x,z);
       var n=Math.sin(x*1.3)*Math.cos(z*1.1)*0.5+Math.sin(x*0.4+z*0.7)*0.5+Math.sin(x*3.1+z*2.3)*0.15;
@@ -283,6 +289,7 @@ function start(opt){
     for(var hm=0;hm<12;hm++){ var ah=hm/12*Math.PI*2; DEC.push(P(new Bx(0.04,0.08,0.06),'#1c1917',cx+Math.cos(ah)*0.44,3.1+Math.sin(ah)*0.44,cz-0.64)); }
     [[-0.8,1.1],[0.8,1.1]].forEach(function(o){ DEC.push(P(new C(0.17,0.2,2.6,10),'#3b3f46',cx+o[0],4.3,cz+o[1]),P(new C(0.24,0.18,0.14,10),'#b7862f',cx+o[0],5.6,cz+o[1])); });
   })();
+  var grassIM=null, grassN=0;
   (function grass(){ var cfg={green:{n:3600,c:['#3f8a3a','#5aa547','#77b955'],h:0.32},cactus:{n:900,c:['#b8a05a','#a68a48','#c9b273'],h:0.26},dead:{n:700,c:['#4b4563','#5b4f73','#3f3a55'],h:0.24},snow:{n:500,c:['#cbd5e1','#e2e8f0','#94a3b8'],h:0.18},lava:{n:400,c:['#44403c','#57534e','#292524'],h:0.2}}[MP.tree]; if(!cfg) return;
     var bl=[]; for(var b=0;b<5;b++){ var a=b/5*6.28+rnd(-0.3,0.3), le=rnd(0.2,0.45), g=new THREE.ConeGeometry(0.12,1,3,1,true); g.translate(0,0.5,0); bl.push(P(g,'#ffffff',Math.cos(a)*0.3,0,Math.sin(a)*0.3,1,rnd(0.7,1.1),1,Math.sin(a)*le,0,-Math.cos(a)*le)); }
     var tg=GX.ao(M(bl),0,1,0.45), im=new THREE.InstancedMesh(tg,lam,cfg.n), d=new THREE.Object3D(), col=new THREE.Color(), n=0;
@@ -291,8 +298,8 @@ function start(opt){
       if(Math.sin(x*0.7)*Math.cos(z*0.6)+Math.sin(x*0.23+z*0.31)<-0.4&&Math.random()<0.75) continue;
       var s=cfg.h*rnd(0.6,1.4); d.position.set(x,0,z); d.rotation.set(0,rnd(0,6.28),0); d.scale.set(s*rnd(0.9,1.3),s,s*rnd(0.9,1.3)); d.updateMatrix(); im.setMatrixAt(n,d.matrix);
       col.set(cfg.c[n%3]).multiplyScalar(rnd(0.85,1.15)); im.setColorAt(n,col); n++; }
-    im.count=n; im.receiveShadow=true; scene.add(im); })();
-  var decM=new THREE.Mesh(GX.ao(M(DEC),0,1.3,0.62),lam); decM.castShadow=true; decM.receiveShadow=true; scene.add(decM);
+    grassN=n; grassIM=im; im.count=Math.round(n*GQS[GQ].grass); im.receiveShadow=true; scene.add(im); })();
+  var decM=new THREE.Mesh(GX.ao(M(DEC),0,1.3,0.62),lam); decM.castShadow=GQ!=='low'; decM.receiveShadow=true; scene.add(decM);
   // いけ（みずが ゆれる）
   var water=null; if(pond){ water=new THREE.Mesh(new THREE.CircleGeometry(pond.r,32),new THREE.MeshLambertMaterial({color:MP.water,transparent:true,opacity:0.9,emissive:MP.tree==='lava'?0xc2410c:MP.tree==='dead'?0x4c1d95:0x000000})); water.rotation.x=-Math.PI/2; water.position.set(pond.x,0.09,pond.z); scene.add(water);
     var shine=new THREE.Mesh(new THREE.RingGeometry(pond.r*0.3,pond.r*0.42,24),new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:0.3})); shine.rotation.x=-Math.PI/2; shine.position.set(pond.x-0.3,0.1,pond.z-0.2); scene.add(shine); water.userData.shine=shine; }
@@ -897,13 +904,13 @@ function start(opt){
 
   // --- ポーズ ---
   function setPause(p){ if(S.asking) return; S.paused=p; pauseBtn.textContent=p?'▶':'Ⅱ';
-    if(p){ closeMenu(); showPanel('<div style="font-size:26px;font-weight:900;margin-bottom:14px;">ひとやすみ</div>',[{t:'つづける',c:'#15803d',f:function(){ setPause(false); }},{t:'やめる',c:'#8a9392',f:function(){ finish(false,true); }}]); }
+    if(p){ closeMenu(); showPanel('<div style="font-size:26px;font-weight:900;margin-bottom:14px;">ひとやすみ</div>',[{t:'つづける',c:'#15803d',f:function(){ setPause(false); }},{t:'🎨 がしつ：'+(GQPICK==='auto'?'じどう（'+GQS[GQ].name+'）':GQS[GQPICK].name),c:'#0e7490',f:function(){ var o=['auto','high','mid','low'], nx=o[(o.indexOf(GQPICK)+1)%o.length]; GQPICK=nx; lsSet('eigoTowerGQpick',nx==='auto'?null:nx); if(nx==='auto'){ lsSet('eigoTowerGQ',null); applyGQ('mid'); } else applyGQ(nx); S.paused=false; setPause(true); }},{t:'やめる',c:'#8a9392',f:function(){ finish(false,true); }}]); }
     else { panel.style.display='none'; S.last=0; } }
   pauseBtn.onclick=function(e){ e.stopPropagation(); if(!S.over) setPause(!S.paused); };
   function vis(){ if(document.hidden&&!S.over&&!S.asking) setPause(true); } document.addEventListener('visibilitychange',vis);
   var camBase=new THREE.Vector3();
   var LKZ=0;
-  function resize(){ var w=root.clientWidth||window.innerWidth, h=root.clientHeight||window.innerHeight; renderer.setSize(w,h,false); if(post) post.setSize(w,h); cam.aspect=w/h;
+  function resize(){ var w=root.clientWidth||window.innerWidth, h=root.clientHeight||window.innerHeight; renderer.setSize(w,h,false); if(post&&usePost) post.setSize(w,h); cam.aspect=w/h;
     var a=w/h; cam.fov=a<0.6?31:a<0.8?29:25; camBase.set(0,a<0.8?47:40,a<0.8?32:28); LKZ=a<0.8?0.2:0; cam.position.copy(camBase); cam.lookAt(0,0,LKZ); cam.updateProjectionMatrix(); }
   resize(); window.addEventListener('resize',resize);
   R.off=function(){ window.removeEventListener('pointermove',pmove); window.removeEventListener('pointerup',pup); window.removeEventListener('pointercancel',pup); window.removeEventListener('resize',resize); document.removeEventListener('visibilitychange',vis); };
@@ -964,9 +971,16 @@ function start(opt){
     if(ty==='boss'){ var bo=S.en[S.en.length-1]; bo.bk=BK; bo.phase=1; bo.bcd=4; if(BINFO.spd) bo.spd=BINFO.spd; if(BINFO.fly){ bo.fly=true; bo.y=2.2; } bossBan.innerHTML='⚠ '+BINFO.name+' しゅつげん！';
       S.slow=1.4; S.shake=1.2; snd('crash'); ringFx(PTS[0][0],PTS[0][1]+1,0xff4d4d,5,1);
       bossBan.style.display='block'; bossBan.style.animation='none'; void bossBan.offsetWidth; bossBan.style.animation='twBoss 1.8s ease-out forwards'; setTimeout(function(){ bossBan.style.display='none'; },1800); } }
+  function applyGQ(q,msg){ GQ=q; var Q=GQS[q]; usePost=Q.post; renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,Q.pr)); resize();
+    renderer.shadowMap.type=Q.soft?THREE.PCFSoftShadowMap:THREE.PCFShadowMap; key.shadow.mapSize.set(Q.shadow,Q.shadow); if(key.shadow.map){ key.shadow.map.dispose(); key.shadow.map=null; }
+    if(grassIM) grassIM.count=Math.round(grassN*Q.grass); decM.castShadow=q!=='low'; if(msg) say(msg,'#e0f2fe',1400); }
+  var FPS={t:0,n:0,bad:0};
+  function fpsWatch(raw){ if(GQPICK!=='auto'||GQ==='low'||S.over||document.hidden) { FPS.t=0; FPS.n=0; return; } if(raw>1.5){ FPS.t=0; FPS.n=0; return; }   // タブを きりかえた ときなどは かぞえない
+    FPS.t+=raw; FPS.n++; if(FPS.t<4) return; var fps=FPS.n/FPS.t; FPS.t=0; FPS.n=0;
+    if(fps<34){ if(++FPS.bad>=2){ FPS.bad=0; var nq=GQN[GQN.indexOf(GQ)-1]; lsSet('eigoTowerGQ',nq); applyGQ(nq,'🎨 うごきを かるく したよ（がしつ：'+GQS[nq].name+'）'); } } else FPS.bad=0; }
   function frame(now){
     R.raf=requestAnimationFrame(frame);
-    var dt=S.last?Math.min(0.05,(now-S.last)/1000):0; S.last=now;
+    var raw=S.last?(now-S.last)/1000:0, dt=S.last?Math.min(0.05,raw):0; S.last=now; if(raw) fpsWatch(raw);
     if(S.slow>0){ S.slow-=dt; dt*=0.3; }                                    // ボスとうじょうは スローモーション
     dt*=S.speed;
     if(!S.paused&&!S.over){ S.t+=dt; step(dt); }
@@ -1171,7 +1185,7 @@ function start(opt){
     fx.update(dt,0); AMB(dt);
     var sh=S.shake||0; S.shake=Math.max(0,sh-dt*2.5);
     cam.position.set(CV.x+camBase.x*CV.zoom+(Math.random()-0.5)*sh*0.5,camBase.y*CV.zoom+(Math.random()-0.5)*sh*0.5,CV.z+LKZ+(camBase.z-LKZ)*CV.zoom);
-    if(post) post.render(scene,cam); else renderer.render(scene,cam);
+    if(post&&usePost) post.render(scene,cam); else renderer.render(scene,cam);
   }
   function layout(){ return {world:WORLD,loop:LOOP,stage:STG,pads:pads.filter(function(q){ return q.lv; }).map(function(q){ return {x:q.x,z:q.z,type:q.type,lv:q.lv,br:q.br,br2:q.br2,prio:q.prio,high:!!q.high,spent:q.spent}; })}; }
   function restoreLayout(){ var L=opt.layout; if(!L||L.world!==WORLD||L.loop!==LOOP||SUB===1) return; var n=0;
@@ -1232,7 +1246,7 @@ function start(opt){
     showPanel(h,[{t:'もどる',c:'#6b7280',f:showStart}]);
     [].forEach.call(panel.querySelectorAll('[data-st]'),function(n){ n.onclick=function(e){ e.stopPropagation(); var v=+n.dataset.st; if(v>mx){ snd('wrong'); return; } if(v===STG){ showStart(); return; } snd('tap'); opt.pickStage(v); }; }); }
   setTimeout(function(){ if(R.S===S){ showStart(); [].forEach.call(panel.querySelectorAll('[data-st]'),function(n){ n.onclick=function(e){ e.stopPropagation(); var v=+n.dataset.st, mx=(stInfo().maxStage||STG); if(v<=mx&&v!==STG&&opt.pickStage){ snd('tap'); opt.pickStage(v); } }; }); } },300);
-  R.debug={step:function(dt){ step(dt); },dayStart:dayStart,distToPath:distToPath,panel:panel,setTower:setTower,layout:layout,zones:function(){ return zones.length; },night:function(){ nightBtn.onclick({stopPropagation:function(){}}); },place:function(x,z,k){ if(canBuild(x,z)) return false; var p=newPad(x,z); return build(p,k||'arrow'); },canBuild:canBuild,camBase:camBase,PATHS:PATHS,W:WORLD,evolve:evolve,buildHero:buildHero,CLS:CLS,setHC:function(k){ HC=CLS.filter(function(c){ return c.k===k; })[0]; buildHero(HC,1); },cards:function(){ return S.card; },HC:HC,upgrade:upgrade,go:startGame,hero:hero,cam:cam,S:S,pads:pads,finish:finish,TT:TT,
+  R.debug={FPS:FPS,GQ:function(){ return [GQPICK,GQ]; },scene:scene,renderer:renderer,step:function(dt){ step(dt); },dayStart:dayStart,distToPath:distToPath,panel:panel,setTower:setTower,layout:layout,zones:function(){ return zones.length; },night:function(){ nightBtn.onclick({stopPropagation:function(){}}); },place:function(x,z,k){ if(canBuild(x,z)) return false; var p=newPad(x,z); return build(p,k||'arrow'); },canBuild:canBuild,camBase:camBase,PATHS:PATHS,W:WORLD,evolve:evolve,buildHero:buildHero,CLS:CLS,setHC:function(k){ HC=CLS.filter(function(c){ return c.k===k; })[0]; buildHero(HC,1); },cards:function(){ return S.card; },HC:HC,upgrade:upgrade,go:startGame,hero:hero,cam:cam,S:S,pads:pads,finish:finish,TT:TT,
     build:function(i,k){ var q=pads[i]; if(!q) return false; return q.lv?upgrade(q):build(q,k||'arrow'); },
     select:function(i){ sel=pads[i]; renderMenu(); },
     bolt:function(){ boltBtn.onclick({stopPropagation:function(){}}); },info:function(){ var i=renderer.info; return {calls:i.render.calls,tris:i.render.triangles}; }};
