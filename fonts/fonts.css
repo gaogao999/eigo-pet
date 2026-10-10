@@ -1,0 +1,7 @@
+/* フォントを アプリに どうこん（オフラインでも おなじ みため）。SIL Open Font License（OFL-*.txt）
+   アプリで つかう もじだけに しぼった サブセット（pyftsubset）。もじを ふやしたら つくりなおす */
+@font-face{font-family:'M PLUS Rounded 1c';font-style:normal;font-weight:400;font-display:swap;src:url(./mplusrounded1c-400.woff2) format('woff2');}
+@font-face{font-family:'M PLUS Rounded 1c';font-style:normal;font-weight:700;font-display:swap;src:url(./mplusrounded1c-700.woff2) format('woff2');}
+@font-face{font-family:'M PLUS Rounded 1c';font-style:normal;font-weight:800;font-display:swap;src:url(./mplusrounded1c-800.woff2) format('woff2');}
+@font-face{font-family:'M PLUS Rounded 1c';font-style:normal;font-weight:900;font-display:swap;src:url(./mplusrounded1c-900.woff2) format('woff2');}
+@font-face{font-family:'DotGothic16';font-style:normal;font-weight:400;font-display:swap;src:url(./dotgothic16.woff2) format('woff2');}

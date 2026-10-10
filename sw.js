@@ -2,8 +2,14 @@
    ・つうしんが できる ときは さいしんばんを とりにいき（ネットワーク ゆうせん）、キャッシュも こうしんする
    ・つうしんが できない／おそい（3びょう）ときは キャッシュを つかう
    ・ファイルを ふやしたら PRECACHE に たして VERSION を あげる */
-var VERSION='eigopet-v1';
+var VERSION='eigopet-v2';
 var PRECACHE=["./",
+  "./fonts/fonts.css",
+  "./fonts/mplusrounded1c-400.woff2",
+  "./fonts/mplusrounded1c-700.woff2",
+  "./fonts/mplusrounded1c-800.woff2",
+  "./fonts/mplusrounded1c-900.woff2",
+  "./fonts/dotgothic16.woff2",
   "./index.html",
   "./manifest.webmanifest",
   "./app.js",
@@ -101,8 +107,8 @@ self.addEventListener('activate',function(e){
 function fromCache(req){ return caches.open(VERSION).then(function(c){ return c.match(req,{ignoreSearch:true}).then(function(r){ return r||(req.mode==='navigate'?c.match('./index.html'):undefined); }); }); }
 self.addEventListener('fetch',function(e){
   var req=e.request; if(req.method!=='GET') return;
-  var url=new URL(req.url), same=url.origin===self.location.origin, font=/fonts\.(googleapis|gstatic)\.com$/.test(url.hostname);
-  if(!same&&!font) return;
+  var url=new URL(req.url), same=url.origin===self.location.origin;
+  if(!same) return;
   e.respondWith(new Promise(function(resolve){
     var done=false, net=fetch(req).then(function(r){
       if(r&&(r.ok||r.type==='opaque')){ var cp=r.clone(); caches.open(VERSION).then(function(c){ c.put(same?url.origin+url.pathname:req, cp); }); }
