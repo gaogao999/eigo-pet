@@ -1778,14 +1778,19 @@ window._eigoPetInit = function() {
     };
     renderVoicePicker();
   })();
-  function speak(en){ try{
+  // たんまつの なかに ある こえ（ネットが なくても よめる）
+  function localVoice(){ var vs=pickerVoices().filter(function(v){ return v.localService!==false; }); if(!vs.length) vs=allEnVoices().filter(function(v){ return v.localService!==false; }); return vs[0]||null; }
+  function speak(en,noNet){ try{
     if(!window.speechSynthesis) return;
     var u=new SpeechSynthesisUtterance(en);
     u.lang='en-US';
     // こえの わりあては 別に try する（ここで こけても 読み上げ自体は 止めない）
-    try{ var v=ensureVoice(); if(v){ u.voice=v; if(v.lang) u.lang=v.lang; } }catch(e2){}
+    // ネットの こえ（Google など）は オフラインだと だまって しまうので、たんまつの こえに かえる
+    var useNet=false;
+    try{ var v=ensureVoice(); if(v&&v.localService===false&&(noNet||navigator.onLine===false)) v=localVoice(); if(v){ u.voice=v; if(v.lang) u.lang=v.lang; useNet=v.localService===false; } }catch(e2){}
     u.rate=state.speechRate||0.8; u.pitch=1.0;
-    speechSynthesis.cancel(); speechSynthesis.speak(u);
+    if(useNet&&!noNet) u.onerror=function(ev){ var er=ev&&ev.error; if(er==='interrupted'||er==='canceled') return; speak(en,true); };   // ネットの こえが だめなら もういちど
+    speechSynthesis.cancel(); try{ speechSynthesis.resume(); }catch(e3){} speechSynthesis.speak(u);
   }catch(e){} }
   document.getElementById('speak').onclick=function(){ qUsedAudio=true; speak(curWord?curWord[0]:document.getElementById('qword').textContent); };
   (function(){ var sb=document.getElementById('spellSubmit'); if(sb) sb.onclick=submitSpell; var si=document.getElementById('spellInput'); if(si){ si.addEventListener('keydown',function(e){ if(e.key==='Enter'){ e.preventDefault(); submitSpell(); } }); si.addEventListener('input',updateSpellBars); } var qw=document.getElementById('qword'); if(qw) attachLongPress(qw,function(){ if(curWord && (qMode==='reverse'||qMode==='spell')) showEasy(curWord); }); })();
